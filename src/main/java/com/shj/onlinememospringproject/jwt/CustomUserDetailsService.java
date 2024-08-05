@@ -2,6 +2,7 @@ package com.shj.onlinememospringproject.jwt;
 
 import com.shj.onlinememospringproject.domain.User;
 import com.shj.onlinememospringproject.repository.UserRepository;
+import com.shj.onlinememospringproject.response.exception.Exception404;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

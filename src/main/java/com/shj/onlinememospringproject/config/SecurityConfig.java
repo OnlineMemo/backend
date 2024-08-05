@@ -1,9 +1,11 @@
 package com.shj.onlinememospringproject.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.shj.onlinememospringproject.jwt.JwtAccessDeniedHandler;
-import com.shj.onlinememospringproject.jwt.JwtAuthenticationEntryPoint;
+import com.shj.onlinememospringproject.jwt.JwtFilter;
 import com.shj.onlinememospringproject.jwt.TokenProvider;
+import com.shj.onlinememospringproject.jwt.handler.JwtAccessDeniedHandler;
+import com.shj.onlinememospringproject.jwt.handler.JwtAuthenticationEntryPoint;
+import com.shj.onlinememospringproject.jwt.handler.JwtExceptionFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,6 +17,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
