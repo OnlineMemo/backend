@@ -1,8 +1,14 @@
 package com.shj.onlinememospringproject.service.impl;
 
+import com.shj.onlinememospringproject.domain.Friendship;
+import com.shj.onlinememospringproject.domain.Memo;
 import com.shj.onlinememospringproject.domain.User;
+import com.shj.onlinememospringproject.domain.mapping.UserMemo;
 import com.shj.onlinememospringproject.dto.AuthDto;
 import com.shj.onlinememospringproject.jwt.TokenProvider;
+import com.shj.onlinememospringproject.repository.FriendshipBatchRepository;
+import com.shj.onlinememospringproject.repository.MemoBatchRepository;
+import com.shj.onlinememospringproject.repository.UserMemoBatchRepository;
 import com.shj.onlinememospringproject.repository.UserRepository;
 import com.shj.onlinememospringproject.response.exception.Exception400;
 import com.shj.onlinememospringproject.service.AuthService;
@@ -15,12 +21,21 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
     private final UserService userService;
     private final UserRepository userRepository;
+    private final MemoBatchRepository memoBatchRepository;
+    private final FriendshipBatchRepository friendshipBatchRepository;
+    private final UserMemoBatchRepository userMemoBatchRepository;
     private final TokenProvider tokenProvider;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManagerBuilder managerBuilder;
@@ -58,6 +73,35 @@ public class AuthServiceImpl implements AuthService {
 
         User user = userService.findUser(Long.valueOf(authentication.getName()));
         user.updatePassword(toEncodePassword(updateRequestDto.getNewPassword()));
+    }
+
+    @Transactional
+    @Override
+    public void withdrawal() {
+        User user = userService.findLoginUser();
+
+        List<UserMemo> userMemoList = user.getUserMemoList();
+        List<Memo> memoList = userMemoList.stream()  // 사용자와 메모와의 관계를 삭제하기 이전에, 먼저 해당 사용자가 보유한 메모들부터 미리 리스트에 담아둠.
+                .map(UserMemo::getMemo)
+                .collect(Collectors.toList());
+
+        // 부모 테이블인 User보다 먼저, 자식 테이블인 UserAndMemo에서 사용자와 메모와의 관계부터 삭제.
+        userMemoBatchRepository.batchDelete(userMemoList);  // UserMemos - Batch Delete
+
+        // 사용자와 메모와의 관계 삭제이후, 담아두었던 메모의 남은 사용자가 0명이라면, 해당 메모도 삭제.
+        List<Memo> deleteMemoList = memoList.stream()
+                .filter(memo -> memo.getUserMemoList().isEmpty())
+                .collect(Collectors.toList());
+        memoBatchRepository.batchDelete(deleteMemoList);  // Memos - Batch Delete
+
+        // 부모 테이블인 User보다 먼저, 자식 테이블인 Friendship에서 요청사용자와 친구와의 관계부터 삭제.
+        Set<Friendship> deleteFriendshipSet = new HashSet<>(user.getReceivefriendshipList());  // 중복제거
+        deleteFriendshipSet.addAll(user.getSendfriendshipList());
+        List<Friendship> deleteFriendshipList = new ArrayList<>(deleteFriendshipSet);
+        friendshipBatchRepository.batchDelete(deleteFriendshipList);  // Friendships - Batch Delete
+
+        // 최종적으로, 부모 테이블인 User를 삭제.
+        userRepository.delete(user);
     }
 
 

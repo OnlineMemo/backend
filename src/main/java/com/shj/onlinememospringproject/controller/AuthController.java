@@ -38,4 +38,11 @@ public class AuthController {
         authService.updatePassword(updateRequestDto);
         return ResponseData.toResponseEntity(ResponseCode.UPDATE_PASSWORD);
     }
+
+    @DeleteMapping("/users")
+    @Operation(summary = "회원탈퇴 [JWT O]")
+    public ResponseEntity<ResponseData> withdrawal() {
+        authService.withdrawal();
+        return ResponseData.toResponseEntity(ResponseCode.DELETE_USER);
+    }
 }
