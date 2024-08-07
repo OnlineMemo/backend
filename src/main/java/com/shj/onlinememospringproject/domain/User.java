@@ -48,4 +48,9 @@ public class User implements Serializable {
         this.nickname = nickname;
         this.authority = Authority.ROLE_USER;
     }
+
+
+    public void updatePassword(String password) {
+        this.password = password;
+    }
 }

@@ -26,6 +26,15 @@ public class AuthDto {
         private String password;
     }
 
+    @Getter
+    @NoArgsConstructor
+    public static class UpdateRequest {
+
+        private String email;
+        private String password;
+        private String newPassword;
+    }
+
 
     // ======== < Response DTO > ======== //
 
