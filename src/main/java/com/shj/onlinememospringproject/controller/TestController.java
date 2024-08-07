@@ -22,7 +22,7 @@ public class TestController {
     }
 
     @GetMapping("/login")
-    @Operation(summary = "AWS - GET login 에러 제거 [JWT X]")
+    @Operation(summary = "AWS - GET login 에러 방지 [JWT X]")
     public ResponseEntity<ResponseData> getLogin() {
         return ResponseData.toResponseEntity(ResponseCode.GET_LOGIN);
     }
