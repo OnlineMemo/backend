@@ -41,11 +41,11 @@ public class User implements Serializable {
 
 
     @Builder(builderClassName = "UserSaveBuilder", builderMethodName = "UserSaveBuilder")
-    public User(String email, String password, String nickname, Authority authority) {
+    public User(String email, String password, String nickname) {
         // 이 빌더는 사용자 회원가입때만 사용할 용도
         this.email = email;
         this.password = password;
         this.nickname = nickname;
-        this.authority = authority;
+        this.authority = Authority.ROLE_USER;
     }
 }

@@ -13,7 +13,7 @@ public class Exception400 extends CustomException {
 
     public static class EmailDuplicate extends Exception400 {
         public EmailDuplicate(String message) {
-            super(ResponseCode.DUPLICATE_EMAIL, "duplicate " + message);
+            super(ResponseCode.DUPLICATE_EMAIL, "duplicate : " + message);
         }
     }
 

@@ -1,0 +1,48 @@
+[ERROR] 2024-08-07 11:18:13.059 / 500 ERROR - 서버 내부 에러
+==> error_message / No static resource api/disease/potential-targets.
+---------------------------------------------------------------------------
+
+[ERROR] 2024-08-07 11:18:13.059 / 500 ERROR - 서버 내부 에러
+==> error_message / No static resource api/disease/sub-diseases.
+---------------------------------------------------------------------------
+
+[ERROR] 2024-08-07 11:18:13.059 / 500 ERROR - 서버 내부 에러
+==> error_message / No static resource api/herb/predicted-targets.
+---------------------------------------------------------------------------
+
+[ERROR] 2024-08-07 11:18:13.059 / 500 ERROR - 서버 내부 에러
+==> error_message / No static resource api/disease/related-genes.
+---------------------------------------------------------------------------
+
+[ERROR] 2024-08-07 11:18:13.059 / 500 ERROR - 서버 내부 에러
+==> error_message / No static resource api/herb/compounds.
+---------------------------------------------------------------------------
+
+[ERROR] 2024-08-07 11:18:13.059 / 500 ERROR - 서버 내부 에러
+==> error_message / No static resource api/disease/related-targets.
+---------------------------------------------------------------------------
+
+[ERROR] 2024-08-07 11:19:05.982 / 500 ERROR - 서버 내부 에러
+==> error_message / No static resource api/disease/related-genes.
+---------------------------------------------------------------------------
+
+[ERROR] 2024-08-07 11:19:05.982 / 500 ERROR - 서버 내부 에러
+==> error_message / No static resource api/disease/sub-diseases.
+---------------------------------------------------------------------------
+
+[ERROR] 2024-08-07 11:19:05.982 / 500 ERROR - 서버 내부 에러
+==> error_message / No static resource api/disease/related-targets.
+---------------------------------------------------------------------------
+
+[ERROR] 2024-08-07 11:19:05.996 / 500 ERROR - 서버 내부 에러
+==> error_message / No static resource api/herb/predicted-targets.
+---------------------------------------------------------------------------
+
+[ERROR] 2024-08-07 11:19:05.997 / 500 ERROR - 서버 내부 에러
+==> error_message / No static resource api/disease/potential-targets.
+---------------------------------------------------------------------------
+
+[ERROR] 2024-08-07 11:19:05.998 / 500 ERROR - 서버 내부 에러
+==> error_message / No static resource api/herb/compounds.
+---------------------------------------------------------------------------
+

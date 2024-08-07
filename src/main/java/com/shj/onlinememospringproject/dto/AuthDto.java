@@ -9,6 +9,23 @@ public class AuthDto {
 
     // ======== < Request DTO > ======== //
 
+    @Getter
+    @NoArgsConstructor
+    public static class SignupRequest {
+
+        private String email;
+        private String password;
+        private String nickname;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    public static class LoginRequest {
+
+        private String email;
+        private String password;
+    }
+
 
     // ======== < Response DTO > ======== //
 
