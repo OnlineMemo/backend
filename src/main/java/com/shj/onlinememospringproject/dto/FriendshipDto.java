@@ -1,6 +1,5 @@
 package com.shj.onlinememospringproject.dto;
 
-import com.shj.onlinememospringproject.domain.enums.FriendshipState;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -20,7 +19,7 @@ public class FriendshipDto {
     public static class UpdateRequest {
 
         private Long userId;  // 친구관계를 수락/거절할 해당 상대방의 userId
-        private FriendshipState friendshipState;
+        private Integer isAccept;  // 수락:1 or 거절:0
     }
 
     @Getter

@@ -19,14 +19,14 @@ public class UserController {
     private final UserService userService;
 
 
-    @GetMapping("/")
+    @GetMapping
     @Operation(summary = "회원정보 조회 [JWT O]")
     public ResponseEntity<ResponseData<UserDto.Response>> findUserProfile() {
         UserDto.Response userResponseDto = userService.findUserProfile();
         return ResponseData.toResponseEntity(ResponseCode.READ_USER, userResponseDto);
     }
 
-    @PutMapping("/")
+    @PutMapping
     @Operation(summary = "회원정보 수정 [JWT O]")
     public ResponseEntity<ResponseData> update(@RequestBody UserDto.UpdateRequest updateRequestDto) {
         userService.updateUserProfile(updateRequestDto);

@@ -54,6 +54,7 @@ public enum ResponseCode {
     DELETE_FRIENDSHIP(StatusItem.NO_CONTENT, MessageItem.DELETE_FRIENDSHIP),
 
     // Friendship 관련 실패 응답
+    NOT_FOUND_FRIENDSHIP(StatusItem.NOT_FOUND, MessageItem.NOT_FOUND_FRIENDSHIP),
     BAD_REQUEST_FRIENDSHIP(StatusItem.BAD_REQUEST, MessageItem.BAD_REQUEST_FRIENDSHIP),
 
     // ===================== //

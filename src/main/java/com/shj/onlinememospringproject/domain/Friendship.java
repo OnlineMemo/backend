@@ -40,4 +40,9 @@ public class Friendship implements Serializable {
         this.senderUser = senderUser;
         this.friendshipState = FriendshipState.SEND;
     }
+
+
+    public void updateFriendshipState(FriendshipState friendshipState) {
+        this.friendshipState = friendshipState;
+    }
 }

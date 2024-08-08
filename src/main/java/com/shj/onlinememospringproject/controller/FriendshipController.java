@@ -22,28 +22,28 @@ public class FriendshipController {
     private final FriendshipService friendshipService;
 
 
-    @GetMapping("/")
+    @GetMapping
     @Operation(summary = "친구/수신 목록 조회 [JWT O]", description = "URI : /friends?isFriend={0 or 1}")
     public ResponseEntity<ResponseData<List<UserDto.Response>>> findFriends(@RequestParam(value = "isFriend", required = true) Integer isFriend) {
         List<UserDto.Response> userResponseDtoList = friendshipService.findFriends(isFriend);
         return ResponseData.toResponseEntity(ResponseCode.READ_FRIENDLIST, userResponseDtoList);
     }
 
-    @PostMapping("/")
+    @PostMapping
     @Operation(summary = "친구요청 생성 [JWT O]")
     public ResponseEntity<ResponseData> sendFriendship(@RequestBody FriendshipDto.SendRequest sendRequestDto) {
         friendshipService.sendFriendship(sendRequestDto);
         return ResponseData.toResponseEntity(ResponseCode.CREATED_SENDFRIENDSHIP);
     }
 
-    @PutMapping("/")
+    @PutMapping
     @Operation(summary = "친구요청 수락/거절 [JWT O]")
     public ResponseEntity<ResponseData> updateFriendship(@RequestBody FriendshipDto.UpdateRequest updateRequestDto) {
         friendshipService.updateFriendship(updateRequestDto);
         return ResponseData.toResponseEntity(ResponseCode.UPDATE_FRIENDSHIP);
     }
 
-    @DeleteMapping("/")
+    @DeleteMapping
     @Operation(summary = "친구 삭제 [JWT O]")
     public ResponseEntity<ResponseData> deleteFriendship(@RequestBody FriendshipDto.DeleteRequest deleteRequestDto) {
         friendshipService.deleteFriendship(deleteRequestDto);
