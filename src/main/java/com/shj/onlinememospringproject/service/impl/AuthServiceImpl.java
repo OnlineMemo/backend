@@ -96,7 +96,8 @@ public class AuthServiceImpl implements AuthService {
         memoBatchRepository.batchDelete(deleteMemoList);  // Memos - Batch Delete
 
         // 부모 테이블인 User보다 먼저, 자식 테이블인 Friendship에서 요청사용자와 친구와의 관계부터 삭제.
-        Set<Friendship> deleteFriendshipSet = new HashSet<>(user.getReceivefriendshipList());  // 중복제거
+        Set<Friendship> deleteFriendshipSet = new HashSet<>();  // 중복제거를 위해 Set 사용.
+        deleteFriendshipSet.addAll(user.getReceivefriendshipList());
         deleteFriendshipSet.addAll(user.getSendfriendshipList());
         List<Friendship> deleteFriendshipList = new ArrayList<>(deleteFriendshipSet);
         friendshipBatchRepository.batchDelete(deleteFriendshipList);  // Friendships - Batch Delete
