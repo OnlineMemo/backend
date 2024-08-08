@@ -50,14 +50,14 @@ public class FriendshipServiceImpl implements FriendshipService {
         if(!(isFriend == 0 || isFriend == 1)) throw new Exception400.FriendshipBadRequest("잘못된 쿼리파라미터로 API를 요청하였습니다.");
         final FriendshipState friendshipState = (isFriend == 1) ? FriendshipState.FRIEND : FriendshipState.SEND;
 
+        // 강제 Eager 조회 (N+1 문제 해결)
         User user = userService.findLoginUser();  // 현재 로그인 사용자 조회
-        List<Friendship> friendshipList = friendshipRepository.findAllByUserAndFriendshipState(user, friendshipState);
-        // 위 대신 간단히 밑의 로직을 사용할수도 있으나, N+1 문제 해결을 위해 직접 DB에서 Eager 조회를 하도록함.
+        List<Friendship> friendshipList = friendshipRepository.findAllByUserAndFriendshipStateWithEager(user, friendshipState);
         // List<Friendship> friendshipList = user.getReceivefriendshipList();
 
         return friendshipList.stream()
                 .filter(friendship -> friendship.getFriendshipState().equals(friendshipState))  // 친구관계상태 필터링
-                .map(friendship -> new UserDto.Response(friendship.getSenderUser()))  // DTO 변환때문에 N+1 접근을 하게됨 (N+1 해결완료)
+                .map(friendship -> new UserDto.Response(friendship.getSenderUser()))  // Friendship.senderUser (DTO 변환으로, N+1 문제 발생)
                 .sorted(Comparator.comparing(UserDto.Response::getNickname)  // 정렬 우선순위 1: 이름 오름차순
                         .thenComparing(UserDto.Response::getUserId))  // 정렬 우선순위 2: id 오름차순
                 .collect(Collectors.toList());

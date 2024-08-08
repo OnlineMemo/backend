@@ -11,8 +11,10 @@ import com.shj.onlinememospringproject.repository.MemoBatchRepository;
 import com.shj.onlinememospringproject.repository.UserMemoBatchRepository;
 import com.shj.onlinememospringproject.repository.UserRepository;
 import com.shj.onlinememospringproject.response.exception.Exception400;
+import com.shj.onlinememospringproject.response.exception.Exception404;
 import com.shj.onlinememospringproject.service.AuthService;
 import com.shj.onlinememospringproject.service.UserService;
+import com.shj.onlinememospringproject.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -78,11 +80,14 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     @Override
     public void withdrawal() {
-        User user = userService.findLoginUser();
+        // 강제 Eager 조회 (N+1 문제 해결)
+        Long loginUserId = SecurityUtil.getCurrentMemberId();
+        User user = userRepository.findByIdWithEager(SecurityUtil.getCurrentMemberId()).orElseThrow(
+                () -> new Exception404.NoSuchUser(String.format("userId = %d", loginUserId)));
         List<UserMemo> userMemoList = user.getUserMemoList();
 
         // 사용자와 메모와의 관계를 삭제하기 이전에, 먼저 해당 사용자가 보유한 메모들부터 미리 리스트에 담아둠.
-        List<Memo> memoList = userMemoList.stream()
+        List<Memo> memoList = userMemoList.stream()  // User.usermemoList (N+1 쿼리 발생)
                 .map(UserMemo::getMemo)
                 .collect(Collectors.toList());
 
@@ -91,7 +96,7 @@ public class AuthServiceImpl implements AuthService {
 
         // 사용자와 메모와의 관계 삭제이후, 담아두었던 메모의 남은 사용자가 0명이라면, 해당 메모도 삭제.
         List<Memo> deleteMemoList = memoList.stream()
-                .filter(memo -> memo.getUserMemoList().isEmpty())
+                .filter(memo -> memo.getUserMemoList().isEmpty())  // User.usermemoList.memo (N+1 쿼리 발생)
                 .collect(Collectors.toList());
         memoBatchRepository.batchDelete(deleteMemoList);  // Memos - Batch Delete
 
