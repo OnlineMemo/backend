@@ -125,6 +125,6 @@ public class FriendshipServiceImpl implements FriendshipService {
         Friendship friendship1 = findFriendshipWithId(loginUserId, deleteUserId, FriendshipState.FRIEND);  // 삭제 가능한 친구상태가 아님.
         Friendship friendship2 = findFriendshipWithId(deleteUserId, loginUserId, FriendshipState.FRIEND);  // 삭제 가능한 친구상태가 아님.
 
-        friendshipBatchRepository.batchDelete(Arrays.asList(friendship1, friendship2));
+        friendshipBatchRepository.batchDelete(Arrays.asList(friendship1, friendship2));  // Friendships - Batch Delete
     }
 }

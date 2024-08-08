@@ -33,7 +33,7 @@ public class MemoServiceImpl implements MemoService {
         // 강제 Eager 조회 (N+1 문제 해결)
         Long loginUserId = SecurityUtil.getCurrentMemberId();
         UserMemo userMemo = userMemoRepository.findByUser_IdAndMemo_IdWithEager(loginUserId, memoId).orElseThrow(
-                () -> new Exception404.NoSuchUserMemo(String.format("userId = %d, memoId = %d", loginUserId, memoId)));
+                () -> new Exception404.NoSuchUserMemo(String.format("userId = %d, memoId = %d", loginUserId, memoId)));  // 로그인사용자id와 메모의 사용자id 불일치 에러
 
         Memo memo = userMemo.getMemo();
         MemoDto.Response memoResponseDto = new MemoDto.Response(memo);  // Usermemo.memo (DTO 변환으로, N+1 쿼리 발생)

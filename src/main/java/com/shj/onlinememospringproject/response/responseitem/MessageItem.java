@@ -23,6 +23,7 @@ public class MessageItem {
     // < UserMemo >
     public static final String NOT_FOUND_USERMEMO = "ERROR - 사용자와 메모 관계를 찾을 수 없습니다.";
     public static final String BAD_REQUEST_USERMEMO = "ERROR - 잘못된 사용자메모관계 요청 에러";
+    public static final String DUPLICATE_USERANDMEMO = "ERROR - 사용자와 메모 관계 중복 에러";
 
     // < Friendship >
     public static final String CREATED_SENDFRIENDSHIP = "SUCCESS - 친구요청 보내기 성공";

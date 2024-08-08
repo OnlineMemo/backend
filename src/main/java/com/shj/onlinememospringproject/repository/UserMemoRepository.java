@@ -18,4 +18,6 @@ public interface UserMemoRepository extends JpaRepository<UserMemo, Long> {
     // Eager 조회 : 'UserMemo + UserMemo.memo' (어차피 하위의 memo는 반드시 존재하므로, JOIN 사용.)
     @Query("SELECT um FROM UserMemo um JOIN FETCH um.memo WHERE um.user.id = :userId AND um.memo.id = :memoId")
     Optional<UserMemo> findByUser_IdAndMemo_IdWithEager(@Param("userId") Long userId, @Param("memoId") Long memoId);
+
+    boolean existsByUser_IdAndMemo_Id(Long userId, Long memoId);
 }

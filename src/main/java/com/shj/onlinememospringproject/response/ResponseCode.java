@@ -43,6 +43,7 @@ public enum ResponseCode {
     // UserAndMemo 관련 실패 응답
     NOT_FOUND_USERMEMO(StatusItem.NOT_FOUND, MessageItem.NOT_FOUND_USERMEMO),
     BAD_REQUEST_USERMEMO(StatusItem.BAD_REQUEST, MessageItem.BAD_REQUEST_USERMEMO),
+    DUPLICATE_USERANDMEMO(StatusItem.BAD_REQUEST, MessageItem.DUPLICATE_USERANDMEMO),
 
     // ===================== //
 

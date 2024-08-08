@@ -17,6 +17,12 @@ public class Exception400 extends CustomException {
         }
     }
 
+    public static class UserMemoDuplicate extends Exception400 {
+        public UserMemoDuplicate(String message) {
+            super(ResponseCode.DUPLICATE_USERANDMEMO, "duplicate : " + message);
+        }
+    }
+
     public static class UserBadRequest extends Exception400 {
         public UserBadRequest(String message) {
             super(ResponseCode.BAD_REQUEST_USER, message);
