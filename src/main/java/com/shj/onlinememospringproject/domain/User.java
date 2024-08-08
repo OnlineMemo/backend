@@ -56,4 +56,8 @@ public class User implements Serializable {
     public void updatePassword(String password) {
         this.password = password;
     }
+
+    public void updateNickName(String nickname) {
+        this.nickname = nickname;
+    }
 }

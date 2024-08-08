@@ -1,6 +1,7 @@
 package com.shj.onlinememospringproject.service.impl;
 
 import com.shj.onlinememospringproject.domain.User;
+import com.shj.onlinememospringproject.dto.UserDto;
 import com.shj.onlinememospringproject.repository.UserRepository;
 import com.shj.onlinememospringproject.response.exception.Exception404;
 import com.shj.onlinememospringproject.service.UserService;
@@ -29,5 +30,20 @@ public class UserServiceImpl implements UserService {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
         User loginUser = findUser(loginUserId);
         return loginUser;
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public UserDto.Response findUserProfile() {
+        User user = findLoginUser();
+        UserDto.Response userResponseDto = new UserDto.Response(user);
+        return userResponseDto;
+    }
+
+    @Transactional
+    @Override
+    public void updateUserProfile(UserDto.UpdateRequest updateRequestDto) {
+        User user = findLoginUser();
+        user.updateNickName(updateRequestDto.getNickname());
     }
 }

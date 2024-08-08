@@ -79,9 +79,10 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void withdrawal() {
         User user = userService.findLoginUser();
-
         List<UserMemo> userMemoList = user.getUserMemoList();
-        List<Memo> memoList = userMemoList.stream()  // 사용자와 메모와의 관계를 삭제하기 이전에, 먼저 해당 사용자가 보유한 메모들부터 미리 리스트에 담아둠.
+
+        // 사용자와 메모와의 관계를 삭제하기 이전에, 먼저 해당 사용자가 보유한 메모들부터 미리 리스트에 담아둠.
+        List<Memo> memoList = userMemoList.stream()
                 .map(UserMemo::getMemo)
                 .collect(Collectors.toList());
 
