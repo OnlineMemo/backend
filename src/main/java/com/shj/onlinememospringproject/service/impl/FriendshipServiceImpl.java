@@ -5,6 +5,7 @@ import com.shj.onlinememospringproject.domain.User;
 import com.shj.onlinememospringproject.domain.enums.FriendshipState;
 import com.shj.onlinememospringproject.dto.FriendshipDto;
 import com.shj.onlinememospringproject.dto.UserDto;
+import com.shj.onlinememospringproject.repository.FriendshipBatchRepository;
 import com.shj.onlinememospringproject.repository.FriendshipRepository;
 import com.shj.onlinememospringproject.response.exception.Exception400;
 import com.shj.onlinememospringproject.service.FriendshipService;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,6 +25,7 @@ public class FriendshipServiceImpl implements FriendshipService {
 
     private final UserService userService;
     private final FriendshipRepository friendshipRepository;
+    private final FriendshipBatchRepository friendshipBatchRepository;
 
 
     @Transactional(readOnly = true)
@@ -77,6 +80,15 @@ public class FriendshipServiceImpl implements FriendshipService {
     @Transactional
     @Override
     public void deleteFriendship(FriendshipDto.DeleteRequest deleteRequestDto) {
+        User loginUser = userService.findLoginUser();  // 현재 로그인 사용자
+        User deleteUser = userService.findUser(deleteRequestDto.getUserId());  // 친구 삭제할 사용자
+        FriendshipState friendshipState = FriendshipState.FRIEND;
 
+        Friendship friendship1 = friendshipRepository.findByUserAndSenderUserFriendshipState(loginUser, deleteUser, friendshipState).orElseThrow(
+                () -> new Exception400.FriendshipBadRequest("삭제 가능한 친구상태가 아닙니다."));
+        Friendship friendship2 = friendshipRepository.findByUserAndSenderUserFriendshipState(deleteUser, loginUser, friendshipState).orElseThrow(
+                () -> new Exception400.FriendshipBadRequest("삭제 가능한 친구상태가 아닙니다."));
+
+        friendshipBatchRepository.batchDelete(Arrays.asList(friendship1, friendship2));
     }
 }
