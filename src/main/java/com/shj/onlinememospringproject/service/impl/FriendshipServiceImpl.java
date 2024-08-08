@@ -3,8 +3,10 @@ package com.shj.onlinememospringproject.service.impl;
 import com.shj.onlinememospringproject.domain.Friendship;
 import com.shj.onlinememospringproject.domain.User;
 import com.shj.onlinememospringproject.domain.enums.FriendshipState;
+import com.shj.onlinememospringproject.dto.FriendshipDto;
 import com.shj.onlinememospringproject.dto.UserDto;
 import com.shj.onlinememospringproject.repository.FriendshipRepository;
+import com.shj.onlinememospringproject.response.exception.Exception400;
 import com.shj.onlinememospringproject.service.FriendshipService;
 import com.shj.onlinememospringproject.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +31,7 @@ public class FriendshipServiceImpl implements FriendshipService {
         // 친구목록 조회 or 친구요청 수신목록 조회
         final FriendshipState friendshipState = (isFriend == 1) ? FriendshipState.FRIEND : FriendshipState.SEND;
 
-        User user = userService.findLoginUser();  // 현재 로그인 사용자
+        User user = userService.findLoginUser();  // 현재 로그인 사용자 조회
         List<Friendship> friendshipList = friendshipRepository.findAllByUserAndFriendshipState(user, friendshipState);
         // 위 대신 간단히 밑의 로직을 사용할수도 있으나, N+1 문제 해결을 위해 직접 DB에서 Eager 조회를 하도록함.
         // List<Friendship> friendshipList = user.getReceivefriendshipList();
@@ -40,5 +42,29 @@ public class FriendshipServiceImpl implements FriendshipService {
                 .sorted(Comparator.comparing(UserDto.Response::getNickname)  // 정렬 우선순위 1: 이름 오름차순
                         .thenComparing(UserDto.Response::getUserId))  // 정렬 우선순위 2: id 오름차순
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    @Override
+    public void sendFriendship(FriendshipDto.SendRequest sendRequestDto) {
+        User loginUser = userService.findLoginUser();  // 현재 로그인 사용자 조회
+        User user = userService.findUserByEmail(sendRequestDto.getEmail());  // 내가 친구요청을 보낼 사용자 조회
+
+        if(loginUser.getId() == user.getId()) {  // 자신이 자신에게 친구요청한 경우라면,
+            throw new Exception400.FriendshipBadRequest("자기 자신에게 친구요청은 할 수 없습니다.");
+        }
+
+        if(friendshipRepository.existsByUserAndSenderUser(user, loginUser)) {  // 이미 DB에 존재하는 친구요청일 경우라면,
+            throw new Exception400.FriendshipBadRequest("이미 친구요청을 보냈거나 친구인 상태입니다.");
+        }
+        else if(friendshipRepository.existsByUserAndSenderUser(loginUser, user)) {  // 또는 반대로 이미 친구요청을 받은상태인데 친구요청한 경우라면,
+            throw new Exception400.FriendshipBadRequest("상대방이 먼저 친구요청을 보냈습니다.");
+        }
+
+        Friendship friendship = Friendship.FriendshipSaveBuilder()
+                .user(user)
+                .senderUser(loginUser)
+                .build();
+        friendshipRepository.save(friendship);
     }
 }

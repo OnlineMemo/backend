@@ -37,10 +37,10 @@ public class User implements Serializable {
     private List<UserMemo> userMemoList = new ArrayList<>();
 
     @OneToMany(mappedBy = "user")  // User-Friendship 양방향매핑 1 (읽기 전용 필드)
-    private List<Friendship> receivefriendshipList = new ArrayList<>();  // 나에게 친구요청을 보내온(받은) 관계리스트 gerSenderUser 활용할것.
+    private List<Friendship> receiveFriendshipList = new ArrayList<>();  // 나에게 친구요청을 보내온(받은) 관계리스트 gerSenderUser 활용할것.
 
     @OneToMany(mappedBy = "senderUser")  // User-Friendship 양방향매핑 2 (읽기 전용 필드)
-    private List<Friendship> sendfriendshipList = new ArrayList<>();  // 내가 친구요청을 보낸(신청한) 관계리스트 gerUser 활용할것.
+    private List<Friendship> sendFriendshipList = new ArrayList<>();  // 내가 친구요청을 보낸(신청한) 관계리스트 gerUser 활용할것.
 
 
     @Builder(builderClassName = "UserSaveBuilder", builderMethodName = "UserSaveBuilder")

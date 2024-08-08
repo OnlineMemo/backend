@@ -1,5 +1,6 @@
 package com.shj.onlinememospringproject.controller;
 
+import com.shj.onlinememospringproject.dto.FriendshipDto;
 import com.shj.onlinememospringproject.dto.UserDto;
 import com.shj.onlinememospringproject.response.ResponseCode;
 import com.shj.onlinememospringproject.response.ResponseData;
@@ -8,10 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -29,5 +27,12 @@ public class FriendshipController {
     public ResponseEntity<ResponseData<List<UserDto.Response>>> findFriends(@RequestParam(value = "isFriend", required = true) Integer isFriend) {
         List<UserDto.Response> userResponseDtoList = friendshipService.findFriends(isFriend);
         return ResponseData.toResponseEntity(ResponseCode.READ_FRIENDLIST, userResponseDtoList);
+    }
+
+    @PostMapping("/")
+    @Operation(summary = "친구요청 생성 [JWT O]")
+    public ResponseEntity<ResponseData> sendFriendship(@RequestBody FriendshipDto.SendRequest sendRequestDto) {
+        friendshipService.sendFriendship(sendRequestDto);
+        return ResponseData.toResponseEntity(ResponseCode.CREATED_SENDFRIENDSHIP);
     }
 }

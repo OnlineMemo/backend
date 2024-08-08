@@ -26,6 +26,13 @@ public class UserServiceImpl implements UserService {
 
     @Transactional(readOnly = true)
     @Override
+    public User findUserByEmail(String email) {
+        return userRepository.findByEmail(email).orElseThrow(
+                () -> new Exception404.NoSuchUser(String.format("email = %s", email)));
+    }
+
+    @Transactional(readOnly = true)
+    @Override
     public User findLoginUser() {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
         User loginUser = findUser(loginUserId);

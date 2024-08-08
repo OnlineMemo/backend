@@ -41,7 +41,6 @@ public enum ResponseCode {
     // ===================== //
 
     // UserAndMemo 관련 실패 응답
-    DUPLICATE_USERMEMO(StatusItem.BAD_REQUEST, MessageItem.DUPLICATE_USERMEMO),
     NOT_FOUND_USERMEMO(StatusItem.NOT_FOUND, MessageItem.NOT_FOUND_USERMEMO),
     BAD_REQUEST_USERMEMO(StatusItem.BAD_REQUEST, MessageItem.BAD_REQUEST_USERMEMO),
 
@@ -55,8 +54,6 @@ public enum ResponseCode {
     DELETE_FRIENDSHIP(StatusItem.NO_CONTENT, MessageItem.DELETE_FRIENDSHIP),
 
     // Friendship 관련 실패 응답
-    NOT_FOUND_FRIENDSHIP(StatusItem.NOT_FOUND, MessageItem.NOT_FOUND_FRIENDSHIP),
-    DUPLICATE_FRIENDSHIP(StatusItem.BAD_REQUEST, MessageItem.DUPLICATE_FRIENDSHIP),
     BAD_REQUEST_FRIENDSHIP(StatusItem.BAD_REQUEST, MessageItem.BAD_REQUEST_FRIENDSHIP),
 
     // ===================== //

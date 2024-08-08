@@ -21,7 +21,6 @@ public class MessageItem {
     public static final String BAD_REQUEST_MEMO = "ERROR - 잘못된 메모요청 에러";
 
     // < UserMemo >
-    public static final String DUPLICATE_USERMEMO = "ERROR - 사용자와 메모 관계 중복 에러";
     public static final String NOT_FOUND_USERMEMO = "ERROR - 사용자와 메모 관계를 찾을 수 없습니다.";
     public static final String BAD_REQUEST_USERMEMO = "ERROR - 잘못된 사용자메모관계 요청 에러";
 
@@ -32,7 +31,6 @@ public class MessageItem {
     public static final String UPDATE_FRIENDSHIP = "SUCCESS - 친구관계 수정 성공";
     public static final String DELETE_FRIENDSHIP = "SUCCESS - 친구관계 삭제 성공";
     public static final String NOT_FOUND_FRIENDSHIP = "ERROR - 친구관계를 찾을 수 없습니다.";
-    public static final String DUPLICATE_FRIENDSHIP = "ERROR - 친구요청 중복 에러";
     public static final String BAD_REQUEST_FRIENDSHIP = "ERROR - 잘못된 친구요청 에러";
 
     // < Auth >
