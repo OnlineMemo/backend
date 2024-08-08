@@ -8,4 +8,6 @@ import java.util.List;
 public interface FriendshipService {
     List<UserDto.Response> findFriends(Integer isFriend);
     void sendFriendship(FriendshipDto.SendRequest sendRequestDto);
+    void updateFriendship(FriendshipDto.UpdateRequest updateRequestDto);
+    void deleteFriendship(FriendshipDto.DeleteRequest deleteRequestDto);
 }

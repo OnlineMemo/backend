@@ -35,4 +35,18 @@ public class FriendshipController {
         friendshipService.sendFriendship(sendRequestDto);
         return ResponseData.toResponseEntity(ResponseCode.CREATED_SENDFRIENDSHIP);
     }
+
+    @PutMapping("/")
+    @Operation(summary = "친구요청 수락/거절 [JWT O]")
+    public ResponseEntity<ResponseData> updateFriendship(@RequestBody FriendshipDto.UpdateRequest updateRequestDto) {
+        friendshipService.updateFriendship(updateRequestDto);
+        return ResponseData.toResponseEntity(ResponseCode.UPDATE_FRIENDSHIP);
+    }
+
+    @DeleteMapping("/")
+    @Operation(summary = "친구 삭제 [JWT O]")
+    public ResponseEntity<ResponseData> deleteFriendship(@RequestBody FriendshipDto.DeleteRequest deleteRequestDto) {
+        friendshipService.deleteFriendship(deleteRequestDto);
+        return ResponseData.toResponseEntity(ResponseCode.DELETE_FRIENDSHIP);
+    }
 }

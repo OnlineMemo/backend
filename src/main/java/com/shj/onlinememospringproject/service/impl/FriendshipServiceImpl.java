@@ -67,4 +67,16 @@ public class FriendshipServiceImpl implements FriendshipService {
                 .build();
         friendshipRepository.save(friendship);
     }
+
+    @Transactional
+    @Override
+    public void updateFriendship(FriendshipDto.UpdateRequest updateRequestDto) {
+
+    }
+
+    @Transactional
+    @Override
+    public void deleteFriendship(FriendshipDto.DeleteRequest deleteRequestDto) {
+
+    }
 }
