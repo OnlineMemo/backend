@@ -21,7 +21,7 @@ public abstract class BaseEntity {
 
 
     @PreUpdate
-    public void onPreUpdate(){  // 단, isStar 필드는 생명주기에서 제외시켜서 업데이트 할것.
+    public void onPreUpdate(){  // isStar 필드는 수정시각에 영향을 주지않도록, @PreUpdate 생명주기에서 제외시켜 따로 JPQL로 직접 업데이트함.
         this.modifiedTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy. M. d. a h:mm").withLocale(Locale.forLanguageTag("ko")));
     }
 }

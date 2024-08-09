@@ -52,12 +52,12 @@ public class FriendshipServiceImpl implements FriendshipService {
 
         // 강제 Eager 조회 (N+1 문제 해결)
         User user = userService.findLoginUser();  // 현재 로그인 사용자 조회
-        List<Friendship> friendshipList = friendshipRepository.findAllByUserAndFriendshipStateWithEager(user, friendshipState);
+        List<Friendship> friendshipList = friendshipRepository.findAllByUserAndFriendshipStateToSenderUserWithEager(user, friendshipState);
         // List<Friendship> friendshipList = user.getReceivefriendshipList();
 
         return friendshipList.stream()
                 .filter(friendship -> friendship.getFriendshipState().equals(friendshipState))  // 친구관계상태 필터링
-                .map(friendship -> new UserDto.Response(friendship.getSenderUser()))  // Friendship.senderUser (DTO 변환으로, N+1 문제 발생)
+                .map(friendship -> new UserDto.Response(friendship.getSenderUser()))  // Friendship.senderUser (DTO 변환으로, N+1 쿼리 발생)
                 .sorted(Comparator.comparing(UserDto.Response::getNickname)  // 정렬 우선순위 1: 이름 오름차순
                         .thenComparing(UserDto.Response::getUserId))  // 정렬 우선순위 2: id 오름차순
                 .collect(Collectors.toList());

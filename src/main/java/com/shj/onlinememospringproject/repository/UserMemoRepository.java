@@ -12,12 +12,13 @@ public interface UserMemoRepository extends JpaRepository<UserMemo, Long> {
     // 다만, 가능한 한 LEFT JOIN 말고 성능이 더 우수한 JOIN 사용할 것.
     // - 네이밍이 남아서 JPA 쿼리메소드 규칙을 따라도 되는 경우 && 하위 엔티티의 존재가 없어도 정상 반환해주어야함 ==> EntityGraph (LEFT JOIN)
     // - 네이밍이 남아서 JPA 쿼리메소드 규칙을 따라도 되는 경우 && 하위 엔티티의 존재한다는것이 이미 확정일때 ==> Fetch Join (JOIN)
-    // - 네이밍이 부족해서 JPA 쿼리메소드 규칙을 따르지 못하는 경우 && 하위 엔티티의 존재가 없어도 정상 반환해주어야함 ==> Fetch Join (LEFT JOIN)
-    // - 네이밍이 부족해서 JPA 쿼리메소드 규칙을 따르지 못하는 경우 && 하위 엔티티의 존재한다는것이 이미 확정일때 ==> Fetch Join (JOIN)
+    // - 네이밍이 부족하거나 오버라이딩으로 겹쳐서 JPA 쿼리메소드 규칙을 따르지 못하는 경우 && 하위 엔티티의 존재가 없어도 정상 반환해주어야함 ==> Fetch Join (LEFT JOIN)
+    // - 네이밍이 부족하거나 오버라이딩으로 겹쳐서 JPA 쿼리메소드 규칙을 따르지 못하는 경우 && 하위 엔티티의 존재한다는것이 이미 확정일때 ==> Fetch Join (JOIN)
 
     // Eager 조회 : 'UserMemo + UserMemo.memo' (어차피 하위의 memo는 반드시 존재하므로, JOIN 사용.)
     @Query("SELECT um FROM UserMemo um JOIN FETCH um.memo WHERE um.user.id = :userId AND um.memo.id = :memoId")
-    Optional<UserMemo> findByUser_IdAndMemo_IdWithEager(@Param("userId") Long userId, @Param("memoId") Long memoId);
+    Optional<UserMemo> findByUser_IdAndMemo_IdToMemoWithEager(@Param("userId") Long userId, @Param("memoId") Long memoId);
 
     boolean existsByUser_IdAndMemo_Id(Long userId, Long memoId);
+    void deleteByUser_IdAndMemo_Id(Long userId, Long memoId);
 }

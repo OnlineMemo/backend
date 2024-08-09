@@ -7,4 +7,5 @@ public interface MemoService {
     Memo findMemo(Long memoId);
     MemoDto.Response findMemoInfo(Long memoId);
     void createMemo(MemoDto.CreateRequest createRequestDto);
+    void deleteMemo(Long memoId);
 }

@@ -82,7 +82,7 @@ public class AuthServiceImpl implements AuthService {
     public void withdrawal() {
         // 강제 Eager 조회 (N+1 문제 해결)
         Long loginUserId = SecurityUtil.getCurrentMemberId();
-        User user = userRepository.findByIdWithEager(SecurityUtil.getCurrentMemberId()).orElseThrow(
+        User user = userRepository.findByIdToMemoWithEager(SecurityUtil.getCurrentMemberId()).orElseThrow(
                 () -> new Exception404.NoSuchUser(String.format("userId = %d", loginUserId)));
         List<UserMemo> userMemoList = user.getUserMemoList();
 
@@ -114,7 +114,7 @@ public class AuthServiceImpl implements AuthService {
 
     // ========== 유틸성 메소드 ========== //
 
-    private String toEncodePassword(String password) {  // DI된 passwordEncoder 의존성 인스턴스 변수를 사용하므로, static으로는 선언할 수 없음.
+    private String toEncodePassword(String password) {  // DI된 passwordEncoder 의존성 인스턴스 변수를 사용하므로, static으로는 선언하지 않는것이 권장됨.
         return passwordEncoder.encode(password);
     }
 

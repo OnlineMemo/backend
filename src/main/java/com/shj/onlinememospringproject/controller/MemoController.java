@@ -41,4 +41,11 @@ public class MemoController {
         userMemoService.inviteUsersToMemo(memoId, inviteRequest.getUserIdList());
         return ResponseData.toResponseEntity(ResponseCode.CREATED_USERMEMO);
     }
+
+    @DeleteMapping("/{memoId}")
+    @Operation(summary = "메모 삭제/탈퇴 [JWT O]")
+    public ResponseEntity<ResponseData> deleteMemo(@PathVariable(value = "memoId") Long memoId) {
+        memoService.deleteMemo(memoId);
+        return ResponseData.toResponseEntity(ResponseCode.DELETE_MEMO);
+    }
 }
