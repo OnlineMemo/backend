@@ -62,7 +62,7 @@ public class MemoServiceImpl implements MemoService {
         userMemoRepository.save(newUserMemo);
 
         // 공동메모 생성시 (초대로직 추가실행)
-        if(!(createRequestDto.getUserIdList() == null || createRequestDto.getUserIdList().isEmpty())) {
+        if(!(createRequestDto.getUserIdList() == null || createRequestDto.getUserIdList().isEmpty())) {  // 개인메모가 아닐때
             userMemoService.inviteUsersToMemo(memoId, createRequestDto.getUserIdList());
         }
     }
