@@ -28,6 +28,26 @@ public class MemoController {
         return ResponseData.toResponseEntity(ResponseCode.READ_MEMO, memoResponseDto);
     }
 
+    @GetMapping
+    @Operation(summary = "메모 목록 조회/정렬/검색 [JWT O]",
+            description = """
+                    <strong>< RequestParam ></strong>
+                    - <strong>filter</strong> : required = false
+                    - <strong>search</strong> : required = false  \n
+                    <strong>< URI ></strong>
+                    - <strong>정렬 URI</strong> : /memos?filter={정렬종류 string}
+                    - <strong>검색 URI</strong> : /memos?search={검색종류 string}  \n
+                    <strong>< value ></strong>
+                    - <strong>정렬 종류(의미)</strong> : 빈값 or all-memo(전체 메모), private-memo(개인 메모), group-memo(공동 메모), star-memo(즐겨찾기 개인메모)
+                    - <strong>검색 종류(의미)</strong> : 빈값(전체 메모), 제목 또는 내용에 포함된 키워드
+                    """)
+    public ResponseEntity<ResponseData<?????>> findMemos(
+            @RequestParam(value = "filter", required = false) String filter,
+            @RequestParam(value = "search", required = false) String search) {
+        ????? = ?????.findMemos(filter, search);
+        return ResponseData.toResponseEntity(ResponseCode.READ_MEMOLIST, ?????);
+    }
+
     @PostMapping
     @Operation(summary = "개인/공동 메모 생성 [JWT O]", description = "- userIdList 필드 : null 허용 (개인메모인 경우에만)")
     public ResponseEntity<ResponseData> createMemo(@RequestBody MemoDto.CreateRequest createRequestDto) {
