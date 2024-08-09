@@ -47,4 +47,13 @@ public class Memo extends BaseEntity implements Serializable {
         this.isStar = 0;
         this.modifiedTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy. M. d. a h:mm").withLocale(Locale.forLanguageTag("ko")));
     }
+
+
+    public void updateTitle(String title) {
+        this.title = title;
+    }
+
+    public void updateContent(String content) {
+        this.content = content;
+    }
 }

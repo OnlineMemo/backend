@@ -37,7 +37,7 @@ public class FriendshipController {
     }
 
     @PutMapping
-    @Operation(summary = "친구요청 수락/거절 [JWT O]")
+    @Operation(summary = "친구요청 수락/거절 [JWT O]", description = "- isAccept 필드 : 0(거절) or 1(수락)")
     public ResponseEntity<ResponseData> updateFriendship(@RequestBody FriendshipDto.UpdateRequest updateRequestDto) {
         friendshipService.updateFriendship(updateRequestDto);
         return ResponseData.toResponseEntity(ResponseCode.UPDATE_FRIENDSHIP);

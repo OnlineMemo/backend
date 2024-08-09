@@ -29,16 +29,23 @@ public class MemoController {
     }
 
     @PostMapping
-    @Operation(summary = "개인/공동 메모 생성 [JWT O]")
-    public ResponseEntity<ResponseData> createMemo(MemoDto.CreateRequest createRequestDto) {
+    @Operation(summary = "개인/공동 메모 생성 [JWT O]", description = "- userIdList 필드 : null 허용 (개인메모인 경우에만)")
+    public ResponseEntity<ResponseData> createMemo(@RequestBody MemoDto.CreateRequest createRequestDto) {
         memoService.createMemo(createRequestDto);
         return ResponseData.toResponseEntity(ResponseCode.CREATED_MEMO);
     }
 
+    @PutMapping("/{memoId}")
+    @Operation(summary = "메모 제목/내용/즐겨찾기 수정 [JWT O]", description = "- isStar 필드 : null 허용 (제목/내용 수정인 경우에만)")
+    public ResponseEntity<ResponseData> updateMemo(@PathVariable(value = "memoId") Long memoId, @RequestBody MemoDto.UpdateRequest updateRequestDto) {
+        memoService.updateMemo(memoId, updateRequestDto);
+        return ResponseData.toResponseEntity(ResponseCode.UPDATE_MEMO);
+    }
+
     @PostMapping("/{memoId}")
     @Operation(summary = "메모 사용자 초대 [JWT O]")
-    public ResponseEntity<ResponseData> invteUsersToMemo(@PathVariable(value = "memoId") Long memoId, @RequestBody MemoDto.InviteRequest inviteRequest) {
-        userMemoService.inviteUsersToMemo(memoId, inviteRequest.getUserIdList());
+    public ResponseEntity<ResponseData> invteUsersToMemo(@PathVariable(value = "memoId") Long memoId, @RequestBody MemoDto.InviteRequest inviteRequestDto) {
+        userMemoService.inviteUsersToMemo(memoId, inviteRequestDto.getUserIdList());
         return ResponseData.toResponseEntity(ResponseCode.CREATED_USERMEMO);
     }
 

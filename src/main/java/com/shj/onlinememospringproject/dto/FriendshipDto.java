@@ -19,7 +19,7 @@ public class FriendshipDto {
     public static class UpdateRequest {
 
         private Long userId;  // 친구관계를 수락/거절할 해당 상대방의 userId
-        private Integer isAccept;  // 수락:1 or 거절:0
+        private Integer isAccept;  // 거절:0 or 수락:1
     }
 
     @Getter

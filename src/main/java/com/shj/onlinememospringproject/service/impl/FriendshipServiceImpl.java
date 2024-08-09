@@ -32,19 +32,6 @@ public class FriendshipServiceImpl implements FriendshipService {
 
     @Transactional(readOnly = true)
     @Override
-    public Friendship findFriendshipWithId(Long userId, Long senderUserId, FriendshipState friendshipState) {
-        if(friendshipState != null) {
-            return friendshipRepository.findByUser_IdAndSenderUser_IdAndFriendshipState(userId, senderUserId, friendshipState).orElseThrow(
-                    () -> new Exception404.NoSuchFriendship(String.format("userId = %d, senderUserId = %d, friendshipState = %s", userId, senderUserId, friendshipState.name())));
-        }
-        else {  // if(friendshipState == null)
-            return friendshipRepository.findByUser_IdAndSenderUser_Id(userId, senderUserId).orElseThrow(
-                    () -> new Exception404.NoSuchFriendship(String.format("userId = %d, senderUserId = %d", userId, senderUserId)));
-        }
-    }
-
-    @Transactional(readOnly = true)
-    @Override
     public List<UserDto.Response> findFriends(Integer isFriend) {
         // 친구목록 조회 or 친구요청 수신목록 조회
         if(!(isFriend == 0 || isFriend == 1)) throw new Exception400.FriendshipBadRequest("잘못된 쿼리파라미터로 API를 요청하였습니다.");
@@ -126,5 +113,21 @@ public class FriendshipServiceImpl implements FriendshipService {
         Friendship friendship2 = findFriendshipWithId(deleteUserId, loginUserId, FriendshipState.FRIEND);  // 삭제 가능한 친구상태가 아님.
 
         friendshipBatchRepository.batchDelete(Arrays.asList(friendship1, friendship2));  // Friendships - Batch Delete
+    }
+
+
+    // ========== 유틸성 메소드 ========== //
+
+    @Transactional(readOnly = true)
+    @Override
+    public Friendship findFriendshipWithId(Long userId, Long senderUserId, FriendshipState friendshipState) {
+        if(friendshipState != null) {
+            return friendshipRepository.findByUser_IdAndSenderUser_IdAndFriendshipState(userId, senderUserId, friendshipState).orElseThrow(
+                    () -> new Exception404.NoSuchFriendship(String.format("userId = %d, senderUserId = %d, friendshipState = %s", userId, senderUserId, friendshipState.name())));
+        }
+        else {  // if(friendshipState == null)
+            return friendshipRepository.findByUser_IdAndSenderUser_Id(userId, senderUserId).orElseThrow(
+                    () -> new Exception404.NoSuchFriendship(String.format("userId = %d, senderUserId = %d", userId, senderUserId)));
+        }
     }
 }

@@ -27,16 +27,11 @@ public class MemoServiceImpl implements MemoService {
 
     @Transactional(readOnly = true)
     @Override
-    public Memo findMemo(Long memoId) {
-        return memoRepository.findById(memoId).orElseThrow(
-                () -> new Exception404.NoSuchMemo(String.format("memoId = %d", memoId)));
-    }
-
-    @Transactional(readOnly = true)
-    @Override
     public MemoDto.Response findMemoInfo(Long memoId) {
-        // 강제 Eager 조회 (N+1 문제 해결)
         Long loginUserId = SecurityUtil.getCurrentMemberId();
+        userMemoService.checkUserInMemo(loginUserId, memoId);  // 사용자의 메모 접근권한 체킹.
+
+        // 강제 Eager 조회 (N+1 문제 해결)
         UserMemo userMemo = userMemoRepository.findByUser_IdAndMemo_IdToMemoWithEager(loginUserId, memoId).orElseThrow(
                 () -> new Exception404.NoSuchUserMemo(String.format("userId = %d, memoId = %d", loginUserId, memoId)));  // 로그인사용자id와 메모의 사용자id 불일치 에러
 
@@ -69,6 +64,23 @@ public class MemoServiceImpl implements MemoService {
 
     @Transactional
     @Override
+    public void updateMemo(Long memoId, MemoDto.UpdateRequest updateRequestDto) {
+        Long loginUserId = SecurityUtil.getCurrentMemberId();
+        userMemoService.checkUserInMemo(loginUserId, memoId);  // 사용자의 메모 접근권한 체킹.
+
+        if(updateRequestDto.getIsStar() != null) {  // 메모의 즐겨찾기 여부 수정인 경우
+            memoRepository.updateIsStar(memoId, updateRequestDto.getIsStar());
+            return;  // 바로 함수 종료.
+        }
+
+        // 즐겨찾기 수정이 아닌, 메모의 제목과 내용 수정인 경우
+        Memo memo = findMemo(memoId);
+        memo.updateTitle(updateRequestDto.getTitle());
+        memo.updateContent(updateRequestDto.getContent());
+    }
+
+    @Transactional
+    @Override
     public void deleteMemo(Long memoId) {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
         userMemoService.checkUserInMemo(loginUserId, memoId);  // 메모를 삭제/탈퇴할 권한이 있는지 체킹.
@@ -88,5 +100,15 @@ public class MemoServiceImpl implements MemoService {
             // 즐겨찾기 여부를 다시 0으로 초기화.
             memoRepository.updateIsStar(memoId, 0);  // isStar 필드는 수정시각에 영향을 주지않도록, @PreUpdate 생명주기에서 제외시켜 따로 JPQL로 직접 업데이트함.
         }
+    }
+
+
+    // ========== 유틸성 메소드 ========== //
+
+    @Transactional(readOnly = true)
+    @Override
+    public Memo findMemo(Long memoId) {
+        return memoRepository.findById(memoId).orElseThrow(
+                () -> new Exception404.NoSuchMemo(String.format("memoId = %d", memoId)));
     }
 }

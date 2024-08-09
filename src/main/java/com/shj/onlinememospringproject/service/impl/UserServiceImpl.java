@@ -19,6 +19,24 @@ public class UserServiceImpl implements UserService {
 
     @Transactional(readOnly = true)
     @Override
+    public UserDto.Response findUserProfile() {
+        User user = findLoginUser();
+        UserDto.Response userResponseDto = new UserDto.Response(user);
+        return userResponseDto;
+    }
+
+    @Transactional
+    @Override
+    public void updateUserProfile(UserDto.UpdateRequest updateRequestDto) {
+        User user = findLoginUser();
+        user.updateNickName(updateRequestDto.getNickname());
+    }
+
+
+    // ========== 유틸성 메소드 ========== //
+
+    @Transactional(readOnly = true)
+    @Override
     public User findUser(Long userId) {
         return userRepository.findById(userId).orElseThrow(
                 () -> new Exception404.NoSuchUser(String.format("userId = %d", userId)));
@@ -37,20 +55,5 @@ public class UserServiceImpl implements UserService {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
         User loginUser = findUser(loginUserId);
         return loginUser;
-    }
-
-    @Transactional(readOnly = true)
-    @Override
-    public UserDto.Response findUserProfile() {
-        User user = findLoginUser();
-        UserDto.Response userResponseDto = new UserDto.Response(user);
-        return userResponseDto;
-    }
-
-    @Transactional
-    @Override
-    public void updateUserProfile(UserDto.UpdateRequest updateRequestDto) {
-        User user = findLoginUser();
-        user.updateNickName(updateRequestDto.getNickname());
     }
 }
