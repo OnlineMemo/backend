@@ -6,4 +6,5 @@ import com.shj.onlinememospringproject.dto.MemoDto;
 public interface MemoService {
     Memo findMemo(Long memoId);
     MemoDto.Response findMemoInfo(Long memoId);
+    void createMemo(MemoDto.CreateRequest createRequestDto);
 }
