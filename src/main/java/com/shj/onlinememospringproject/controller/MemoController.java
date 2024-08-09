@@ -4,6 +4,7 @@ import com.shj.onlinememospringproject.dto.MemoDto;
 import com.shj.onlinememospringproject.response.ResponseCode;
 import com.shj.onlinememospringproject.response.ResponseData;
 import com.shj.onlinememospringproject.service.MemoService;
+import com.shj.onlinememospringproject.service.UserMemoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 public class MemoController {
 
     private final MemoService memoService;
+    private final UserMemoService userMemoService;
 
 
     @GetMapping("/{memoId}")
@@ -31,5 +33,12 @@ public class MemoController {
     public ResponseEntity<ResponseData> createMemo(MemoDto.CreateRequest createRequestDto) {
         memoService.createMemo(createRequestDto);
         return ResponseData.toResponseEntity(ResponseCode.CREATED_MEMO);
+    }
+
+    @PostMapping("/{memoId}")
+    @Operation(summary = "메모 사용자 초대 [JWT O]")
+    public ResponseEntity<ResponseData> invteUsersToMemo(@PathVariable(value = "memoId") Long memoId, @RequestBody MemoDto.InviteRequest inviteRequest) {
+        userMemoService.inviteUsersToMemo(memoId, inviteRequest.getUserIdList());
+        return ResponseData.toResponseEntity(ResponseCode.CREATED_USERMEMO);
     }
 }

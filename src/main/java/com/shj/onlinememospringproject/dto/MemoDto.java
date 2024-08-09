@@ -19,6 +19,13 @@ public class MemoDto {
         private List<Long> userIdList;  // 함께 공동메모를 생성할 사용자들 userId 리스트 (null일 경우, 개인메모)
     }
 
+    @Getter
+    @NoArgsConstructor
+    public static class InviteRequest {
+
+        private List<Long> userIdList;  // 추가적으로 초대할 사용자들 userId 리스트
+    }
+
 
     // ======== < Response DTO > ======== //
 
