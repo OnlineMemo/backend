@@ -58,9 +58,9 @@ public class SecurityConfig {
                     authorizeRequests
                             .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                            .requestMatchers("/**").permitAll()  // Test 용도
-                            // .requestMatchers("/", "/error", "/favicon.ico", "/v3/api-docs/**", "/swagger-ui/**", "/swagger/**", "/health").permitAll()
-                            // .requestMatchers("/reissue", "/login", "/auth", "/signup", "/password", "/information", "/notice", "/download", "/webjars/**").permitAll()
+                            // .requestMatchers("/**").permitAll()  // Test 용도
+                            .requestMatchers("/", "/error", "/favicon.ico", "/v3/api-docs/**", "/swagger-ui/**", "/swagger/**", "/health").permitAll()
+                            .requestMatchers("/login", "/signup", "/password", "/webjars/**").permitAll()
 
                             .anyRequest().hasAnyAuthority("ROLE_USER", "ROLE_ADMIN");  // permit 지정한 경로들 외에는 전부 USER나 ADMIN 권한이 있어야지 URI를 이용 가능함.
                 })
@@ -81,8 +81,8 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOriginPatterns(Arrays.asList("*"));  // Test 용도
-        // config.setAllowedOriginPatterns(Arrays.asList("http://localhost:3000", "https://www.onlinememo.kr"));
+        // config.setAllowedOriginPatterns(Arrays.asList("*"));  // Test 용도
+        config.setAllowedOriginPatterns(Arrays.asList("http://localhost:3000", "https://www.onlinememo.kr"));
         config.setAllowedHeaders(Arrays.asList("*"));
         config.setAllowedMethods(Arrays.asList("*"));
         config.setAllowCredentials(true);
