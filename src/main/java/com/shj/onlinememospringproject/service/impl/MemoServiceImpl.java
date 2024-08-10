@@ -6,6 +6,7 @@ import com.shj.onlinememospringproject.domain.mapping.UserMemo;
 import com.shj.onlinememospringproject.dto.MemoDto;
 import com.shj.onlinememospringproject.repository.MemoRepository;
 import com.shj.onlinememospringproject.repository.UserMemoRepository;
+import com.shj.onlinememospringproject.repository.UserRepository;
 import com.shj.onlinememospringproject.response.exception.Exception404;
 import com.shj.onlinememospringproject.service.MemoService;
 import com.shj.onlinememospringproject.service.UserMemoService;
@@ -15,12 +16,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class MemoServiceImpl implements MemoService {
 
     private final UserService userService;
     private final UserMemoService userMemoService;
+    private final UserRepository userRepository;
     private final MemoRepository memoRepository;
     private final UserMemoRepository userMemoRepository;
 
@@ -38,6 +43,20 @@ public class MemoServiceImpl implements MemoService {
         Memo memo = userMemo.getMemo();
         MemoDto.Response memoResponseDto = new MemoDto.Response(memo);  // Usermemo.memo (DTO 변환으로, N+1 쿼리 발생)
         return memoResponseDto;
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<MemoDto.MemoPageResponse> findMemos(String filter, String search) {
+        Long loginUserId = SecurityUtil.getCurrentMemberId();
+        User user = userRepository.findByIdToDeepUserWithEager(loginUserId).orElseThrow(
+                () -> new Exception404.NoSuchUser(String.format("userId = %d", loginUserId)));
+
+        List<MemoDto.MemoPageResponse> memoPageResponseDtoList = user.getUserMemoList().stream()
+                .map(UserMemo::getMemo)
+                .map(MemoDto.MemoPageResponse::new)
+                .collect(Collectors.toList());
+        return memoPageResponseDtoList;
     }
 
     @Transactional

@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Tag(name = "Memo")
 @RestController
 @RequiredArgsConstructor
@@ -41,11 +43,11 @@ public class MemoController {
                     - <strong>정렬 종류(의미)</strong> : 빈값 or all-memo(전체 메모), private-memo(개인 메모), group-memo(공동 메모), star-memo(즐겨찾기 개인메모)
                     - <strong>검색 종류(의미)</strong> : 빈값(전체 메모), 제목 또는 내용에 포함된 키워드
                     """)
-    public ResponseEntity<ResponseData<?????>> findMemos(
+    public ResponseEntity<ResponseData<List<MemoDto.MemoPageResponse>>> findMemos(
             @RequestParam(value = "filter", required = false) String filter,
             @RequestParam(value = "search", required = false) String search) {
-        ????? = ?????.findMemos(filter, search);
-        return ResponseData.toResponseEntity(ResponseCode.READ_MEMOLIST, ?????);
+        List<MemoDto.MemoPageResponse> memoPageResponseDtoList = memoService.findMemos(filter, search);
+        return ResponseData.toResponseEntity(ResponseCode.READ_MEMOLIST, memoPageResponseDtoList);
     }
 
     @PostMapping

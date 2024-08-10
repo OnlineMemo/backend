@@ -26,6 +26,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.userMemoList uml LEFT JOIN FETCH uml.memo WHERE u.id = :userId")
     Optional<User> findByIdToMemoWithEager(@Param("userId") Long userId);
 
+    // Eager 조회 : 'User + User.userMemoList.memo + User.userMemoList.memo.userMemoList + User.userMemoList.memo.userMemoList.user' (하위의 userRoomList가 비어있더라도 정상 반환되도록, LEFT JOIN 사용. 그 뒤에도 마찬가지임.)
+    // 비록 OneToMany 필드인 userMemoList를 Eager로 지정하여 카테시안곱의 중복데이터 위험이 있지만, 메소드 반환자료형이 List가 아닌 고유한 하나의 값이기에, DISTINCT 없이 작성해도 무방함.
+    @Query("SELECT u FROM User u " +
+            "LEFT JOIN FETCH u.userMemoList uml " +
+            "LEFT JOIN FETCH uml.memo m " +
+            "LEFT JOIN FETCH m.userMemoList umll " +
+            "LEFT JOIN FETCH umll.user " +
+            "WHERE u.id = :userId")
+    Optional<User> findByIdToDeepUserWithEager(@Param("userId") Long userId);
+
     Optional<User> findByEmail(String email);
     List<User> findByIdIn(List<Long> userIdList);
 }
