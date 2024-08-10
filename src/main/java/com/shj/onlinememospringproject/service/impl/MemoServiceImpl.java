@@ -7,6 +7,7 @@ import com.shj.onlinememospringproject.dto.MemoDto;
 import com.shj.onlinememospringproject.repository.MemoRepository;
 import com.shj.onlinememospringproject.repository.UserMemoRepository;
 import com.shj.onlinememospringproject.repository.UserRepository;
+import com.shj.onlinememospringproject.response.exception.Exception400;
 import com.shj.onlinememospringproject.response.exception.Exception404;
 import com.shj.onlinememospringproject.service.MemoService;
 import com.shj.onlinememospringproject.service.UserMemoService;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Service
@@ -49,16 +51,22 @@ public class MemoServiceImpl implements MemoService {
     @Transactional(readOnly = true)
     @Override
     public List<MemoDto.MemoPageResponse> findMemos(String filter, String search) {
+        if(filter != null && search != null) throw new Exception400.MemoBadRequest("잘못된 쿼리파라미터로 API를 요청하였습니다.");  // 정렬과 검색중 하나만 적용 가능.
+        Predicate<Memo> memoPredicate = (filter != null) ? filterMemos(filter) : searchMemos(search);
+
+        // 강제 Eager 조회 (N+1 문제 해결)
         Long loginUserId = SecurityUtil.getCurrentMemberId();
         User user = userRepository.findByIdToDeepUserWithEager(loginUserId).orElseThrow(
                 () -> new Exception404.NoSuchUser(String.format("userId = %d", loginUserId)));
 
         List<MemoDto.MemoPageResponse> memoPageResponseDtoList = user.getUserMemoList().stream()
                 .map(UserMemo::getMemo)
+                .filter(memoPredicate)  // User.userMemoList.memo (N+1 쿼리 발생)
                 .sorted(Comparator.comparing(Memo::getModifiedTime).reversed()  // 정렬 우선순위 1: 수정날짜 내림차순
                         .thenComparing(Memo::getId).reversed())  // 정렬 우선순위 2: id 내림차순
-                .map(MemoDto.MemoPageResponse::new)
+                .map(MemoDto.MemoPageResponse::new)  // User.userMemoList.memo.userMemoList & User.userMemoList.memo.userMemoList.user (내부에서 N+1 쿼리 발생)
                 .collect(Collectors.toList());
+
         return memoPageResponseDtoList;
     }
 
@@ -132,5 +140,21 @@ public class MemoServiceImpl implements MemoService {
     public Memo findMemo(Long memoId) {
         return memoRepository.findById(memoId).orElseThrow(
                 () -> new Exception404.NoSuchMemo(String.format("memoId = %d", memoId)));
+    }
+
+    private static Predicate<Memo> filterMemos(String filter) {
+        if(filter == null) return memo -> true;
+        Predicate<Memo> predicate = switch (filter) {
+            case "private-memo" -> memo -> memo.getUserMemoList().size() == 1;
+            case "group-memo" -> memo -> memo.getUserMemoList().size() > 1;
+            case "star-memo" -> memo -> memo.getIsStar() == 1;
+            default -> throw new Exception400.MemoBadRequest("잘못된 쿼리파라미터로 API를 요청하였습니다.");
+        };
+        return predicate;
+    }
+
+    private static Predicate<Memo> searchMemos(String search) {
+        if(search == null) return memo -> true;
+        return memo -> memo.getTitle().contains(search) || memo.getContent().contains(search);
     }
 }

@@ -40,7 +40,7 @@ public class MemoController {
                     - <strong>정렬 URI</strong> : /memos?filter={정렬종류 string}
                     - <strong>검색 URI</strong> : /memos?search={검색종류 string}  \n
                     <strong>< value ></strong>
-                    - <strong>정렬 종류(의미)</strong> : 빈값 or all-memo(전체 메모), private-memo(개인 메모), group-memo(공동 메모), star-memo(즐겨찾기 개인메모)
+                    - <strong>정렬 종류(의미)</strong> : 빈값(전체 메모), private-memo(개인 메모), group-memo(공동 메모), star-memo(즐겨찾기 개인메모)
                     - <strong>검색 종류(의미)</strong> : 빈값(전체 메모), 제목 또는 내용에 포함된 키워드
                     """)
     public ResponseEntity<ResponseData<List<MemoDto.MemoPageResponse>>> findMemos(
