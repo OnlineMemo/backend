@@ -49,7 +49,7 @@ public class JwtFilter extends OncePerRequestFilter {  // HTTP 요청을 중간�
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-        String[] excludePath = {"/health", "/login", "/signup", "/password"};
+        String[] excludePath = {"/health", "/reissue", "/login", "/signup", "/password"};
         String path = request.getRequestURI();
         return Arrays.stream(excludePath).anyMatch(path::startsWith);
     }

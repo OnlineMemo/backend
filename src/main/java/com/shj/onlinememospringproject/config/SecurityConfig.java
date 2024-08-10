@@ -60,7 +60,7 @@ public class SecurityConfig {
 
                             // .requestMatchers("/**").permitAll()  // Test 용도
                             .requestMatchers("/", "/error", "/favicon.ico", "/v3/api-docs/**", "/swagger-ui/**", "/swagger/**", "/health").permitAll()
-                            .requestMatchers("/login", "/signup", "/password", "/webjars/**").permitAll()
+                            .requestMatchers("/reissue", "/login", "/signup", "/password", "/reissue", "/webjars/**").permitAll()
 
                             .anyRequest().hasAnyAuthority("ROLE_USER", "ROLE_ADMIN");  // permit 지정한 경로들 외에는 전부 USER나 ADMIN 권한이 있어야지 URI를 이용 가능함.
                 })

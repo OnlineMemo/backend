@@ -35,6 +35,14 @@ public class AuthDto {
         private String newPassword;
     }
 
+    @Getter
+    @NoArgsConstructor
+    public static class ReissueRequest {
+
+        private String accessToken;
+        private String refreshToken;
+    }
+
 
     // ======== < Response DTO > ======== //
 
@@ -47,5 +55,6 @@ public class AuthDto {
         private String grantType;
         private String accessToken;
         private Long accessTokenExpiresIn;
+        private String refreshToken;
     }
 }

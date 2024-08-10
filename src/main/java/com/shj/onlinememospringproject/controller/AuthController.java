@@ -45,4 +45,11 @@ public class AuthController {
         authService.withdrawal();
         return ResponseData.toResponseEntity(ResponseCode.DELETE_USER);
     }
+
+    @PostMapping("/reissue")
+    @Operation(summary = "로그인 유지 - JWT Access Token 재발급 [JWT X]")
+    public ResponseEntity<ResponseData<AuthDto.TokenResponse>> reissue(@RequestBody AuthDto.ReissueRequest reissueRequestDto) {
+        AuthDto.TokenResponse tokenResponseDto = authService.reissue(reissueRequestDto);
+        return ResponseData.toResponseEntity(ResponseCode.REISSUE_SUCCESS, tokenResponseDto);
+    }
 }

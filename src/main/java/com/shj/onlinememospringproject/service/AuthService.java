@@ -7,4 +7,5 @@ public interface AuthService {
     AuthDto.TokenResponse login(AuthDto.LoginRequest loginRequestDto);
     void updatePassword(AuthDto.UpdateRequest updateRequestDto);
     void withdrawal();
+    AuthDto.TokenResponse reissue(AuthDto.ReissueRequest reissueRequestDto);
 }

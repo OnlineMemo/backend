@@ -26,7 +26,8 @@ public class TokenProvider {
 
     private static final String AUTHORITIES_KEY = "auth";
     private static final String BEARER_TYPE = "bearer";
-    private static final long ACCESS_TOKEN_EXPIRE_TIME = 1000 * 60 * 720;  // 720분 = 12시간
+    private static final long ACCESS_TOKEN_EXPIRE_TIME = 1000 * 60 * 3;  // 180분 = 3시간
+    private static final long REFRESH_TOKEN_EXPIRE_TIME = 1000 * 60 * 1440 * 14;  // 1440분 x 14 = 24시간 x 14 = 14일 = 2주
     private final Key key;
 
 
@@ -37,8 +38,33 @@ public class TokenProvider {
     }
 
 
-    // 토큰 생성
+    // 전체 토큰 새로 생성
     public AuthDto.TokenResponse generateTokenDto(Authentication authentication) {
+        String accessToken = generateAccessToken(authentication);
+        String refreshToken = generateRefreshToken();
+
+        return AuthDto.TokenResponse.builder()
+                .grantType(BEARER_TYPE)
+                .accessToken(accessToken)
+                .accessTokenExpiresIn(parseClaims(accessToken).getExpiration().getTime())
+                .refreshToken(refreshToken)
+                .build();
+    }
+
+    // Access 토큰이 만료된 경우, Refresh Token으로 Access Token 재발급하기
+    public AuthDto.TokenResponse generateAccessTokenByRefreshToken(Authentication authentication, String refreshToken) {
+        String accessToken = generateAccessToken(authentication);
+
+        return AuthDto.TokenResponse.builder()
+                .grantType(BEARER_TYPE)
+                .accessToken(accessToken)
+                .accessTokenExpiresIn(parseClaims(accessToken).getExpiration().getTime())
+                .refreshToken(refreshToken)
+                .build();
+    }
+
+    // Access Token 생성 후 반환하는 메소드
+    public String generateAccessToken(Authentication authentication) {
         String authorities = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
@@ -53,11 +79,21 @@ public class TokenProvider {
                 .signWith(key, SignatureAlgorithm.HS512)
                 .compact();
 
-        return AuthDto.TokenResponse.builder()
-                .grantType(BEARER_TYPE)
-                .accessToken(accessToken)
-                .accessTokenExpiresIn(tokenExpiresIn.getTime())
-                .build();
+        return accessToken;
+    }
+
+    // Refresh Token 생성 후 반환하는 메소드
+    public String generateRefreshToken() {
+        long now = (new Date()).getTime();
+        Date refreshTokenExpiresIn = new Date(now + REFRESH_TOKEN_EXPIRE_TIME);
+
+        // Refresh Token 생성
+        String refreshToken = Jwts.builder()  // 로그인유지(재발급) 용도로써, 중요정보 Claim 없이 만료 시간만 담음.
+                .setExpiration(refreshTokenExpiresIn)
+                .signWith(key, SignatureAlgorithm.HS512)
+                .compact();
+
+        return refreshToken;
     }
 
     public Authentication getAuthentication(String accessToken) {

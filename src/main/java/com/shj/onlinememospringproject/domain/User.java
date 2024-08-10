@@ -33,6 +33,9 @@ public class User implements Serializable {
     @Enumerated(EnumType.STRING)
     private Authority authority;
 
+    @Column(name = "refresh_token")
+    private String refreshToken;
+
     @OneToMany(mappedBy = "user")  // User-UserMemo 양방향매핑 (읽기 전용 필드)
     private List<UserMemo> userMemoList = new ArrayList<>();
 
@@ -45,13 +48,17 @@ public class User implements Serializable {
 
     @Builder(builderClassName = "UserSaveBuilder", builderMethodName = "UserSaveBuilder")
     public User(String email, String password, String nickname) {
-        // 이 빌더는 사용자 회원가입때만 사용할 용도
+        // 이 빌더는 사용자 회원가입때만 사용할 용도 (refreshToken=null로 저장됨.)
         this.email = email;
         this.password = password;
         this.nickname = nickname;
         this.authority = Authority.ROLE_USER;
     }
 
+
+    public void updateRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
 
     public void updatePassword(String password) {
         this.password = password;

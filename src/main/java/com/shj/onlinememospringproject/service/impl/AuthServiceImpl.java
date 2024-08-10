@@ -15,6 +15,7 @@ import com.shj.onlinememospringproject.response.exception.Exception404;
 import com.shj.onlinememospringproject.service.AuthService;
 import com.shj.onlinememospringproject.service.UserService;
 import com.shj.onlinememospringproject.util.SecurityUtil;
+import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -58,13 +59,17 @@ public class AuthServiceImpl implements AuthService {
         userRepository.save(user);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     @Override
     public AuthDto.TokenResponse login(AuthDto.LoginRequest loginRequestDto) {
         UsernamePasswordAuthenticationToken authenticationToken = toAuthentication(loginRequestDto.getEmail(), loginRequestDto.getPassword());
         Authentication authentication = managerBuilder.getObject().authenticate(authenticationToken);  // 아이디와 비밀번호가 일치하는지 검증.
 
-        return tokenProvider.generateTokenDto(authentication);  // 로그인 성공. JWT 토큰 생성.
+        AuthDto.TokenResponse tokenResponseDto = tokenProvider.generateTokenDto(authentication);
+        User user = userService.findUser(Long.valueOf(authentication.getName()));
+        user.updateRefreshToken(tokenResponseDto.getRefreshToken());  // DB Refresh Token 업데이트.
+
+        return tokenResponseDto;  // 로그인 성공. JWT 토큰 생성.
     }
 
     @Transactional
@@ -109,6 +114,33 @@ public class AuthServiceImpl implements AuthService {
 
         // 최종적으로, 부모 테이블인 User를 삭제.
         userRepository.delete(user);
+    }
+
+    @Transactional
+    @Override
+    public AuthDto.TokenResponse reissue(AuthDto.ReissueRequest reissueRequestDto) {  // Refresh Token으로 Access Token 재발급 메소드
+
+        // RequestDto로 전달받은 Token값들
+        String accessToken = reissueRequestDto.getAccessToken();
+        String refreshToken = reissueRequestDto.getRefreshToken();
+
+        // Refresh Token 유효성 검사
+        if(tokenProvider.validateToken(refreshToken) == false) {
+            throw new JwtException("입력한 Refresh Token은 잘못된 토큰입니다.");
+        }
+
+        // Access Token에서 userId 가져오기
+        Authentication authentication = tokenProvider.getAuthentication(accessToken);
+        Long userId = Long.valueOf(authentication.getName());
+
+        // DB의 사용자 Refresh Token 값과, 전달받은 Refresh Token의 불일치 여부 검사
+        User user = userService.findUser(userId);
+        if(!user.getRefreshToken().equals(refreshToken)) {
+            throw new Exception400.TokenBadRequest("Refresh Token = " + refreshToken);
+        }
+
+        AuthDto.TokenResponse tokenResponseDto = tokenProvider.generateAccessTokenByRefreshToken(authentication, refreshToken);
+        return tokenResponseDto;
     }
 
 
