@@ -19,7 +19,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // Eager 조회 : 'User + User.userMemoList (하위의 userRoomList가 비어있더라도 정상 반환되도록, LEFT JOIN 사용.)
     // 비록 OneToMany 필드인 userMemoList를 Eager로 지정하여 카테시안곱의 중복데이터 위험이 있지만, 메소드 반환자료형이 List가 아닌 고유한 하나의 값이기에, DISTINCT 없이 작성해도 무방함.
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.userMemoList WHERE u.id = :userId")
-    Optional<User> findByIdToUserMemoListWithEager(@Param("userId") Long userId);
+    Optional<User> findByIdToUserMemoListWithEager(@Param("userId") Long userId);  // 현재 미사용 메소드이나, 차후 활용가능성을 위해 작성해두었음.
 
     // Eager 조회 : 'User + User.userMemoList + User.userMemoList.memo' (하위의 userRoomList가 비어있더라도 정상 반환되도록, LEFT JOIN 사용. userRoomList가 비어있을수도있으니, User.userMemoList.memo 부분도 LEFT JOIN 사용.)
     // 비록 OneToMany 필드인 userMemoList를 Eager로 지정하여 카테시안곱의 중복데이터 위험이 있지만, 메소드 반환자료형이 List가 아닌 고유한 하나의 값이기에, DISTINCT 없이 작성해도 무방함.

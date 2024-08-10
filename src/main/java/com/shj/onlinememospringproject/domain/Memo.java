@@ -2,7 +2,6 @@ package com.shj.onlinememospringproject.domain;
 
 import com.shj.onlinememospringproject.domain.common.BaseEntity;
 import com.shj.onlinememospringproject.domain.mapping.UserMemo;
-import com.shj.onlinememospringproject.util.TimeConverter;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
@@ -32,7 +31,7 @@ public class Memo extends BaseEntity implements Serializable {
     private String content;
 
     @Column(name = "is_star", columnDefinition = "TINYINT(1) default 0", length = 1)
-    private Integer isStar;  // isStar 필드는 수정시각에 영향을 주지않도록, @PreUpdate 생명주기에서 제외시켜 따로 JPQL로 직접 업데이트함.
+    private Integer isStar;  // isStar 필드는 수정시각에 영향을 주지않도록, @LastModifiedDate 생명주기에서 제외시켜 따로 JPQL로 직접 업데이트함.
 
     @OneToMany(mappedBy = "memo")  // Memo-UserMemo 양방향매핑 (읽기 전용 필드)
     private List<UserMemo> userMemoList = new ArrayList<>();
@@ -44,7 +43,7 @@ public class Memo extends BaseEntity implements Serializable {
         this.title = title;
         this.content = content;
         this.isStar = 0;
-        this.modifiedTime = TimeConverter.timeToString(LocalDateTime.now());
+        this.modifiedTime = LocalDateTime.now();
     }
 
 

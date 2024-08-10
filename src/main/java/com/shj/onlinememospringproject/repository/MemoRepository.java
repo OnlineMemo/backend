@@ -26,7 +26,7 @@ public interface MemoRepository extends JpaRepository<Memo, Long> {
     @Query("SELECT m FROM Memo m LEFT JOIN FETCH m.userMemoList uml LEFT JOIN FETCH uml.user WHERE m.id = :memoId")
     Optional<Memo> findByIdToUserWithEager(@Param("memoId") Long memoId);
 
-    // isStar 필드는 수정시각에 영향을 주지않도록, @PreUpdate 생명주기에서 제외시켜 따로 JPQL로 직접 업데이트함.
+    // isStar 필드는 수정시각에 영향을 주지않도록, @LastModifiedDate 생명주기에서 제외시켜 따로 JPQL로 직접 업데이트함.
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Memo m SET m.isStar = :isStar WHERE m.id = :memoId")  // 네이티브쿼리 말고, JPQL로 작성하였음.
     void updateIsStar(@Param("memoId") Long memoId, @Param("isStar") Integer isStar);

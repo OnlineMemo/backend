@@ -2,6 +2,7 @@ package com.shj.onlinememospringproject.dto;
 
 import com.shj.onlinememospringproject.domain.Memo;
 import com.shj.onlinememospringproject.domain.mapping.UserMemo;
+import com.shj.onlinememospringproject.util.TimeConverter;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -58,7 +59,7 @@ public class MemoDto {
             this.title = entity.getTitle();
             this.content = entity.getContent();
             this.isStar = entity.getIsStar();
-            this.modifiedTime = entity.getModifiedTime();
+            this.modifiedTime = TimeConverter.timeToString(entity.getModifiedTime());
         }
     }
 
@@ -84,13 +85,13 @@ public class MemoDto {
             this.memoId = entity.getId();
             this.title = entity.getTitle();
             this.isStar = entity.getIsStar();
-            this.modifiedTime = entity.getModifiedTime();
+            this.modifiedTime = TimeConverter.timeToString(entity.getModifiedTime());
 
             List<UserDto.Response> userResponseDtoList = entity.getUserMemoList().stream()
                     .map(UserMemo::getUser)
                     .map(UserDto.Response::new)
-                    .sorted(Comparator.comparing(UserDto.Response::getNickname)
-                            .thenComparing(UserDto.Response::getUserId))
+                    .sorted(Comparator.comparing(UserDto.Response::getNickname)  // 정렬 우선순위 1: 이름 오름차순
+                            .thenComparing(UserDto.Response::getUserId))  // 정렬 우선순위 2: id 내림차순
                     .collect(Collectors.toList());
             this.userResponseDtoList = userResponseDtoList;
             this.memoHasUsersCount = userResponseDtoList.size();

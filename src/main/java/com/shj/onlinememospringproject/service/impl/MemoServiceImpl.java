@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -54,6 +55,8 @@ public class MemoServiceImpl implements MemoService {
 
         List<MemoDto.MemoPageResponse> memoPageResponseDtoList = user.getUserMemoList().stream()
                 .map(UserMemo::getMemo)
+                .sorted(Comparator.comparing(Memo::getModifiedTime).reversed()  // 정렬 우선순위 1: 수정날짜 내림차순
+                        .thenComparing(Memo::getId).reversed())  // 정렬 우선순위 2: id 내림차순
                 .map(MemoDto.MemoPageResponse::new)
                 .collect(Collectors.toList());
         return memoPageResponseDtoList;
@@ -117,7 +120,7 @@ public class MemoServiceImpl implements MemoService {
         }
         else if(memoHasUsersCount == 2) {  // 공동메모인데, 그룹 탈퇴로 메모의 사용자가 2명에서 1명으로 개인메모가 될 경우 (즉, 원래 2명이었을 경우)
             // 즐겨찾기 여부를 다시 0으로 초기화.
-            memoRepository.updateIsStar(memoId, 0);  // isStar 필드는 수정시각에 영향을 주지않도록, @PreUpdate 생명주기에서 제외시켜 따로 JPQL로 직접 업데이트함.
+            memoRepository.updateIsStar(memoId, 0);  // isStar 필드는 수정시각에 영향을 주지않도록, @LastModifiedDate 생명주기에서 제외시켜 따로 JPQL로 직접 업데이트함.
         }
     }
 
