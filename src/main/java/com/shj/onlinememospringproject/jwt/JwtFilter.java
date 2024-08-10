@@ -12,6 +12,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {  // HTTP 요청을 중간에서 가로채어 JWT를 처리하고, 사용자를 인증함으로써 SecurityContextHolder에 해당 인증 정보를 설정하는 역할.
@@ -44,5 +45,12 @@ public class JwtFilter extends OncePerRequestFilter {  // HTTP 요청을 중간�
             return bearerToken.substring(7);  // 앞부분인 "Bearer "을 제외하여 7인덱스부터 끝까지인 실제 토큰 문자열을 반환.
         }
         return null;
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String[] excludePath = {"/health", "/login", "/signup", "/password"};
+        String path = request.getRequestURI();
+        return Arrays.stream(excludePath).anyMatch(path::startsWith);
     }
 }
