@@ -60,7 +60,7 @@ public class MemoServiceImpl implements MemoService {
                 () -> new Exception404.NoSuchUser(String.format("userId = %d", loginUserId)));
 
         List<MemoDto.MemoPageResponse> memoPageResponseDtoList = user.getUserMemoList().stream()
-                .map(UserMemo::getMemo)
+                .map(UserMemo::getMemo)  // User.userMemoList (N+1 쿼리 발생)
                 .filter(memoPredicate)  // User.userMemoList.memo (N+1 쿼리 발생)
                 .sorted(Comparator.comparing(Memo::getModifiedTime).reversed()  // 정렬 우선순위 1: 수정날짜 내림차순
                         .thenComparing(Memo::getId).reversed())  // 정렬 우선순위 2: id 내림차순
