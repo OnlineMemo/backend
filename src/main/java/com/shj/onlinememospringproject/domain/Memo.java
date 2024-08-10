@@ -2,6 +2,7 @@ package com.shj.onlinememospringproject.domain;
 
 import com.shj.onlinememospringproject.domain.common.BaseEntity;
 import com.shj.onlinememospringproject.domain.mapping.UserMemo;
+import com.shj.onlinememospringproject.util.TimeConverter;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
@@ -9,10 +10,8 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 @Getter
 @NoArgsConstructor
@@ -45,7 +44,7 @@ public class Memo extends BaseEntity implements Serializable {
         this.title = title;
         this.content = content;
         this.isStar = 0;
-        this.modifiedTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy. M. d. a h:mm").withLocale(Locale.forLanguageTag("ko")));
+        this.modifiedTime = TimeConverter.timeToString(LocalDateTime.now());
     }
 
 
