@@ -58,7 +58,11 @@ public class MemoController {
     }
 
     @PutMapping("/{memoId}")
-    @Operation(summary = "메모 제목/내용/즐겨찾기 수정 [JWT O]", description = "- isStar 필드 : null 허용 (제목/내용 수정인 경우에만)")
+    @Operation(summary = "메모 제목/내용/즐겨찾기 수정 [JWT O]",
+            description = """
+                    - title & content 필드 : null 허용 (즐겨찾기 수정인 경우에만)
+                    - isStar 필드 : null 허용 (제목/내용 수정인 경우에만)
+                    """)
     public ResponseEntity<ResponseData> updateMemo(@PathVariable(value = "memoId") Long memoId, @RequestBody MemoDto.UpdateRequest updateRequestDto) {
         memoService.updateMemo(memoId, updateRequestDto);
         return ResponseData.toResponseEntity(ResponseCode.UPDATE_MEMO);

@@ -15,9 +15,9 @@ public interface UserMemoRepository extends JpaRepository<UserMemo, Long> {
     // - 네이밍이 부족하거나 오버라이딩으로 겹쳐서 JPA 쿼리메소드 규칙을 따르지 못하는 경우 && 하위 엔티티의 존재가 없어도 정상 반환해주어야함 ==> Fetch Join (LEFT JOIN)
     // - 네이밍이 부족하거나 오버라이딩으로 겹쳐서 JPA 쿼리메소드 규칙을 따르지 못하는 경우 && 하위 엔티티의 존재한다는것이 이미 확정일때 ==> Fetch Join (JOIN)
 
-    // Eager 조회 : 'UserMemo + UserMemo.memo' (어차피 하위의 memo는 반드시 존재하므로, JOIN 사용.)
-    @Query("SELECT um FROM UserMemo um JOIN FETCH um.memo WHERE um.user.id = :userId AND um.memo.id = :memoId")
-    Optional<UserMemo> findByUser_IdAndMemo_IdToMemoWithEager(@Param("userId") Long userId, @Param("memoId") Long memoId);
+    // Eager 조회 : 'UserMemo + UserMemo.memo + UserMemo.memo.userMemoList' (하위의 memo는 반드시 존재하므로 JOIN 사용하나, userMemoList는 비어있을수도있어 LEFT JOIN 사용.)
+    @Query("SELECT um FROM UserMemo um JOIN FETCH um.memo m LEFT JOIN FETCH m.userMemoList WHERE um.user.id = :userId AND um.memo.id = :memoId")
+    Optional<UserMemo> findByUser_IdAndMemo_IdToUserMemoListWithEager(@Param("userId") Long userId, @Param("memoId") Long memoId);
 
     boolean existsByUser_IdAndMemo_Id(Long userId, Long memoId);
     void deleteByUser_IdAndMemo_Id(Long userId, Long memoId);

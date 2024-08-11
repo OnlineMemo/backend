@@ -40,11 +40,11 @@ public class MemoServiceImpl implements MemoService {
         userMemoService.checkUserInMemo(loginUserId, memoId);  // 사용자의 메모 접근권한 체킹.
 
         // 강제 Eager 조회 (N+1 문제 해결)
-        UserMemo userMemo = userMemoRepository.findByUser_IdAndMemo_IdToMemoWithEager(loginUserId, memoId).orElseThrow(
+        UserMemo userMemo = userMemoRepository.findByUser_IdAndMemo_IdToUserMemoListWithEager(loginUserId, memoId).orElseThrow(
                 () -> new Exception404.NoSuchUserMemo(String.format("userId = %d, memoId = %d", loginUserId, memoId)));  // 로그인사용자id와 메모의 사용자id 불일치 에러
 
         Memo memo = userMemo.getMemo();
-        MemoDto.Response memoResponseDto = new MemoDto.Response(memo);  // Usermemo.memo (DTO 변환으로, N+1 쿼리 발생)
+        MemoDto.Response memoResponseDto = new MemoDto.Response(memo);  // Usermemo.memo & Usermemo.memo.userMemoList (DTO 변환 및 List길이 계산으로, N+1 쿼리 발생)
         return memoResponseDto;
     }
 

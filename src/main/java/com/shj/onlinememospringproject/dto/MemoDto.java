@@ -53,6 +53,7 @@ public class MemoDto {
         private String content;
         private Integer isStar;
         private String modifiedTime;
+        private Integer memoHasUsersCount;  // 해당 메모를 가지고 있는 사용자의 수
 
         public Response(Memo entity) {
             this.memoId = entity.getId();
@@ -60,6 +61,7 @@ public class MemoDto {
             this.content = entity.getContent();
             this.isStar = entity.getIsStar();
             this.modifiedTime = TimeConverter.timeToString(entity.getModifiedTime());
+            this.memoHasUsersCount = entity.getUserMemoList().size();
         }
     }
 
