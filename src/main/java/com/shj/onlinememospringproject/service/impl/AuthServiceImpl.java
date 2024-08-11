@@ -134,8 +134,8 @@ public class AuthServiceImpl implements AuthService {
         Long userId = Long.valueOf(authentication.getName());
 
         // DB의 사용자 Refresh Token 값과, 전달받은 Refresh Token의 불일치 여부 검사
-        User user = userService.findUser(userId);
-        if(!user.getRefreshToken().equals(refreshToken)) {
+        String dbRefreshToken = userRepository.findRefreshTokenById(userId);
+        if(dbRefreshToken == null || !(dbRefreshToken.equals(refreshToken))) {
             throw new Exception400.TokenBadRequest("Refresh Token = " + refreshToken);
         }
 

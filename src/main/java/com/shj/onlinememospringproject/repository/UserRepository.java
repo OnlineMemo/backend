@@ -36,6 +36,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "WHERE u.id = :userId")
     Optional<User> findByIdToDeepUserWithEager(@Param("userId") Long userId);
 
+    // userId로 검색하여 refreshToken만 가져오는 메소드
+    @Query("SELECT u.refreshToken FROM User u WHERE u.id = :userId")
+    String findRefreshTokenById(@Param("userId") Long userId);
+
     Optional<User> findByEmail(String email);
     List<User> findByIdIn(List<Long> userIdList);
 }
