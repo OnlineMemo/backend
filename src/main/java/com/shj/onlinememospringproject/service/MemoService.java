@@ -8,7 +8,7 @@ import java.util.List;
 public interface MemoService {
     MemoDto.Response findMemoInfo(Long memoId);
     List<MemoDto.MemoPageResponse> findMemos(String filter, String search);
-    void createMemo(MemoDto.CreateRequest createRequestDto);
+    MemoDto.CreateResponse createMemo(MemoDto.CreateRequest createRequestDto);
     void updateMemo(Long memoId, MemoDto.UpdateRequest updateRequestDto);
     void deleteMemo(Long memoId);
 

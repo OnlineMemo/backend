@@ -52,9 +52,9 @@ public class MemoController {
 
     @PostMapping
     @Operation(summary = "개인/공동 메모 생성 [JWT O]", description = "- userIdList 필드 : null 허용 (개인메모인 경우에만)")
-    public ResponseEntity<ResponseData> createMemo(@RequestBody MemoDto.CreateRequest createRequestDto) {
-        memoService.createMemo(createRequestDto);
-        return ResponseData.toResponseEntity(ResponseCode.CREATED_MEMO);
+    public ResponseEntity<ResponseData<MemoDto.CreateResponse>> createMemo(@RequestBody MemoDto.CreateRequest createRequestDto) {
+        MemoDto.CreateResponse createResponseDto = memoService.createMemo(createRequestDto);
+        return ResponseData.toResponseEntity(ResponseCode.CREATED_MEMO, createResponseDto);
     }
 
     @PutMapping("/{memoId}")

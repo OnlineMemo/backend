@@ -67,6 +67,19 @@ public class MemoDto {
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class CreateResponse {
+
+        private Long memoId;
+
+        public CreateResponse(Memo entity) {
+            this.memoId = entity.getId();
+        }
+    }
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class MemoPageResponse {
 
         // Memo

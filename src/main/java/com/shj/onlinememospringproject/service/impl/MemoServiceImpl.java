@@ -72,7 +72,7 @@ public class MemoServiceImpl implements MemoService {
 
     @Transactional
     @Override
-    public void createMemo(MemoDto.CreateRequest createRequestDto) {
+    public MemoDto.CreateResponse createMemo(MemoDto.CreateRequest createRequestDto) {
         User loginUser = userService.findLoginUser();
         Memo memo = Memo.MemoSaveBuilder()
                 .title(createRequestDto.getTitle())
@@ -90,6 +90,10 @@ public class MemoServiceImpl implements MemoService {
         if(!(createRequestDto.getUserIdList() == null || createRequestDto.getUserIdList().isEmpty())) {  // 개인메모가 아닐때
             userMemoService.inviteUsersToMemo(memoId, createRequestDto.getUserIdList());
         }
+
+        return MemoDto.CreateResponse.builder()
+                .memoId(memoId)
+                .build();
     }
 
     @Transactional
