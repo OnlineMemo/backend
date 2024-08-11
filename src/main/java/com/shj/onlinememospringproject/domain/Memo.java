@@ -10,7 +10,9 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @NoArgsConstructor
@@ -34,7 +36,7 @@ public class Memo extends BaseEntity implements Serializable {
     private Integer isStar;  // isStar 필드는 수정시각에 영향을 주지않도록, @LastModifiedDate 생명주기에서 제외시켜 따로 JPQL로 직접 업데이트함.
 
     @OneToMany(mappedBy = "memo")  // Memo-UserMemo 양방향매핑 (읽기 전용 필드)
-    private List<UserMemo> userMemoList = new ArrayList<>();
+    private Set<UserMemo> userMemoList = new HashSet<>();  // MultipleBagFetchException Fetch Join 에러 해결을 위해, Set으로 선언하고 List로 변환해서 사용함.
 
 
     @Builder(builderClassName = "MemoSaveBuilder", builderMethodName = "MemoSaveBuilder")
@@ -46,6 +48,11 @@ public class Memo extends BaseEntity implements Serializable {
         this.modifiedTime = LocalDateTime.now();
     }
 
+
+    // get UserMemoList
+    public List<UserMemo> getUserMemoList() {
+        return new ArrayList<>(this.userMemoList);
+    }
 
     public void updateTitle(String title) {
         this.title = title;

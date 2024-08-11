@@ -9,7 +9,9 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @NoArgsConstructor
@@ -37,7 +39,7 @@ public class User implements Serializable {
     private String refreshToken;
 
     @OneToMany(mappedBy = "user")  // User-UserMemo 양방향매핑 (읽기 전용 필드)
-    private List<UserMemo> userMemoList = new ArrayList<>();
+    private Set<UserMemo> userMemoList = new HashSet<>();  // MultipleBagFetchException Fetch Join 에러 해결을 위해, Set으로 선언하고 List로 변환해서 사용함.
 
     @OneToMany(mappedBy = "user")  // User-Friendship 양방향매핑 1 (읽기 전용 필드)
     private List<Friendship> receiveFriendshipList = new ArrayList<>();  // 나에게 친구요청을 보내온(받은) 관계리스트 gerSenderUser 활용할것.
@@ -55,6 +57,11 @@ public class User implements Serializable {
         this.authority = Authority.ROLE_USER;
     }
 
+
+    // get UserMemoList
+    public List<UserMemo> getUserMemoList() {
+        return new ArrayList<>(this.userMemoList);
+    }
 
     public void updateRefreshToken(String refreshToken) {
         this.refreshToken = refreshToken;
