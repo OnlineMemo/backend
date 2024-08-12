@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 // @Hidden
-@Tag(name = "Test")
+@Tag(name = "AWS Test")
 @RestController
 @RequiredArgsConstructor
 public class TestController {
