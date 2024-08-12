@@ -52,6 +52,9 @@ public class UserMemoServiceImpl implements UserMemoService {
         }
         List<User> userList = userRepository.findByIdIn(userIdList);  // 한 번의 DB 호출로 Users 정보 조회
 
+        // 즐겨찾기 해제
+        memoRepository.updateIsStar(memoId, 0);
+
         List<UserMemo> userMemoList = userList.stream()
                 .map(user -> UserMemo.UserMemoSaveBuilder()
                         .user(user)

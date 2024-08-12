@@ -126,6 +126,7 @@ public class MemoServiceImpl implements MemoService {
 
         // 공동메모 그룹 탈퇴 처리. (자식 테이블인 UserMemo에서 먼저 삭제.)
         userMemoRepository.deleteByUser_IdAndMemo_Id(loginUserId, memoId);
+        userMemoRepository.flush();  // 영속성 컨텍스트 내 변경상태인 위 delete를 즉시 반영.
 
         if(memoHasUsersCount == 1) {  // 해당 메모가 개인메모라면
             memoRepository.delete(memo);  // 그 이후에 부모 테이블인 Memo에서 해당 메모를 삭제. (이후 부모 테이블인 Memo에서 삭제.)
