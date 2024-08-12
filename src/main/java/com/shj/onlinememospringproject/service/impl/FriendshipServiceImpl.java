@@ -76,9 +76,9 @@ public class FriendshipServiceImpl implements FriendshipService {
 
     @Transactional
     @Override
-    public void updateFriendship(FriendshipDto.UpdateRequest updateRequestDto) {
+    public void updateFriendship(Long friendId, FriendshipDto.UpdateRequest updateRequestDto) {
         Long loginUserId = SecurityUtil.getCurrentMemberId();  // 현재 로그인 사용자
-        Long updateUserId = updateRequestDto.getUserId();  // 친구상태를 업데이트할 사용자
+        Long updateUserId = friendId;  // 친구상태를 업데이트할 사용자
 
         // 어차피 자식 테이블인 Friendship보다 부모 테이블인 User를 먼저 삭제하는건 불가능하기에, 굳이 따로 User 엔티티들을 조회해보는 과정없이 바로 Friend 엔티티를 조회해도 무관함.
         Friendship friendship = findFriendshipWithId(loginUserId, updateUserId, null);
@@ -104,9 +104,9 @@ public class FriendshipServiceImpl implements FriendshipService {
 
     @Transactional
     @Override
-    public void deleteFriendship(FriendshipDto.DeleteRequest deleteRequestDto) {
+    public void deleteFriendship(Long friendId) {
         Long loginUserId = SecurityUtil.getCurrentMemberId();  // 현재 로그인 사용자
-        Long deleteUserId = deleteRequestDto.getUserId();  // 친구 삭제할 사용자
+        Long deleteUserId = friendId;  // 친구 삭제할 사용자
 
         // 어차피 자식 테이블인 Friendship보다 부모 테이블인 User를 먼저 삭제하는건 불가능하기에, 굳이 따로 User 엔티티들을 조회해보는 과정없이 바로 Friend 엔티티를 조회해도 무관함.
         Friendship friendship1 = findFriendshipWithId(loginUserId, deleteUserId, FriendshipState.FRIEND);  // 삭제 가능한 친구상태가 아님.

@@ -18,17 +18,8 @@ public class FriendshipDto {
     @NoArgsConstructor
     public static class UpdateRequest {
 
-        private Long userId;  // 친구관계를 수락/거절할 해당 상대방의 userId
         private Integer isAccept;  // 거절:0 or 수락:1
     }
-
-    @Getter
-    @NoArgsConstructor
-    public static class DeleteRequest {
-
-        private Long userId;  // 친구관계를 삭제할 해당 상대방의 userId
-    }
-
 
     // ======== < Response DTO > ======== //
 

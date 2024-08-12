@@ -10,8 +10,8 @@ import java.util.List;
 public interface FriendshipService {
     List<UserDto.Response> findFriends(Integer isFriend);
     void sendFriendship(FriendshipDto.SendRequest sendRequestDto);
-    void updateFriendship(FriendshipDto.UpdateRequest updateRequestDto);
-    void deleteFriendship(FriendshipDto.DeleteRequest deleteRequestDto);
+    void updateFriendship(Long friendId, FriendshipDto.UpdateRequest updateRequestDto);
+    void deleteFriendship(Long friendId);
 
     // ========== 유틸성 메소드 ========== //
     Friendship findFriendshipWithId(Long userId, Long senderUserId, FriendshipState friendshipState);
