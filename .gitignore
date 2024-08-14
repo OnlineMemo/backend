@@ -37,10 +37,10 @@ out/
 .vscode/
 
 # Ignore '.DS_Store' files
-#.DS_Store
-#._.DS_Store
-#**/.DS_Store
-#**/._.DS_Store
+.DS_Store
+._.DS_Store
+**/.DS_Store
+**/._.DS_Store
 
 # Logging file ignore
 logs/
