@@ -82,7 +82,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         // config.setAllowedOriginPatterns(Arrays.asList("*"));  // Test 용도
-        config.setAllowedOriginPatterns(Arrays.asList("http://localhost:3000", "https://www.onlinememo.kr"));
+        config.setAllowedOriginPatterns(Arrays.asList("https://www.onlinememo.kr"));  // 리스트에서 "http://localhost:3000" 제거하였음.
         config.setAllowedHeaders(Arrays.asList("*"));
         config.setAllowedMethods(Arrays.asList("*"));
         config.setAllowCredentials(true);
