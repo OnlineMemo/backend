@@ -203,7 +203,7 @@ public void batchDelete(List<Memo> memoList) {
 **Before<br>(MemoPage - 30 memos)**|**After<br>(MemoPage - 30 memos)**
 |-----|-----|
 <img src="https://github.com/user-attachments/assets/72d75f87-f0a9-4860-bffc-eba280c949da" width="100%">|<img src="https://github.com/user-attachments/assets/85f2d5a2-574a-4046-82b1-a42c9cfff2c5" width="100%">
-| -&nbsp;&nbsp;FE : 각각의 모든 하위 컴포넌트에서 API 다중 호출<br> -&nbsp;&nbsp;Result&nbsp;:&nbsp;&nbsp;Request = 91번&nbsp;&nbsp;&&nbsp;&nbsp;Finish Time = 11.27s| -&nbsp;&nbsp;FE : 상위 컴포넌트에서 API 호출 후 하위로 props 전달<br>-&nbsp;&nbsp;BE : 전체적인 비즈니스 로직 및 쿼리 개선<br> -&nbsp;&nbsp;Result&nbsp;:&nbsp;&nbsp;Request = 2번&nbsp;&nbsp;&&nbsp;&nbsp;Finish Time = 193ms<br><br> &#8594;&nbsp;&nbsp;불과 30개의 메모임에도, 무려 58.4배의 성능 개선<br> &#8594;&nbsp;&nbsp;Prod 재배포 시, 최소 60배 이상의 속도 향상 예상
+| -&nbsp;&nbsp;FE : 각각의 모든 하위 컴포넌트에서 API 다중 호출<br> -&nbsp;&nbsp;Result&nbsp;:&nbsp;&nbsp;Request = 91번&nbsp;&nbsp;&&nbsp;&nbsp;Finish Time = 11.27s| -&nbsp;&nbsp;FE : 상위 컴포넌트에서 API 호출 후 하위로 props 전달<br>-&nbsp;&nbsp;BE : 전체적인 비즈니스 로직 및 쿼리 개선<br> -&nbsp;&nbsp;Result&nbsp;:&nbsp;&nbsp;Request = 2번&nbsp;&nbsp;&&nbsp;&nbsp;Finish Time = 193ms<br><br> &#8594;&nbsp;&nbsp;불과 30개의 메모임에도, 무려 58.4배의 성능 개선<br> &#8594;&nbsp;&nbsp;Prod 서버 재배포 시, 최소 60배 이상의 속도 향상 예상
 
 <br>
 
