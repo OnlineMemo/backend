@@ -7,6 +7,7 @@ import com.shj.onlinememospringproject.jwt.handler.JwtAccessDeniedHandler;
 import com.shj.onlinememospringproject.jwt.handler.JwtAuthenticationEntryPoint;
 import com.shj.onlinememospringproject.jwt.handler.JwtExceptionFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -24,6 +25,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.List;
 
 @RequiredArgsConstructor
 @Configuration
@@ -35,6 +37,9 @@ public class SecurityConfig {
     private final ObjectMapper objectMapper;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
+
+    @Value("${server.env}")
+    private String serverEnv;
 
 
     @Bean
@@ -81,8 +86,10 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // config.setAllowedOriginPatterns(Arrays.asList("*"));  // Test 용도
-        config.setAllowedOriginPatterns(Arrays.asList("https://www.onlinememo.kr"));  // 리스트에서 "http://localhost:3000" 제거하였음.
+        List<String> corsList = Arrays.asList("*");  // "http://localhost:3000"
+        if(serverEnv.equals("prod")) corsList = Arrays.asList("https://www.onlinememo.kr");
+
+        config.setAllowedOriginPatterns(corsList);
         config.setAllowedHeaders(Arrays.asList("*"));
         config.setAllowedMethods(Arrays.asList("*"));
         config.setAllowCredentials(true);
