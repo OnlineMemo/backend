@@ -231,185 +231,100 @@ public void batchDelete(List<Memo> memoList) {
 
 ### Directory Structure
 
-<details>
-  <summary>&nbsp;<strong>Before</strong>&nbsp;:&nbsp;Open!</summary>
-  <br>
-
 ```
-└── com
-    └── shj
-        └── onlinememospringproject
-            ├── config
-            │   ├── JwtSecurityConfig.java
-            │   ├── SwaggerConfig.java
-            │   └── WebSecurityConfig.java
-            ├── controller
-            │   ├── AuthController.java
-            │   ├── FriendshipController.java
-            │   ├── MemoController.java
-            │   ├── TestController.java
-            │   └── UserController.java
-            ├── domain
-            │   ├── DefaultFriendshipEntity.java
-            │   ├── DefaultMemoEntity.java
-            │   ├── friendship
-            │   │   ├── Friendship.java
-            │   │   └── FriendshipJpaRepository.java
-            │   ├── memo
-            │   │   ├── Memo.java
-            │   │   └── MemoJpaRepository.java
-            │   ├── user
-            │   │   ├── Authority.java
-            │   │   ├── User.java
-            │   │   └── UserJpaRepository.java
-            │   └── userandmemo
-            │       ├── UserAndMemo.java
-            │       └── UserAndMemoJpaRepository.java
-            ├── dto
-            │   ├── friendship
-            │   │   ├── FriendshipRequestDto.java
-            │   │   ├── FriendshipResponseDto.java
-            │   │   ├── FriendshipSendRequestDto.java
-            │   │   ├── FriendshipSendResponseDto.java
-            │   │   └── FriendshipUpdateRequestDto.java
-            │   ├── memo
-            │   │   ├── MemoInviteResponseDto.java
-            │   │   ├── MemoResponseDto.java
-            │   │   ├── MemoSaveRequestDto.java
-            │   │   ├── MemoSaveResponseDto.java
-            │   │   ├── MemoUpdateRequestDto.java
-            │   │   └── MemoUpdateStarRequestDto.java
-            │   ├── token
-            │   │   └── TokenDto.java
-            │   ├── user
-            │   │   ├── UserIdResponseDto.java
-            │   │   ├── UserLoginRequestDto.java
-            │   │   ├── UserRequestDto.java
-            │   │   ├── UserRequestDtos.java
-            │   │   ├── UserResponseDto.java
-            │   │   ├── UserSignupRequestDto.java
-            │   │   ├── UserUpdateNameRequestDto.java
-            │   │   └── UserUpdatePwRequestDto.java
-            │   └── userandmemo
-            │       ├── UserAndMemoRequestDto.java
-            │       └── UserAndMemoResponseDto.java
-            ├── jwt
-            │   ├── JwtAccessDeniedHandler.java
-            │   ├── JwtAuthenticationEntryPoint.java
-            │   ├── JwtFilter.java
-            │   └── TokenProvider.java
-            ├── response
-            │   ├── GlobalExceptionHandler.java
-            │   ├── ResponseCode.java
-            │   ├── ResponseData.java
-            │   ├── exception
-            │   │   ├── FriendshipBadRequestException.java
-            │   │   ├── FriendshipDuplicateException.java
-            │   │   ├── LoginIdDuplicateException.java
-            │   │   ├── MemoSortBadRequestException.java
-            │   │   ├── NoSuchFriendshipException.java
-            │   │   ├── NoSuchMemoException.java
-            │   │   ├── NoSuchUserException.java
-            │   │   └── UserAndMemoDuplicateException.java
-            │   └── responseitem
-            │       ├── MessageItem.java
-            │       └── StatusItem.java
-            ├── service
-            │   ├── FriendshipService.java
-            │   ├── MemoService.java
-            │   ├── UserAndMemoService.java
-            │   ├── UserService.java
-            │   ├── auth
-            │   │   ├── AuthService.java
-            │   │   └── CustomUserDetailsService.java
-            │   └── logic
-            │       ├── FriendshipServiceLogic.java
-            │       ├── MemoServiceLogic.java
-            │       ├── UserAndMemoServiceLogic.java
-            │       └── UserServiceLogic.java
-            └── util
-                └── SecurityUtil.java
-
+< Before >                                        < After >
+----------------------------------------------------------------------------------------------
+:                                                 :
+├── config                                        ├── config
+│   ├── JwtSecurityConfig.java                    │   ├── SecurityConfig.java
+│   ├── SwaggerConfig.java                        │   └── SwaggerConfig.java
+│   └── WebSecurityConfig.java                    ├── controller
+├── controller                                    │   ├── AuthController.java
+│   ├── AuthController.java                       │   ├── FriendshipController.java
+│   ├── FriendshipController.java                 │   ├── MemoController.java
+│   ├── MemoController.java                       │   ├── TestController.java
+│   ├── TestController.java                       │   └── UserController.java
+│   └── UserController.java                       ├── domain
+├── domain                                        │   ├── Friendship.java
+│   ├── DefaultFriendshipEntity.java              │   ├── Memo.java
+│   ├── DefaultMemoEntity.java                    │   ├── User.java
+│   ├── friendship                                │   ├── common
+│   │   ├── Friendship.java                       │   │   └── BaseEntity.java
+│   │   └── FriendshipJpaRepository.java          │   ├── enums
+│   ├── memo                                      │   │   ├── Authority.java
+│   │   ├── Memo.java                             │   │   └── FriendshipState.java
+│   │   └── MemoJpaRepository.java                │   └── mapping
+│   ├── user                                      │       └── UserMemo.java
+│   │   ├── Authority.java                        ├── dto
+│   │   ├── User.java                             │   ├── AuthDto.java
+│   │   └── UserJpaRepository.java                │   ├── FriendshipDto.java
+│   └── userandmemo                               │   ├── MemoDto.java
+│       ├── UserAndMemo.java                      │   └── UserDto.java
+│       └── UserAndMemoJpaRepository.java         ├── jwt
+├── dto                                           │   ├── CustomUserDetailsService.java
+│   ├── friendship                                │   ├── JwtFilter.java
+│   │   ├── FriendshipRequestDto.java             │   ├── TokenProvider.java
+│   │   ├── FriendshipResponseDto.java            │   └── handler
+│   │   ├── FriendshipSendRequestDto.java         │       ├── JwtAccessDeniedHandler.java
+│   │   ├── FriendshipSendResponseDto.java        │       ├── JwtAuthenticationEntryPoint.java
+│   │   └── FriendshipUpdateRequestDto.java       │       └── JwtExceptionFilter.java
+│   ├── memo                                      ├── repository
+│   │   ├── MemoInviteResponseDto.java            │   ├── FriendshipBatchRepository.java
+│   │   ├── MemoResponseDto.java                  │   ├── FriendshipRepository.java
+│   │   ├── MemoSaveRequestDto.java               │   ├── MemoBatchRepository.java
+│   │   ├── MemoSaveResponseDto.java              │   ├── MemoRepository.java
+│   │   ├── MemoUpdateRequestDto.java             │   ├── UserMemoBatchRepository.java
+│   │   └── MemoUpdateStarRequestDto.java         │   ├── UserMemoRepository.java
+│   ├── token                                     │   └── UserRepository.java
+│   │   └── TokenDto.java                         ├── response
+│   ├── user                                      │   ├── GlobalExceptionHandler.java
+│   │   ├── UserIdResponseDto.java                │   ├── ResponseCode.java
+│   │   ├── UserLoginRequestDto.java              │   ├── ResponseData.java
+│   │   ├── UserRequestDto.java                   │   ├── exception
+│   │   ├── UserRequestDtos.java                  │   │   ├── CustomException.java
+│   │   ├── UserResponseDto.java                  │   │   ├── Exception400.java
+│   │   ├── UserSignupRequestDto.java             │   │   ├── Exception404.java
+│   │   ├── UserUpdateNameRequestDto.java         │   │   └── Exception500.java
+│   │   └── UserUpdatePwRequestDto.java           │   └── responseitem
+│   └── userandmemo                               │       ├── MessageItem.java
+│       ├── UserAndMemoRequestDto.java            │       └── StatusItem.java
+│       └── UserAndMemoResponseDto.java           ├── service
+├── jwt                                           │   ├── AuthService.java
+│   ├── JwtAccessDeniedHandler.java               │   ├── FriendshipService.java
+│   ├── JwtAuthenticationEntryPoint.java          │   ├── MemoService.java
+│   ├── JwtFilter.java                            │   ├── UserMemoService.java
+│   └── TokenProvider.java                        │   ├── UserService.java
+├── response                                      │   └── impl
+│   ├── GlobalExceptionHandler.java               │       ├── AuthServiceImpl.java
+│   ├── ResponseCode.java                         │       ├── FriendshipServiceImpl.java
+│   ├── ResponseData.java                         │       ├── MemoServiceImpl.java
+│   ├── exception                                 │       ├── UserMemoServiceImpl.java
+│   │   ├── FriendshipBadRequestException.java    │       └── UserServiceImpl.java
+│   │   ├── FriendshipDuplicateException.java     └── util
+│   │   ├── LoginIdDuplicateException.java            ├── SecurityUtil.java
+│   │   ├── MemoSortBadRequestException.java          └── TimeConverter.java
+│   │   ├── NoSuchFriendshipException.java
+│   │   ├── NoSuchMemoException.java
+│   │   ├── NoSuchUserException.java
+│   │   └── UserAndMemoDuplicateException.java
+│   └── responseitem
+│       ├── MessageItem.java
+│       └── StatusItem.java
+├── service
+│   ├── FriendshipService.java
+│   ├── MemoService.java
+│   ├── UserAndMemoService.java
+│   ├── UserService.java
+│   ├── auth
+│   │   ├── AuthService.java
+│   │   └── CustomUserDetailsService.java
+│   └── logic
+│       ├── FriendshipServiceLogic.java
+│       ├── MemoServiceLogic.java
+│       ├── UserAndMemoServiceLogic.java
+│       └── UserServiceLogic.java
+└── util
+    └── SecurityUtil.java
 ```
-</details>
-
-<details>
-  <summary>&nbsp;<strong>After</strong>&nbsp;:&nbsp;Open!</summary>
-  <br>
-
-```
-└── com
-    └── shj
-        └── onlinememospringproject
-            ├── config
-            │   ├── SecurityConfig.java
-            │   └── SwaggerConfig.java
-            ├── controller
-            │   ├── AuthController.java
-            │   ├── FriendshipController.java
-            │   ├── MemoController.java
-            │   ├── TestController.java
-            │   └── UserController.java
-            ├── domain
-            │   ├── Friendship.java
-            │   ├── Memo.java
-            │   ├── User.java
-            │   ├── common
-            │   │   └── BaseEntity.java
-            │   ├── enums
-            │   │   ├── Authority.java
-            │   │   └── FriendshipState.java
-            │   └── mapping
-            │       └── UserMemo.java
-            ├── dto
-            │   ├── AuthDto.java
-            │   ├── FriendshipDto.java
-            │   ├── MemoDto.java
-            │   └── UserDto.java
-            ├── jwt
-            │   ├── CustomUserDetailsService.java
-            │   ├── JwtFilter.java
-            │   ├── TokenProvider.java
-            │   └── handler
-            │       ├── JwtAccessDeniedHandler.java
-            │       ├── JwtAuthenticationEntryPoint.java
-            │       └── JwtExceptionFilter.java
-            ├── repository
-            │   ├── FriendshipBatchRepository.java
-            │   ├── FriendshipRepository.java
-            │   ├── MemoBatchRepository.java
-            │   ├── MemoRepository.java
-            │   ├── UserMemoBatchRepository.java
-            │   ├── UserMemoRepository.java
-            │   └── UserRepository.java
-            ├── response
-            │   ├── GlobalExceptionHandler.java
-            │   ├── ResponseCode.java
-            │   ├── ResponseData.java
-            │   ├── exception
-            │   │   ├── CustomException.java
-            │   │   ├── Exception400.java
-            │   │   ├── Exception404.java
-            │   │   └── Exception500.java
-            │   └── responseitem
-            │       ├── MessageItem.java
-            │       └── StatusItem.java
-            ├── service
-            │   ├── AuthService.java
-            │   ├── FriendshipService.java
-            │   ├── MemoService.java
-            │   ├── UserMemoService.java
-            │   ├── UserService.java
-            │   └── impl
-            │       ├── AuthServiceImpl.java
-            │       ├── FriendshipServiceImpl.java
-            │       ├── MemoServiceImpl.java
-            │       ├── UserMemoServiceImpl.java
-            │       └── UserServiceImpl.java
-            └── util
-                ├── SecurityUtil.java
-                └── TimeConverter.java
-```
-</details>
 
 <br>
