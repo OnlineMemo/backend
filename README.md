@@ -6,7 +6,7 @@
 - <a href="https://github.com/orgs/OnlineMemo/repositories?q=sort%3Aname-asc">FullStack Repo</a>
 
 ### Refactor
-- <a href="https://github.com/OnlineMemo/backend/issues/1">Github Issue</a>
+- <a href="https://github.com/OnlineMemo/backend/pull/2">Github PR</a>
 - <a href="https://github.com/OnlineMemo/backend/tree/223c16c130d15a2cd024f5a1c531ad63239a13b4">Before Code</a>&nbsp;&nbsp;/&nbsp;&nbsp;<a href="https://github.com/OnlineMemo/backend/tree/refactor/onlinememo-v2">After Code</a>
 - <a href="https://github.com/OnlineMemo/frontend-web/tree/refactor/onlinememo-v2">Frontend Refactor</a>
 
