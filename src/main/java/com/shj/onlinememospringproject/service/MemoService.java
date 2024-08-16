@@ -1,16 +1,17 @@
 package com.shj.onlinememospringproject.service;
 
-import com.shj.onlinememospringproject.dto.memo.*;
+import com.shj.onlinememospringproject.domain.Memo;
+import com.shj.onlinememospringproject.dto.MemoDto;
 
 import java.util.List;
 
 public interface MemoService {
+    MemoDto.Response findMemoInfo(Long memoId);
+    List<MemoDto.MemoPageResponse> findMemos(String filter, String search);
+    MemoDto.CreateResponse createMemo(MemoDto.CreateRequest createRequestDto);
+    void updateMemo(Long memoId, MemoDto.UpdateRequest updateRequestDto);
+    void deleteMemo(Long memoId);
 
-    MemoSaveResponseDto saveMemo(Long userId, MemoSaveRequestDto memoSaveRequestDto);  // 신규 메모 생성하고 memo와 userId 반환 기능.
-    MemoResponseDto findById(Long memoId);  // memoId로 검색한 메모 1개 반환 기능.
-    void updateMemo(Long memoId, MemoUpdateRequestDto memoUpdateRequestDto);  // 해당 memoId의 메모 수정 기능.
-    void updateIsStar(Long memoId, MemoUpdateStarRequestDto memoUpdateStarRequestDto);  // 해당 memoId의 즐겨찾기 여부 수정 기능.
-    void deleteMemo(Long userId, Long memoId);  // 해당 memoId의 메모 삭제 기능. 만약 개인메모가 아닐 경우에는 메모를 삭제하지 않고 메모그룹 탈퇴로 처리함.
-
-    List<MemoResponseDto> sortAndsearch(List<MemoResponseDto> memoResponseDtos, String order, String search);  // 메모들 정렬 및 검색 기능.
+    // ========== 유틸성 메소드 ========== //
+    Memo findMemo(Long memoId);
 }

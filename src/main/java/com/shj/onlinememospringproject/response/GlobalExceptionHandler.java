@@ -1,91 +1,63 @@
 package com.shj.onlinememospringproject.response;
 
-import com.shj.onlinememospringproject.response.exception.*;
-import com.shj.onlinememospringproject.response.responseitem.MessageItem;
-import com.shj.onlinememospringproject.response.responseitem.StatusItem;
+import com.shj.onlinememospringproject.response.exception.CustomException;
+import com.shj.onlinememospringproject.response.exception.Exception400;
+import com.shj.onlinememospringproject.response.exception.Exception404;
+import com.shj.onlinememospringproject.response.exception.Exception500;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import javax.naming.AuthenticationException;
+import java.nio.file.AccessDeniedException;
+
 @Slf4j
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class GlobalExceptionHandler {  // 참고로 Filter에서 throw된 에러는 이보다 앞단에 위치하여 잡아내지 못함.
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity handleException(Exception ex) {
-        if (ex.getMessage().equals("For input string: \"anonymousUser\"")) {
-            return ResponseData.toResponseEntity(ResponseCode.anonymousUser_ERROR);
+        if (ex.getMessage() != null && ex.getMessage().equals("Security Context에 인증 정보가 없습니다.")) {
+            return logAndResponse(ResponseCode.anonymousUser_ERROR, ex.getMessage());  // 시큐리티 헤더의 로그인 정보가 없을때 값을 조회하면 발생.
         }
-        log.error(StatusItem.INTERNAL_SERVER_ERROR + " " + MessageItem.INTERNAL_SERVER_ERROR + "\n" + "==> error_messege / " + ex.getMessage());
-        return ResponseData.toResponseEntity(ResponseCode.INTERNAL_SERVER_ERROR);
+        return logAndResponse(ResponseCode.INTERNAL_SERVER_ERROR, ex.getMessage());
     }
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity handleUnauthorizedException(Exception ex) {
-        // log.error(StatusItem.UNAUTHORIZED + " " + MessageItem.UNAUTHORIZED + "\n" + "==> error_messege / " + ex.getMessage());
-        // 401 에러는 딱히 로그의 특징성에서 의미가 없어서, 로그의 가독성을 위해 logback 출력에서 제외시키도록 하겠다.
-        return ResponseData.toResponseEntity(ResponseCode.UNAUTHORIZED_ERROR);
-        // 사실 이건 의미가 없는게, 예외처리권한이 JwtAuthenticationEntryPoint 에게 넘어가기에 크롬콘솔에선 설정한방식대로 출력되지않는다.
-        // 하지만 이는 postman 프로그램 에서 출력받아 확인할 수 있다.
+        return logAndResponse(ResponseCode.UNAUTHORIZED_ERROR, ex.getMessage());
+        // 예외처리권한이 JwtAuthenticationEntryPoint로 넘어가기에 크롬콘솔에선 설정한방식대로 출력되지않지만, 이는 postman 프로그램에서 확인이 가능하기에 명시하였음.
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity handleForbiddenException(Exception ex) {
-        log.error(StatusItem.FORBIDDEN + " " + MessageItem.FORBIDDEN  + "\n" + "==> error_messege / " + ex.getMessage());
-        return ResponseData.toResponseEntity(ResponseCode.FORBIDDEN_ERROR);
-        // 사실 이건 의미가 없는게, 예외처리권한이 JwtAccessDeniedHandler 에게 넘어가기에 크롬콘솔에선 설정한방식대로 출력되지않는다.
-        // 하지만 이는 postman 프로그램 에서 출력받아 확인할 수 있다.
+        return logAndResponse(ResponseCode.FORBIDDEN_ERROR, ex.getMessage());
+        // 예외처리권한이 JwtAccessDeniedHandler로 넘어가기에 크롬콘솔에선 설정한방식대로 출력되지않지만, 이는 postman 프로그램에서 확인이 가능하기에 명시하였음.
     }
 
-    @ExceptionHandler(LoginIdDuplicateException.class)
-    public ResponseEntity handleLoginIdDuplicateException(LoginIdDuplicateException ex) {
-        log.error(ex.getErrorStatus() + " " + ex.getErrorMessage() + "\n" + "==> error_data by duplicate / " + "loginId = " + ex.getLoginId());
-        return ResponseData.toResponseEntity(ResponseCode.DUPLICATE_USER);
+    // ========== 커스텀 예외 처리 ========== //
+
+    // < 400,404,500 Exception >
+    @ExceptionHandler({
+            Exception400.class,
+            Exception404.class,
+            Exception500.class
+    })
+    public ResponseEntity handleCustomException(CustomException ex) {
+        return logAndResponse(ex.getErrorResponseCode(), ex.getMessage());
     }
 
-    @ExceptionHandler(NoSuchUserException.class)
-    public ResponseEntity handleNoSuchUserException(NoSuchUserException ex) {
-        log.error(ex.getErrorStatus() + " " + ex.getErrorMessage() + "\n" + "==> error_data / " + ex.getMessage());
-        return ResponseData.toResponseEntity(ResponseCode.NOT_FOUND_USER);
-    }
+    // ========== 유틸성 메소드 ========== //
 
-    @ExceptionHandler(NoSuchMemoException.class)
-    public ResponseEntity handleNoSuchMemoException(NoSuchMemoException ex) {
-        log.error(ex.getErrorStatus() + " " + ex.getErrorMessage() + "\n" + "==> error_data / " + ex.getMessage());
-        return ResponseData.toResponseEntity(ResponseCode.NOT_FOUND_MEMO);
-    }
+    private ResponseEntity logAndResponse(ResponseCode responseCode, String message) {
+        Integer statusItem = responseCode.getHttpStatus();
+        String messageItem = responseCode.getMessage();
 
-    @ExceptionHandler(MemoSortBadRequestException.class)
-    public ResponseEntity handleMemoSortBadRequestException(MemoSortBadRequestException ex) {
-        log.error(ex.getErrorStatus() + " " + ex.getErrorMessage() + "\n" + "==> error_data / " + "order_string = " + ex.getOrder());
-        return ResponseData.toResponseEntity(ResponseCode.BAD_REQUEST_MEMOSORT);
-    }
+        String prefix = (statusItem == 404) ? "==> error_data / " : "==> error_message / ";  // 404 예외처리인 경우에만, 'error_data'로 출력.
+        message = prefix + message;
 
-    @ExceptionHandler(UserAndMemoDuplicateException.class)
-    public ResponseEntity handleUserAndMemoDuplicateException(UserAndMemoDuplicateException ex) {
-        log.error(ex.getErrorStatus() + " " + ex.getErrorMessage() + "\n" + "==> error_data by duplicate / " + ex.getMessage());
-        return ResponseData.toResponseEntity(ResponseCode.DUPLICATE_USERANDMEMO);
+        log.error(statusItem + " " + messageItem + "\n" + message);
+        return ResponseData.toResponseEntity(responseCode);
     }
-
-    @ExceptionHandler(FriendshipDuplicateException.class)
-    public ResponseEntity handleFriendshipDuplicateException(FriendshipDuplicateException ex) {
-        log.error(ex.getErrorStatus() + " " + ex.getErrorMessage() + "\n" + "==> error_data by duplicate / " + ex.getMessage());
-        return ResponseData.toResponseEntity(ResponseCode.DUPLICATE_FRIENDSHIP);
-    }
-
-    @ExceptionHandler(FriendshipBadRequestException.class)
-    public ResponseEntity handleFriendshipBadRequestException(FriendshipBadRequestException ex) {
-        log.error(ex.getErrorStatus() + " " + ex.getErrorMessage() + "\n" + "==> error_reason / " + ex.getMessage());
-        return ResponseData.toResponseEntity(ResponseCode.BAD_REQUEST_FRIENDSHIP);
-    }
-
-    @ExceptionHandler(NoSuchFriendshipException.class)
-    public ResponseEntity handleNoSuchFriendshipException(NoSuchFriendshipException ex) {
-        log.error(ex.getErrorStatus() + " " + ex.getErrorMessage() + "\n" + "==> error_data / " + ex.getMessage());
-        return ResponseData.toResponseEntity(ResponseCode.NOT_FOUND_FRIENDSHIP);
-    }
-
 }

@@ -9,6 +9,9 @@ import lombok.Getter;
 @Getter
 public enum ResponseCode {
 
+    // Swagger API 응답값 미리보기 용도
+    string(StatusItem.OK, "Swagger API"),
+
     // ===================== //
 
     // User 관련 성공 응답
@@ -19,7 +22,8 @@ public enum ResponseCode {
 
     // User 관련 실패 응답
     NOT_FOUND_USER(StatusItem.NOT_FOUND, MessageItem.NOT_FOUND_USER),
-    DUPLICATE_USER(StatusItem.BAD_REQUEST, MessageItem.DUPLICATE_USER),
+    BAD_REQUEST_USER(StatusItem.BAD_REQUEST, MessageItem.BAD_REQUEST_USER),
+    DUPLICATE_EMAIL(StatusItem.BAD_REQUEST, MessageItem.DUPLICATE_EMAIL),
 
     // ===================== //
 
@@ -32,13 +36,16 @@ public enum ResponseCode {
 
     // Memo 관련 실패 응답
     NOT_FOUND_MEMO(StatusItem.NOT_FOUND, MessageItem.NOT_FOUND_MEMO),
-    BAD_REQUEST_MEMOSORT(StatusItem.BAD_REQUEST, MessageItem.BAD_REQUEST_MEMOSORT),
+    BAD_REQUEST_MEMO(StatusItem.BAD_REQUEST, MessageItem.BAD_REQUEST_MEMO),
 
     // ===================== //
 
-    // UserAndMemo 관련 성공 응답
+    // UserMemo 관련 성공 응답
+    CREATED_USERMEMO(StatusItem.CREATED, MessageItem.CREATED_USERMEMO),
 
-    // UserAndMemo 관련 실패 응답
+    // UserMemo 관련 실패 응답
+    NOT_FOUND_USERMEMO(StatusItem.NOT_FOUND, MessageItem.NOT_FOUND_USERMEMO),
+    BAD_REQUEST_USERMEMO(StatusItem.BAD_REQUEST, MessageItem.BAD_REQUEST_USERMEMO),
     DUPLICATE_USERANDMEMO(StatusItem.BAD_REQUEST, MessageItem.DUPLICATE_USERANDMEMO),
 
     // ===================== //
@@ -52,8 +59,17 @@ public enum ResponseCode {
 
     // Friendship 관련 실패 응답
     NOT_FOUND_FRIENDSHIP(StatusItem.NOT_FOUND, MessageItem.NOT_FOUND_FRIENDSHIP),
-    DUPLICATE_FRIENDSHIP(StatusItem.BAD_REQUEST, MessageItem.DUPLICATE_FRIENDSHIP),
     BAD_REQUEST_FRIENDSHIP(StatusItem.BAD_REQUEST, MessageItem.BAD_REQUEST_FRIENDSHIP),
+
+    // ===================== //
+
+    // Token 성공 응답
+    REISSUE_SUCCESS(StatusItem.OK, MessageItem.REISSUE_SUCCESS),
+
+    // Token 실패 응답
+    TOKEN_EXPIRED(StatusItem.UNAUTHORIZED, MessageItem.TOKEN_EXPIRED),
+    TOKEN_ERROR(StatusItem.UNAUTHORIZED, MessageItem.TOKEN_ERROR),
+    BAD_REQUEST_TOKEN(StatusItem.BAD_REQUEST, MessageItem.BAD_REQUEST_TOKEN),
 
     // ===================== //
 
