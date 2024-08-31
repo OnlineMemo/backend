@@ -39,9 +39,9 @@ public class MessageItem {
     public static final String LOGIN_SUCCESS = "SUCCESS - 로그인 성공";
     public static final String UPDATE_PASSWORD = "SUCCESS - 비밀번호 수정 성공";
     public static final String READ_IS_LOGIN = "SUCCESS - 현재 로그인 여부 조회 성공";
-    public static final String GET_LOGIN = "204 - login api를 get method로 호출하였음";
     public static final String UNAUTHORIZED = "ERROR - Unauthorized 에러";
     public static final String FORBIDDEN = "ERROR - Forbidden 에러";
+    public static final String PREVENT_GET_ERROR = "Status 204 - 리소스 및 리다이렉트 GET호출 에러 방지";
 
     // < Token >
     public static final String REISSUE_SUCCESS = "SUCCESS - JWT Access 토큰 재발급 성공";
