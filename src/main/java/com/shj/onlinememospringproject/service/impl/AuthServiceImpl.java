@@ -65,10 +65,17 @@ public class AuthServiceImpl implements AuthService {
         UsernamePasswordAuthenticationToken authenticationToken = toAuthentication(loginRequestDto.getEmail(), loginRequestDto.getPassword());
         Authentication authentication = managerBuilder.getObject().authenticate(authenticationToken);  // 아이디와 비밀번호가 일치하는지 검증.
 
-        AuthDto.TokenResponse tokenResponseDto = tokenProvider.generateTokenDto(authentication);
         User user = userService.findUser(Long.valueOf(authentication.getName()));
-        user.updateRefreshToken(tokenResponseDto.getRefreshToken());  // DB Refresh Token 업데이트.
+        String refreshToken = user.getRefreshToken();
+        AuthDto.TokenResponse tokenResponseDto;
 
+        if(refreshToken == null || tokenProvider.validateToken(refreshToken) == false) {  // DB에 Refresh Token이 아직 등록되지 않았거나, 만료 또는 잘못된 토큰인 경우
+            tokenResponseDto = tokenProvider.generateTokenDto(authentication);  // Access Token & Refresh Token 모두를 재발급.
+            user.updateRefreshToken(tokenResponseDto.getRefreshToken());  // DB Refresh Token 업데이트.
+        }
+        else {  // DB에 만료되지않은 정상적인 Refresh Token을 갖고있는 경우
+            tokenResponseDto = tokenProvider.generateAccessTokenByRefreshToken(authentication, refreshToken);  // 오직 Access Token 하나만을 재발급.
+        }
         return tokenResponseDto;  // 로그인 성공. JWT 토큰 생성.
     }
 
