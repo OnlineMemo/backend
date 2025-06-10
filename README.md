@@ -1,14 +1,23 @@
-# OnlineMemo - Backend Refactoring
-***&#8594;&nbsp;&nbsp;60x Speed Improvement***
+# OnlineMemo - Backend Refactor
+유저로부터 메모페이지 속도 지연 피드백을 받음.<br>
+성능 측정 결과 문제가 확인되어, Backend 대규모 리팩토링을 진행.<br>
+DB 재설계 · 쿼리 튜닝 · API 다중호출 개선 등 여러 최적화를 수행.
+
+>[ 메모페이지 응답 개선 ]<br>
+◦&nbsp;&nbsp;API 호출 횟수 :&nbsp;&nbsp;91회 &#8594; 2회<br>
+◦&nbsp;&nbsp;쿼리 발생 횟수 :&nbsp;&nbsp;100회 이상 &#8594; 1~2회<br>
+◦&nbsp;&nbsp;페이지 렌더링 속도 :&nbsp;&nbsp;11.27초 &#8594; 0.19초&nbsp;&nbsp;**(60배 ↑, 98% ↑)**
 
 ### Project
-- Detail : <a href="https://github.com/OnlineMemo">README.md</a>
-- All Repo : <a href="https://github.com/orgs/OnlineMemo/repositories?q=sort%3Aname-asc">FullStack Repo</a>
+- 프로젝트 설명 & 아키텍처&nbsp;:&nbsp;&nbsp;<a href="https://github.com/OnlineMemo">README.md</a>
+- 전체 레포지토리&nbsp;:&nbsp;&nbsp;<a href="https://github.com/orgs/OnlineMemo/repositories?q=sort%3Aname-asc">FullStack Repo</a>
 
+<!--
 ### Refactor
 - <a href="https://github.com/OnlineMemo/backend/pull/2">Github PR</a>
 - <a href="https://github.com/OnlineMemo/frontend-web">Frontend Refactor</a>
-<!-- - <a href="https://github.com/OnlineMemo/backend/tree/223c16c130d15a2cd024f5a1c531ad63239a13b4">Before Code</a>&nbsp;&nbsp;/&nbsp;&nbsp;<a href="https://github.com/OnlineMemo/backend/tree/refactor/onlinememo-v2">After Code</a> -->
+- <a href="https://github.com/OnlineMemo/backend/tree/223c16c130d15a2cd024f5a1c531ad63239a13b4">Before Code</a>&nbsp;&nbsp;/&nbsp;&nbsp;<a href="https://github.com/OnlineMemo/backend/tree/refactor/onlinememo-v2">After Code</a>
+-->
 
 <details open>
   <summary><h3>&nbsp;Contents</h3></summary>
@@ -65,7 +74,7 @@
 #### refresh_token 컬럼 추가
 - JWT Access Token만 운용 시, 6시간의 짧은 로그인 유지시간을 가지며 보안에 취약함.
 - Access Token 만료 시, Refresh Token으로 재발급 받아 2주동안 로그인 유지가 가능하며 보안이 강화됨.
-- Access Token&nbsp;&nbsp;&#8594;&nbsp;&nbsp;Access Token + Refresh Token 함께 운용.&nbsp;&nbsp;(FE : Axios Interceptor 적용)
+- Access Token&nbsp;&nbsp;&#8594;&nbsp;&nbsp;Access Token + Refresh Token 동시 운용.&nbsp;&nbsp;(FE : Axios Interceptor 적용)
 
 <br>
 
@@ -73,7 +82,7 @@
 
 ## 📗 API
 
-**<a href="https://github.com/user-attachments/assets/128c819e-2424-487d-aac0-23611d68af1c">Before</a>**|**<a href="https://github.com/user-attachments/assets/4b60a166-ff46-4a0e-a14e-20bb2722273b">After</a>**
+**Before**|**After**
 |:-----:|:-----:|
 <img src="https://github.com/user-attachments/assets/128c819e-2424-487d-aac0-23611d68af1c" width="100%">|<img src="https://github.com/user-attachments/assets/4b60a166-ff46-4a0e-a14e-20bb2722273b" width="100%">
 | -&nbsp;&nbsp;불필요하게 많은 API 호출로 성능 저하 발생<br> -&nbsp;&nbsp;사용자에게 userId가 자주 노출되어 보안성 저하| -&nbsp;&nbsp;RestFul URI 및 API 개수 단축으로 성능 향상<br> -&nbsp;&nbsp;Security Context 정보로 userId를 대체하여 보안성 향상|
@@ -203,7 +212,7 @@ public void batchDelete(List<Memo> memoList) {
 **Before<br>(MemoPage - 30 memos)**|**After<br>(MemoPage - 30 memos)**
 |-----|-----|
 <img src="https://github.com/user-attachments/assets/72d75f87-f0a9-4860-bffc-eba280c949da" width="100%">|<img src="https://github.com/user-attachments/assets/85f2d5a2-574a-4046-82b1-a42c9cfff2c5" width="100%">
-| -&nbsp;&nbsp;FE : 각각의 모든 하위 컴포넌트에서 API 다중 호출<br> -&nbsp;&nbsp;Result&nbsp;:&nbsp;&nbsp;Request = 91번&nbsp;&nbsp;&&nbsp;&nbsp;Finish Time = 11.27s| -&nbsp;&nbsp;FE : 상위 컴포넌트에서 API 호출 후 하위로 props 전달<br>-&nbsp;&nbsp;BE : 전체적인 비즈니스 로직 및 쿼리 개선<br> -&nbsp;&nbsp;Result&nbsp;:&nbsp;&nbsp;Request = 2번&nbsp;&nbsp;&&nbsp;&nbsp;Finish Time = 193ms<br><br> &#8594;&nbsp;&nbsp;불과 30개의 메모임에도, 무려 58.4배의 성능 개선<br> &#8594;&nbsp;&nbsp;Prod 서버 재배포 시, 최소 60배 이상의 속도 향상 예상
+| -&nbsp;&nbsp;FE : 각각의 모든 하위 컴포넌트에서 API 다중 호출<br> -&nbsp;&nbsp;Result&nbsp;:&nbsp;&nbsp;Request = 91회&nbsp;&nbsp;&&nbsp;&nbsp;Finish Time = 11.27s| -&nbsp;&nbsp;FE : 상위 컴포넌트에서 API 호출 후 하위로 props 전달<br>-&nbsp;&nbsp;BE : 전체적인 비즈니스 로직 및 쿼리 개선<br> -&nbsp;&nbsp;Result&nbsp;:&nbsp;&nbsp;Request = 2회&nbsp;&nbsp;&&nbsp;&nbsp;Finish Time = 193ms<br><br> &#8594;&nbsp;&nbsp;불과 30개의 메모임에도, 무려 58.4배의 성능 개선<br> &#8594;&nbsp;&nbsp;Prod 서버 재배포 시, 최소 60배 이상의 속도 향상 예상
 
 <br>
 
