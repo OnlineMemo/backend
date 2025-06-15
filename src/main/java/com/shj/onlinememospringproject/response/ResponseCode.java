@@ -78,6 +78,7 @@ public enum ResponseCode {
     LOGIN_SUCCESS(StatusItem.OK, MessageItem.LOGIN_SUCCESS),
     UPDATE_PASSWORD(StatusItem.NO_CONTENT, MessageItem.UPDATE_PASSWORD),
     LOCK_ACQUIRED(StatusItem.CREATED, MessageItem.LOCK_ACQUIRED),
+    DELETE_LOCK(StatusItem.NO_CONTENT, MessageItem.DELETE_LOCK),
     HEALTHY_SUCCESS(StatusItem.OK, MessageItem.HEALTHY_SUCCESS),
     TEST_SUCCESS(StatusItem.OK, MessageItem.TEST_SUCCESS),
     PREVENT_GET_ERROR(StatusItem.NO_CONTENT, MessageItem.PREVENT_GET_ERROR),

@@ -50,6 +50,7 @@ public class MessageItem {
 
     // < Etc >
     public static final String LOCK_ACQUIRED = "SUCCESS - Lock 획득 성공";
+    public static final String DELETE_LOCK = "SUCCESS - Lock 삭제 성공";
     public static final String HEALTHY_SUCCESS = "SUCCESS - Health check 성공";
     public static final String TEST_SUCCESS = "SUCCESS - Test 성공";  // Test 임시 용도
     public static final String PREVENT_GET_ERROR = "Status 204 - 리소스 및 리다이렉트 GET호출 에러 방지";

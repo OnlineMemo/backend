@@ -57,11 +57,18 @@ public class MemoController {
         return ResponseData.toResponseEntity(ResponseCode.CREATED_MEMO, createResponseDto);
     }
 
-    @PostMapping("/{memoId}/lock-check")
+    @PostMapping("/{memoId}/lock")
     @Operation(summary = "메모 편집모드 Lock 검사/생성 [JWT O]")
     public ResponseEntity<ResponseData> checkEditLock(@PathVariable(value = "memoId") Long memoId) {
         memoService.checkEditLock(memoId);
         return ResponseData.toResponseEntity(ResponseCode.LOCK_ACQUIRED);
+    }
+
+    @DeleteMapping("/{memoId}/lock")
+    @Operation(summary = "메모 편집모드 Lock 삭제 [JWT O]")
+    public ResponseEntity<ResponseData> releaseEditLock(@PathVariable(value = "memoId") Long memoId) {
+        memoService.releaseEditLock(memoId);
+        return ResponseData.toResponseEntity(ResponseCode.DELETE_LOCK);
     }
 
     @PutMapping("/{memoId}")

@@ -106,17 +106,6 @@ public class MemoServiceImpl implements MemoService {
 
     @Transactional
     @Override
-    public void releaseEditLock(Long memoId) {
-        Long loginUserId = SecurityUtil.getCurrentMemberId();
-        userMemoService.checkUserInMemo(loginUserId, memoId);  // 사용자의 메모 접근권한 체킹.
-
-        String lockKey = "memoId:" + memoId;
-        checkOwnLock(lockKey, loginUserId);  // 사용자의 락 접근권한 체킹.
-        redisRepository.unlock(lockKey);
-    }
-
-    @Transactional
-    @Override
     public void checkEditLock(Long memoId) {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
         userMemoService.checkUserInMemo(loginUserId, memoId);  // 사용자의 메모 접근권한 체킹.
@@ -146,6 +135,17 @@ public class MemoServiceImpl implements MemoService {
         else {
             redisRepository.lock(lockKey, lockValue, lockTTL);
         }
+    }
+
+    @Transactional
+    @Override
+    public void releaseEditLock(Long memoId) {
+        Long loginUserId = SecurityUtil.getCurrentMemberId();
+        userMemoService.checkUserInMemo(loginUserId, memoId);  // 사용자의 메모 접근권한 체킹.
+
+        String lockKey = "memoId:" + memoId;
+        checkOwnLock(lockKey, loginUserId);  // 사용자의 락 접근권한 체킹.
+        redisRepository.unlock(lockKey);
     }
 
     // < 'Redis 분산 락 (Lettuce Lock)' 기반의 퍼사드 메소드 >
