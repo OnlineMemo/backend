@@ -7,7 +7,7 @@ import lombok.Getter;
 public abstract class CustomException extends RuntimeException {
 
     private ResponseCode errorResponseCode;
-    private String message;  // CustomException500인 경우에는 null 가능.
+    private String message;  // 409 or 500 예외인 경우에는 null 가능.
 
     public CustomException(ResponseCode errorResponseCode, String message) {
         this.errorResponseCode = errorResponseCode;
