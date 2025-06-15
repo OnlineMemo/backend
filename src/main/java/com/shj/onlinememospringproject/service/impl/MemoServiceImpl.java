@@ -199,11 +199,11 @@ public class MemoServiceImpl implements MemoService {
     // < '낙관적 락 (Optimistic Lock)' 기반의 퍼사드 메소드 >
     @Transactional  // updateMemoFacade()와 updateMemo()를 동일 클래스에 작성해 트랜잭션이 적용되지 않으므로, 퍼사드 메소드에도 트랜잭션 명시가 필요함.
     @Override
-    public void updateMemoFacade(Long memoId, MemoDto.UpdateRequest updateRequestDto) {  // 메모의 제목 or 내용을 수정할 경우에 호출하는 메소드
+    public void updateMemoFacade(Long memoId, MemoDto.UpdateRequest updateRequestDto) {  // 메모의 제목 또는 내용을 수정할 경우에 호출하는 메소드
         try {
             String lockKey = "memoId:" + memoId;
             Long loginUserId = SecurityUtil.getCurrentMemberId();
-            checkOwnLock(lockKey, loginUserId);  // 사용자의 락 접근권한 체킹.
+            checkOwnLock(lockKey, loginUserId);  // 사용자의 락 접근권한 체킹. (메모의 즐겨찾기 수정과는 무관함.)
 
             // 메모 수정 비즈니스 로직
             updateMemo(memoId, updateRequestDto);
@@ -232,17 +232,17 @@ public class MemoServiceImpl implements MemoService {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
         userMemoService.checkUserInMemo(loginUserId, memoId);  // 사용자의 메모 접근권한 체킹.
 
-        // '낙관적 락 (Optimistic Lock)' 기반의 조회 (이는 트랜잭션 종료 후 update 될때 검증됨.)
-        Memo memo = memoRepository.findByIdWithOptimisticLock(memoId).orElseThrow(
-                () -> new Exception404.NoSuchMemo(String.format("memoId = %d", memoId)));
-
-        // 메모의 즐겨찾기 여부 수정인 경우
+        // case 1. 메모의 즐겨찾기 여부 수정인 경우
         if(updateRequestDto.getIsStar() != null) {
             memoRepository.updateIsStar(memoId, updateRequestDto.getIsStar());
             return;  // 바로 함수 종료.
         }
 
-        // 즐겨찾기 수정이 아닌, 메모의 제목과 내용 수정인 경우
+        // '낙관적 락 (Optimistic Lock)' 기반의 조회 (이는 트랜잭션 종료 후 update 될때 검증됨.)
+        Memo memo = memoRepository.findByIdWithOptimisticLock(memoId).orElseThrow(
+                () -> new Exception404.NoSuchMemo(String.format("memoId = %d", memoId)));
+
+        // case 2. 즐겨찾기 수정이 아닌, 메모의 제목과 내용 수정인 경우
         memo.updateTitle(updateRequestDto.getTitle());
         memo.updateContent(updateRequestDto.getContent());
     }

@@ -78,7 +78,8 @@ public class MemoController {
                     - isStar 필드 : null 허용 (제목/내용 수정인 경우에만)
                     """)
     public ResponseEntity<ResponseData> updateMemo(@PathVariable(value = "memoId") Long memoId, @RequestBody MemoDto.UpdateRequest updateRequestDto) {
-        memoService.updateMemoFacade(memoId, updateRequestDto);
+        if(updateRequestDto.getIsStar() != null) memoService.updateMemo(memoId, updateRequestDto);  // Lock은 메모의 즐겨찾기 수정과는 무관하므로, 퍼사드 메소드 호출 X.
+        else memoService.updateMemoFacade(memoId, updateRequestDto);  // 퍼사드 메소드 호출 O.
         return ResponseData.toResponseEntity(ResponseCode.UPDATE_MEMO);
     }
 
