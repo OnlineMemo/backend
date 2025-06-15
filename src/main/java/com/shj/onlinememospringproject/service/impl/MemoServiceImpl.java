@@ -5,20 +5,24 @@ import com.shj.onlinememospringproject.domain.User;
 import com.shj.onlinememospringproject.domain.mapping.UserMemo;
 import com.shj.onlinememospringproject.dto.MemoDto;
 import com.shj.onlinememospringproject.repository.MemoRepository;
+import com.shj.onlinememospringproject.repository.RedisRepository;
 import com.shj.onlinememospringproject.repository.UserMemoRepository;
 import com.shj.onlinememospringproject.repository.UserRepository;
 import com.shj.onlinememospringproject.response.exception.Exception400;
 import com.shj.onlinememospringproject.response.exception.Exception404;
+import com.shj.onlinememospringproject.response.exception.Exception423;
 import com.shj.onlinememospringproject.service.MemoService;
 import com.shj.onlinememospringproject.service.UserMemoService;
 import com.shj.onlinememospringproject.service.UserService;
 import com.shj.onlinememospringproject.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.StringTokenizer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -31,6 +35,7 @@ public class MemoServiceImpl implements MemoService {
     private final UserRepository userRepository;
     private final MemoRepository memoRepository;
     private final UserMemoRepository userMemoRepository;
+    private final RedisRepository redisRepository;
 
 
     @Transactional(readOnly = true)
@@ -98,9 +103,88 @@ public class MemoServiceImpl implements MemoService {
 
     @Transactional
     @Override
-    public void updateMemo(Long memoId, MemoDto.UpdateRequest updateRequestDto) {
+    public void tryEditMode(Long memoId) {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
         userMemoService.checkUserInMemo(loginUserId, memoId);  // 사용자의 메모 접근권한 체킹.
+
+        String loginUserNickname = userRepository.findNicknameById(loginUserId);
+        StringBuilder lockValueStb = new StringBuilder();
+        lockValueStb.append("userId:").append(loginUserId).append(",").append("userNickname:").append(loginUserNickname);
+
+        String lockKey = "memoId:" + memoId;
+        String lockValue = lockValueStb.toString();
+        Long lockTTL = 1000L * 60 * 30;  // TTL 30분
+
+        String value = redisRepository.getValue(lockKey);
+        if(value != null) {  // Redis에 해당 메모의 락이 이미 존재한다면
+            Object[] userInfo = parseUserInfo(value);
+            Long lockUserId = (Long) userInfo[0];
+            String lockUserNickname = (String) userInfo[1];
+
+            boolean isOwnLock = (lockUserId != null && lockUserId.equals(loginUserId));
+            if(isOwnLock == true) {  // 존재하는 락이 이미 자신의 것이라면
+                redisRepository.refreshTTL(lockKey, lockTTL);  // 락의 TTL 연장하기
+            }
+            else {
+                throw new Exception423.LockedData(lockUserNickname);
+            }
+        }
+        else {
+            redisRepository.lock(lockKey, lockValue, lockTTL);
+        }
+    }
+
+    @Transactional  // updateMemoFacade()와 updateMemo()를 동일 클래스에 작성해 트랜잭션이 적용되지 않으므로, 퍼사드 메소드에도 트랜잭션 명시가 필요함.
+    @Override
+    public void updateMemoFacade(Long memoId, MemoDto.UpdateRequest updateRequestDto) {
+        Long loginUserId = SecurityUtil.getCurrentMemberId();
+        userMemoService.checkUserInMemo(loginUserId, memoId);  // 사용자의 메모 접근권한 체킹.
+
+        String loginUserNickname = userRepository.findNicknameById(loginUserId);
+        StringBuilder lockValueStb = new StringBuilder();
+        lockValueStb.append("userId:").append(loginUserId).append(",").append("userNickname:").append(loginUserNickname);
+
+        String lockKey = "memoId:" + memoId;
+        String lockValue = lockValueStb.toString();
+        Long lockTTL = 1000L * 5;  // TTL 5초
+
+        String value = redisRepository.getValue(lockKey);
+        if(value != null) {  // Redis에 해당 메모의 락이 이미 존재한다면
+            Object[] userInfo = parseUserInfo(value);
+            Long lockUserId = (Long) userInfo[0];
+            String lockUserNickname = (String) userInfo[1];
+
+            boolean isOwnLock = (lockUserId != null && lockUserId.equals(loginUserId));
+            int retryCnt = 0, limitRetryCnt = 3;
+            if(isOwnLock == false) {  // 존재하는 락이 자신의 것이 아니라면, 지정한 최대횟수까지 재시도.
+                while(!redisRepository.lock(lockKey, lockValue, lockTTL)) {
+                    if(++retryCnt >= limitRetryCnt) {
+                        throw new Exception423.LockedData(lockUserNickname);
+                    }
+
+                    try {
+                        Thread.sleep(200);  // Redis의 부하를 줄이기 위해, Spin Lock 사이사이에 텀을 주어야함.
+                    } catch (InterruptedException iex) {
+                        Thread.currentThread().interrupt();  // 현재 스레드의 인터럽트 상태를 복원.
+                        throw new RuntimeException(iex);
+                    }
+                }
+            }
+        }
+
+        try {
+            updateMemo(memoId, updateRequestDto);
+        } finally {
+            redisRepository.unlock(lockKey);
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Override
+    public void updateMemo(Long memoId, MemoDto.UpdateRequest updateRequestDto) {
+        // 권한 체크는 퍼사드 메소드에서 이미 수행했으므로 생략.
+//        Long loginUserId = SecurityUtil.getCurrentMemberId();
+//        userMemoService.checkUserInMemo(loginUserId, memoId);  // 사용자의 메모 접근권한 체킹.
 
         if(updateRequestDto.getIsStar() != null) {  // 메모의 즐겨찾기 여부 수정인 경우
             memoRepository.updateIsStar(memoId, updateRequestDto.getIsStar());
@@ -161,5 +245,26 @@ public class MemoServiceImpl implements MemoService {
     private static Predicate<Memo> searchMemos(String search) {
         if(search == null) return memo -> true;
         return memo -> memo.getTitle().contains(search) || memo.getContent().contains(search);
+    }
+
+    private static Object[] parseUserInfo(String value) {
+        StringTokenizer typeStt = new StringTokenizer(value, ",");
+        StringTokenizer fieldStt;
+        Long lockUserId = null;
+        String lockUserNickname = null;
+
+        while(typeStt.hasMoreTokens()) {
+            fieldStt = new StringTokenizer(typeStt.nextToken(), ":");
+            String fieldName = fieldStt.nextToken();
+            if(lockUserId == null && fieldName.equals("userId") == true) {
+                lockUserId = Long.valueOf(fieldStt.nextToken());
+            }
+            else if(lockUserNickname == null && fieldName.equals("userNickname") == true) {
+                lockUserNickname = fieldStt.nextToken();
+            }
+            if(lockUserId != null && lockUserNickname != null) break;
+        }
+
+        return new Object[]{ lockUserId, lockUserNickname };
     }
 }
