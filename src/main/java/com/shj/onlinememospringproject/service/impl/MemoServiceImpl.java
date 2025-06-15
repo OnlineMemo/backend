@@ -304,7 +304,8 @@ public class MemoServiceImpl implements MemoService {
 
     private static Predicate<Memo> searchMemos(String search) {
         if(search == null) return memo -> true;
-        return memo -> memo.getTitle().contains(search) || memo.getContent().contains(search);
+        String lowerSearch = search.toLowerCase();
+        return memo -> memo.getTitle().toLowerCase().contains(lowerSearch) || memo.getContent().toLowerCase().contains(lowerSearch);
     }
 
     public void checkOwnLock(String key, Long userId) {  // DI된 redisRepository 의존성 인스턴스 변수를 사용하므로, static으로는 선언하지 않는것이 권장됨.
