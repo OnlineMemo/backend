@@ -10,6 +10,7 @@ import com.shj.onlinememospringproject.repository.UserMemoRepository;
 import com.shj.onlinememospringproject.repository.UserRepository;
 import com.shj.onlinememospringproject.response.exception.Exception400;
 import com.shj.onlinememospringproject.response.exception.Exception404;
+import com.shj.onlinememospringproject.response.exception.Exception409;
 import com.shj.onlinememospringproject.response.exception.Exception423;
 import com.shj.onlinememospringproject.service.MemoService;
 import com.shj.onlinememospringproject.service.UserMemoService;
@@ -19,6 +20,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.Comparator;
 import java.util.List;
@@ -103,7 +106,18 @@ public class MemoServiceImpl implements MemoService {
 
     @Transactional
     @Override
-    public void tryEditMode(Long memoId) {
+    public void releaseEditLock(Long memoId) {
+        Long loginUserId = SecurityUtil.getCurrentMemberId();
+        userMemoService.checkUserInMemo(loginUserId, memoId);  // 사용자의 메모 접근권한 체킹.
+
+        String lockKey = "memoId:" + memoId;
+        checkOwnLock(lockKey, loginUserId);  // 사용자의 락 접근권한 체킹.
+        redisRepository.unlock(lockKey);
+    }
+
+    @Transactional
+    @Override
+    public void checkEditLock(Long memoId) {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
         userMemoService.checkUserInMemo(loginUserId, memoId);  // 사용자의 메모 접근권한 체킹.
 
@@ -113,7 +127,7 @@ public class MemoServiceImpl implements MemoService {
 
         String lockKey = "memoId:" + memoId;
         String lockValue = lockValueStb.toString();
-        Long lockTTL = 1000L * 60 * 30;  // TTL 30분
+        Long lockTTL = 1000L * 60 * 5;  // TTL 5분
 
         String value = redisRepository.getValue(lockKey);
         if(value != null) {  // Redis에 해당 메모의 락이 이미 존재한다면
@@ -125,7 +139,7 @@ public class MemoServiceImpl implements MemoService {
             if(isOwnLock == true) {  // 존재하는 락이 이미 자신의 것이라면
                 redisRepository.refreshTTL(lockKey, lockTTL);  // 락의 TTL 연장하기
             }
-            else {
+            else {  // 다른 사용자(락 주인)가 해당 메모를 수정중인 상황임.
                 throw new Exception423.LockedData(lockUserNickname);
             }
         }
@@ -134,65 +148,101 @@ public class MemoServiceImpl implements MemoService {
         }
     }
 
+    // < 'Redis 분산 락 (Lettuce Lock)' 기반의 퍼사드 메소드 >
+//    // updateMemoFacade()와 updateMemo()를 동일 클래스에 작성해 트랜잭션이 적용되지 않으므로, 퍼사드 메소드에도 트랜잭션 명시가 필요함.
+//    // 단, 이 경우 updateMemo()의 트랜잭션은 '@Transactional(propagation = Propagation.REQUIRES_NEW)' 선언할것.
+//    @Transactional
+//    @Override
+//    public void updateMemoFacade(Long memoId, MemoDto.UpdateRequest updateRequestDto) {
+//        Long loginUserId = SecurityUtil.getCurrentMemberId();
+//        userMemoService.checkUserInMemo(loginUserId, memoId);  // 사용자의 메모 접근권한 체킹.
+//
+//        String loginUserNickname = userRepository.findNicknameById(loginUserId);
+//        StringBuilder lockValueStb = new StringBuilder();
+//        lockValueStb.append("userId:").append(loginUserId).append(",").append("userNickname:").append(loginUserNickname);
+//
+//        String lockKey = "memoId:" + memoId;
+//        String lockValue = lockValueStb.toString();
+//        Long lockTTL = 1000L * 5;  // TTL 5초
+//
+//        String value = redisRepository.getValue(lockKey);
+//        if(value != null) {  // Redis에 해당 메모의 락이 이미 존재한다면
+//            Object[] userInfo = parseUserInfo(value);
+//            Long lockUserId = (Long) userInfo[0];
+//            String lockUserNickname = (String) userInfo[1];
+//
+//            boolean isOwnLock = (lockUserId != null && lockUserId.equals(loginUserId));
+//            int retryCnt = 0, limitRetryCnt = 3;
+//            if(isOwnLock == false) {  // 존재하는 락이 자신의 것이 아니라면, 지정한 최대횟수까지 재시도.
+//                while(!redisRepository.lock(lockKey, lockValue, lockTTL)) {
+//                    if(++retryCnt >= limitRetryCnt) {
+//                        throw new Exception423.LockedData(lockUserNickname);
+//                    }
+//
+//                    try {
+//                        Thread.sleep(200);  // Redis의 부하를 줄이기 위해, Spin Lock 사이사이에 텀을 주어야함.
+//                    } catch (InterruptedException iex) {
+//                        Thread.currentThread().interrupt();  // 현재 스레드의 인터럽트 상태를 복원.
+//                        throw new RuntimeException(iex);
+//                    }
+//                }
+//            }
+//        }
+//
+//        try {
+//            updateMemo(memoId, updateRequestDto);
+//        } finally {
+//            redisRepository.unlock(lockKey);
+//        }
+//    }
+
+    // < '낙관적 락 (Optimistic Lock)' 기반의 퍼사드 메소드 >
     @Transactional  // updateMemoFacade()와 updateMemo()를 동일 클래스에 작성해 트랜잭션이 적용되지 않으므로, 퍼사드 메소드에도 트랜잭션 명시가 필요함.
     @Override
-    public void updateMemoFacade(Long memoId, MemoDto.UpdateRequest updateRequestDto) {
-        Long loginUserId = SecurityUtil.getCurrentMemberId();
-        userMemoService.checkUserInMemo(loginUserId, memoId);  // 사용자의 메모 접근권한 체킹.
-
-        String loginUserNickname = userRepository.findNicknameById(loginUserId);
-        StringBuilder lockValueStb = new StringBuilder();
-        lockValueStb.append("userId:").append(loginUserId).append(",").append("userNickname:").append(loginUserNickname);
-
-        String lockKey = "memoId:" + memoId;
-        String lockValue = lockValueStb.toString();
-        Long lockTTL = 1000L * 5;  // TTL 5초
-
-        String value = redisRepository.getValue(lockKey);
-        if(value != null) {  // Redis에 해당 메모의 락이 이미 존재한다면
-            Object[] userInfo = parseUserInfo(value);
-            Long lockUserId = (Long) userInfo[0];
-            String lockUserNickname = (String) userInfo[1];
-
-            boolean isOwnLock = (lockUserId != null && lockUserId.equals(loginUserId));
-            int retryCnt = 0, limitRetryCnt = 3;
-            if(isOwnLock == false) {  // 존재하는 락이 자신의 것이 아니라면, 지정한 최대횟수까지 재시도.
-                while(!redisRepository.lock(lockKey, lockValue, lockTTL)) {
-                    if(++retryCnt >= limitRetryCnt) {
-                        throw new Exception423.LockedData(lockUserNickname);
-                    }
-
-                    try {
-                        Thread.sleep(200);  // Redis의 부하를 줄이기 위해, Spin Lock 사이사이에 텀을 주어야함.
-                    } catch (InterruptedException iex) {
-                        Thread.currentThread().interrupt();  // 현재 스레드의 인터럽트 상태를 복원.
-                        throw new RuntimeException(iex);
-                    }
-                }
-            }
-        }
-
+    public void updateMemoFacade(Long memoId, MemoDto.UpdateRequest updateRequestDto) {  // 메모의 제목 or 내용을 수정할 경우에 호출하는 메소드
         try {
+            String lockKey = "memoId:" + memoId;
+            Long loginUserId = SecurityUtil.getCurrentMemberId();
+            checkOwnLock(lockKey, loginUserId);  // 사용자의 락 접근권한 체킹.
+
+            // 메모 수정 비즈니스 로직
             updateMemo(memoId, updateRequestDto);
-        } finally {
-            redisRepository.unlock(lockKey);
+
+            // - 현재 구조에서는 updateMemo()가 updateMemoFacade() 메소드의 트랜잭션 범위 안에서 실행되므로,
+            // updateMemo() 종료 시점에는 트랜잭션이 커밋되지 않음. 실제 DB 업데이트 커밋은 updateMemoFacade() 종료 시 발생함.
+            // - 이에 TransactionSynchronizationManager.registerSynchronization()을 사용하면,
+            // 트랜잭션이 성공적으로 커밋된 직후에 afterCommit() 콜백이 실행되게 구성할 수 있음.
+            // 따라서 이 콜백 안에서 Redis 편집락 해제를 수행하게 하면, 메모 수정이 DB에 완전히 반영된 이후에 락 해제가 이뤄지므로 데이터 정합성을 보장할 수 있음.
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    redisRepository.unlock(lockKey);
+                }
+            });
+        } catch (Exception404.NoSuchMemo ex404) {
+            throw ex404;
+        } catch (Exception ex) {
+            throw new Exception409.ConflictData();
         }
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     @Override
     public void updateMemo(Long memoId, MemoDto.UpdateRequest updateRequestDto) {
-        // 권한 체크는 퍼사드 메소드에서 이미 수행했으므로 생략.
-//        Long loginUserId = SecurityUtil.getCurrentMemberId();
-//        userMemoService.checkUserInMemo(loginUserId, memoId);  // 사용자의 메모 접근권한 체킹.
+        Long loginUserId = SecurityUtil.getCurrentMemberId();
+        userMemoService.checkUserInMemo(loginUserId, memoId);  // 사용자의 메모 접근권한 체킹.
 
-        if(updateRequestDto.getIsStar() != null) {  // 메모의 즐겨찾기 여부 수정인 경우
+        // '낙관적 락 (Optimistic Lock)' 기반의 조회 (이는 트랜잭션 종료 후 update 될때 검증됨.)
+        Memo memo = memoRepository.findByIdWithOptimisticLock(memoId).orElseThrow(
+                () -> new Exception404.NoSuchMemo(String.format("memoId = %d", memoId)));
+
+        // 메모의 즐겨찾기 여부 수정인 경우
+        if(updateRequestDto.getIsStar() != null) {
             memoRepository.updateIsStar(memoId, updateRequestDto.getIsStar());
             return;  // 바로 함수 종료.
         }
 
         // 즐겨찾기 수정이 아닌, 메모의 제목과 내용 수정인 경우
-        Memo memo = findMemo(memoId);
         memo.updateTitle(updateRequestDto.getTitle());
         memo.updateContent(updateRequestDto.getContent());
     }
@@ -245,6 +295,13 @@ public class MemoServiceImpl implements MemoService {
     private static Predicate<Memo> searchMemos(String search) {
         if(search == null) return memo -> true;
         return memo -> memo.getTitle().contains(search) || memo.getContent().contains(search);
+    }
+
+    public void checkOwnLock(String key, Long userId) {
+        boolean isOwnLock = redisRepository.checkOwner(key, userId);
+        if(isOwnLock == false) {
+            throw new Exception423.LockedData(String.format("해당 Lock은 사용자(userId = %d)의 소유가 아니거나 존재하지 않습니다.", userId));
+        }
     }
 
     private static Object[] parseUserInfo(String value) {

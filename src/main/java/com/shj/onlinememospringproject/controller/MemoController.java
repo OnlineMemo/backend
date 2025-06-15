@@ -59,8 +59,8 @@ public class MemoController {
 
     @PostMapping("/{memoId}/lock-check")
     @Operation(summary = "메모 편집모드 Lock 검사/생성 [JWT O]")
-    public ResponseEntity<ResponseData> tryEditMode(@PathVariable(value = "memoId") Long memoId) {
-        memoService.tryEditMode(memoId);
+    public ResponseEntity<ResponseData> checkEditLock(@PathVariable(value = "memoId") Long memoId) {
+        memoService.checkEditLock(memoId);
         return ResponseData.toResponseEntity(ResponseCode.LOCK_ACQUIRED);
     }
 

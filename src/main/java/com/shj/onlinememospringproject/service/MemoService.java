@@ -9,7 +9,8 @@ public interface MemoService {
     MemoDto.Response findMemoInfo(Long memoId);
     List<MemoDto.MemoPageResponse> findMemos(String filter, String search);
     MemoDto.CreateResponse createMemo(MemoDto.CreateRequest createRequestDto);
-    void tryEditMode(Long memoId);
+    void releaseEditLock(Long memoId);
+    void checkEditLock(Long memoId);
     void updateMemoFacade(Long memoId, MemoDto.UpdateRequest updateRequestDto);
     void updateMemo(Long memoId, MemoDto.UpdateRequest updateRequestDto);
     void deleteMemo(Long memoId);

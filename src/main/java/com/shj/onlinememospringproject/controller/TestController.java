@@ -27,20 +27,4 @@ public class TestController {
     public ResponseEntity<ResponseData> preventGetError() {
         return ResponseData.toResponseEntity(ResponseCode.PREVENT_GET_ERROR);
     }
-
-
-    // ========== Test 메소드 ========== //
-
-//    private final RedisRepository redisRepository;
-//
-//    @GetMapping("/test")
-//    @Operation(summary = "Test API [JWT X]", description = "<strong>프론트엔드 사용 X</strong>")
-//    public ResponseEntity<ResponseData<String>> getTestResult() {
-//        String result = "Test ResponseStr";
-//
-//        Boolean isLockAcquired = redisRepository.lock("testKey", "testValue", 60000L);
-//        result = (isLockAcquired != null && isLockAcquired == true) ? "true" : "false";
-//
-//        return ResponseData.toResponseEntity(ResponseCode.TEST_SUCCESS, result);
-//    }
 }

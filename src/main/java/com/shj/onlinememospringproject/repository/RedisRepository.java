@@ -22,6 +22,26 @@ public class RedisRepository {
         return redisTemplate.expire(key, Duration.ofMillis(millisecond));
     }
 
+    public boolean checkOwner(String key, Long userId) {  // 본인의 락이 맞는지 검증
+        String value = getValue(key);
+        if(value == null) return false;
+        StringTokenizer typeStt = new StringTokenizer(value, ",");
+        StringTokenizer fieldStt;
+
+        while(typeStt.hasMoreTokens()) {
+            fieldStt = new StringTokenizer(typeStt.nextToken(), ":");
+            if(fieldStt.nextToken().equals("userId") == true) {
+                if(fieldStt.nextToken().equals(userId.toString()) == true) {
+                    return true;
+                }
+                else {
+                    return false;  // 키는 존재하나, 본인의 락이 아님.
+                }
+            }
+        }
+        return false;
+    }
+
     public Boolean lock(String key, String value, long millisecond) {  // 락 획득 & 생성 (성공 여부를 Boolean으로 반환)
         // true : 현재 키가 Redis에 없어서 성공적으로 락을 생성하고, 획득함.
         // false : 이미 해당 키가 Redis에 존재하여 락 획득 실패 (다른 누군가가 이미 락을 잡고 있음)
@@ -35,21 +55,8 @@ public class RedisRepository {
     }
 
     public Boolean unlockOwner(String key, Long userId) {  // 본인의 락 해제
-        String value = getValue(key);
-        if(value == null) return false;
-        StringTokenizer typeStt = new StringTokenizer(value, ",");
-        StringTokenizer fieldStt;
-
-        while(typeStt.hasMoreTokens()) {
-            fieldStt = new StringTokenizer(typeStt.nextToken(), ":");
-            if(fieldStt.nextToken().equals("userId") == true) {
-                if(fieldStt.nextToken().equals(userId.toString()) == true) {
-                    return unlock(key);
-                }
-                else {
-                    return false;  // 키는 존재하나, 본인의 락이 아님.
-                }
-            }
+        if(checkOwner(key, userId) == true) {
+            return unlock(key);
         }
         return false;
     }
