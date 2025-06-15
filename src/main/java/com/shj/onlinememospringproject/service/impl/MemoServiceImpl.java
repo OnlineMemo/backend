@@ -109,6 +109,7 @@ public class MemoServiceImpl implements MemoService {
     public void checkEditLock(Long memoId) {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
         userMemoService.checkUserInMemo(loginUserId, memoId);  // 사용자의 메모 접근권한 체킹.
+        if(!userMemoService.checkGroupMemo(memoId)) return;  // 공동메모 여부 체킹. (개인메모라면 락 제어는 불필요하므로 즉시 종료.)
 
         String loginUserNickname = userRepository.findNicknameById(loginUserId);
         StringBuilder lockValueStb = new StringBuilder();
@@ -142,6 +143,7 @@ public class MemoServiceImpl implements MemoService {
     public void releaseEditLock(Long memoId) {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
         userMemoService.checkUserInMemo(loginUserId, memoId);  // 사용자의 메모 접근권한 체킹.
+        if(!userMemoService.checkGroupMemo(memoId)) return;  // 공동메모 여부 체킹. (개인메모라면 락 제어는 불필요하므로 즉시 종료.)
 
         String lockKey = "memoId:" + memoId;
         checkOwnLock(lockKey, loginUserId);  // 사용자의 락 접근권한 체킹.
@@ -203,7 +205,11 @@ public class MemoServiceImpl implements MemoService {
         try {
             String lockKey = "memoId:" + memoId;
             Long loginUserId = SecurityUtil.getCurrentMemberId();
-            checkOwnLock(lockKey, loginUserId);  // 사용자의 락 접근권한 체킹. (메모의 즐겨찾기 수정과는 무관함.)
+
+            boolean isGroupMemo = userMemoService.checkGroupMemo(memoId);  // 공동메모 여부 체킹. (개인메모라면 락 제어는 불필요하므로 리소스 낭비를 방지하기위함.)
+            if(isGroupMemo == true) {
+                checkOwnLock(lockKey, loginUserId);  // 사용자의 락 접근권한 체킹. (메모의 즐겨찾기 수정과는 무관함.)
+            }
 
             // 메모 수정 비즈니스 로직
             updateMemo(memoId, updateRequestDto);
@@ -216,11 +222,15 @@ public class MemoServiceImpl implements MemoService {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
                 @Override
                 public void afterCommit() {
-                    redisRepository.unlock(lockKey);
+                    if(isGroupMemo == true) {
+                        redisRepository.unlock(lockKey);
+                    }
                 }
             });
         } catch (Exception404.NoSuchMemo ex404) {
             throw ex404;
+        } catch (Exception423.LockedData ex423) {
+            throw ex423;
         } catch (Exception ex) {
             throw new Exception409.ConflictData();
         }
@@ -297,10 +307,10 @@ public class MemoServiceImpl implements MemoService {
         return memo -> memo.getTitle().contains(search) || memo.getContent().contains(search);
     }
 
-    public void checkOwnLock(String key, Long userId) {
+    public void checkOwnLock(String key, Long userId) {  // DI된 redisRepository 의존성 인스턴스 변수를 사용하므로, static으로는 선언하지 않는것이 권장됨.
         boolean isOwnLock = redisRepository.checkOwner(key, userId);
         if(isOwnLock == false) {
-            throw new Exception423.LockedData(String.format("해당 Lock은 사용자(userId = %d)의 소유가 아니거나 존재하지 않습니다.", userId));
+            throw new Exception423.LockedData(String.format("해당 데이터의 Lock은 사용자(userId=%d)의 소유가 아니거나 존재하지 않습니다.", userId));
         }
     }
 

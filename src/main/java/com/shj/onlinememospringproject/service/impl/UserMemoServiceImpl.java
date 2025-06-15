@@ -75,4 +75,12 @@ public class UserMemoServiceImpl implements UserMemoService {
             throw new Exception404.NoSuchUserMemo(String.format("userId = %d, memoId = %d", userId, memoId));
         }
     }
+
+    // 해당 메모가 공동메모인지 체킹하는 메소드
+    @Transactional(readOnly = true)
+    @Override
+    public boolean checkGroupMemo(Long memoId) {
+        boolean isGroupMemo = (userMemoRepository.isGroupMemoByMemoId(memoId) != 0);
+        return isGroupMemo;
+    }
 }
