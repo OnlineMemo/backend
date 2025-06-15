@@ -35,6 +35,9 @@ public class Memo extends BaseEntity implements Serializable {
     @Column(name = "is_star", columnDefinition = "TINYINT(1) default 0", length = 1)
     private Integer isStar;  // isStar 필드는 수정시각에 영향을 주지않도록, @LastModifiedDate 생명주기에서 제외시켜 따로 JPQL로 직접 업데이트함.
 
+    @Version
+    private Long version;  // '낙관적 락(Optimistic Lock)'을 위한 버전 필드
+
     @OneToMany(mappedBy = "memo")  // Memo-UserMemo 양방향매핑 (읽기 전용 필드)
     private Set<UserMemo> userMemoList = new HashSet<>();  // MultipleBagFetchException Fetch Join 에러 해결을 위해, Set으로 선언하고 List로 변환해서 사용함.
 

@@ -1,7 +1,9 @@
 package com.shj.onlinememospringproject.repository;
 
 import com.shj.onlinememospringproject.domain.Memo;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -30,4 +32,9 @@ public interface MemoRepository extends JpaRepository<Memo, Long> {
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Memo m SET m.isStar = :isStar WHERE m.id = :memoId")  // 네이티브쿼리 말고, JPQL로 작성하였음.
     void updateIsStar(@Param("memoId") Long memoId, @Param("isStar") Integer isStar);
+
+    // 낙관적 락 (Optimistic Lock)
+    @Lock(LockModeType.OPTIMISTIC)
+    @Query("SELECT m FROM Memo m WHERE m.id = :memoId")
+    Optional<Memo> findByIdWithOptimisticLock(@Param("memoId") Long memoId);
 }
