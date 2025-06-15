@@ -1,9 +1,6 @@
 package com.shj.onlinememospringproject.response;
 
-import com.shj.onlinememospringproject.response.exception.CustomException;
-import com.shj.onlinememospringproject.response.exception.Exception400;
-import com.shj.onlinememospringproject.response.exception.Exception404;
-import com.shj.onlinememospringproject.response.exception.Exception500;
+import com.shj.onlinememospringproject.response.exception.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -38,10 +35,11 @@ public class GlobalExceptionHandler {  // 참고로 Filter에서 throw된 에러
 
     // ========== 커스텀 예외 처리 ========== //
 
-    // < 400,404,500 Exception >
+    // < 400,404,423,500 Exception >
     @ExceptionHandler({
             Exception400.class,
             Exception404.class,
+            Exception423.class,
             Exception500.class
     })
     public ResponseEntity handleCustomException(CustomException ex) {
@@ -54,6 +52,9 @@ public class GlobalExceptionHandler {  // 참고로 Filter에서 throw된 에러
         Integer statusItem = responseCode.getHttpStatus();
         String messageItem = responseCode.getMessage();
 
+        if(statusItem == 423) {
+            return ResponseData.toResponseEntity(responseCode, message);  // 423 예외처리인 경우, message는 Lock의 정보를 가리킴.
+        }
         String prefix = (statusItem == 404) ? "==> error_data / " : "==> error_message / ";  // 404 예외처리인 경우에만, 'error_data'로 출력.
         message = prefix + message;
 
