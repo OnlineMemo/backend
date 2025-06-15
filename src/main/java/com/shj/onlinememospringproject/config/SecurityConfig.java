@@ -65,7 +65,7 @@ public class SecurityConfig {
 
                             // .requestMatchers("/**").permitAll()  // Test 용도
                             .requestMatchers(HttpMethod.POST, "/").denyAll()  // "/"에 대한 POST 요청을 막음. (이처럼 위쪽에 작성해야 정상 적용가능.)
-                            .requestMatchers("/", "/error", "/favicon.ico", "/webjars/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger/**", "/health").permitAll()
+                            .requestMatchers("/", "/error", "/favicon.ico", "/webjars/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger/**", "/health", "/test").permitAll()
                             .requestMatchers("/login", "/signup", "/password", "/reissue").permitAll()
 
                             .anyRequest().hasAnyAuthority("ROLE_USER", "ROLE_ADMIN");  // permit 지정한 경로들 외에는 전부 USER나 ADMIN 권한이 있어야지 URI를 이용 가능함.

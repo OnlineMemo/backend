@@ -24,7 +24,7 @@ public class SwaggerConfig {
 
     @Bean
     public OpenAPI openAPI() {
-        if (serverEnv.equals("prod")) {
+        if(serverEnv.equals("prod")) {
             return null;  // prod 환경일 경우 Swagger 설정을 반환하지 않음. (어차피 현재는 properties에 분리해두어 사용X)
         }
 
