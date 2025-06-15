@@ -57,6 +57,13 @@ public class MemoController {
         return ResponseData.toResponseEntity(ResponseCode.CREATED_MEMO, createResponseDto);
     }
 
+    @PostMapping("/{memoId}/lock-check")
+    @Operation(summary = "메모 편집모드 Lock 검사/생성 [JWT O]")
+    public ResponseEntity<ResponseData> tryEditMode(@PathVariable(value = "memoId") Long memoId) {
+        memoService.tryEditMode(memoId);
+        return ResponseData.toResponseEntity(ResponseCode.LOCK_ACQUIRED);
+    }
+
     @PutMapping("/{memoId}")
     @Operation(summary = "메모 제목/내용/즐겨찾기 수정 [JWT O]",
             description = """
@@ -64,7 +71,7 @@ public class MemoController {
                     - isStar 필드 : null 허용 (제목/내용 수정인 경우에만)
                     """)
     public ResponseEntity<ResponseData> updateMemo(@PathVariable(value = "memoId") Long memoId, @RequestBody MemoDto.UpdateRequest updateRequestDto) {
-        memoService.updateMemo(memoId, updateRequestDto);
+        memoService.updateMemoFacade(memoId, updateRequestDto);
         return ResponseData.toResponseEntity(ResponseCode.UPDATE_MEMO);
     }
 
