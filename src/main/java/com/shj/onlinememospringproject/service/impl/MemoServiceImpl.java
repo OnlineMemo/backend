@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MemoServiceImpl implements MemoService {
 
+    private static final long EDIT_LOCK_EXPIRE_TIME = 1000L * 60 * 8;  // Redis 편집락 TTL : 8분
     private final UserService userService;
     private final UserMemoService userMemoService;
     private final UserRepository userRepository;
@@ -117,7 +118,7 @@ public class MemoServiceImpl implements MemoService {
 
         String lockKey = "memoId:" + memoId;
         String lockValue = lockValueStb.toString();
-        Long lockTTL = 1000L * 60 * 5;  // TTL 5분
+        long lockTTL = EDIT_LOCK_EXPIRE_TIME;
 
         String value = redisRepository.getValue(lockKey);
         if(value != null) {  // Redis에 해당 메모의 락이 이미 존재한다면
