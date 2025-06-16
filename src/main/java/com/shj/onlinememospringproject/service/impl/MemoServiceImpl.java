@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.Comparator;
@@ -33,13 +33,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MemoServiceImpl implements MemoService {
 
-    private static final long EDIT_LOCK_EXPIRE_TIME = 1000L * 60 * 8;  // Redis 편집락 TTL : 8분
     private final UserService userService;
     private final UserMemoService userMemoService;
     private final UserRepository userRepository;
     private final MemoRepository memoRepository;
     private final UserMemoRepository userMemoRepository;
     private final RedisRepository redisRepository;
+    private static final long EDIT_LOCK_EXPIRE_TIME = 1000L * 60 * 8;  // Redis 편집락 TTL : 8분
 
 
     @Transactional(readOnly = true)
@@ -147,8 +147,7 @@ public class MemoServiceImpl implements MemoService {
         if(!userMemoService.checkGroupMemo(memoId)) return;  // 공동메모 여부 체킹. (개인메모라면 락 제어는 불필요하므로 즉시 종료.)
 
         String lockKey = "memoId:" + memoId;
-        checkOwnLock(lockKey, loginUserId);  // 사용자의 락 접근권한 체킹.
-        redisRepository.unlock(lockKey);
+        redisRepository.unlockOwner(lockKey, loginUserId);
     }
 
     // < 'Redis 분산 락 (Lettuce Lock)' 기반의 퍼사드 메소드 >
@@ -209,7 +208,8 @@ public class MemoServiceImpl implements MemoService {
 
             boolean isGroupMemo = userMemoService.checkGroupMemo(memoId);  // 공동메모 여부 체킹. (개인메모라면 락 제어는 불필요하므로 리소스 낭비를 방지하기위함.)
             if(isGroupMemo == true) {
-                checkOwnLock(lockKey, loginUserId);  // 사용자의 락 접근권한 체킹. (메모의 즐겨찾기 수정과는 무관함.)
+                // 공동메모를 수정중인 다른 사용자가 없다면(키가 존재하지않을때), 굳이 수정을 막을 필요가 없으므로 파라미터에 false를 전달.
+                checkOwnLock(lockKey, loginUserId, false);  // 사용자의 락 접근권한 체킹. (메모의 즐겨찾기 수정과는 무관함.)
             }
 
             // 메모 수정 비즈니스 로직
@@ -220,11 +220,11 @@ public class MemoServiceImpl implements MemoService {
             // - 이에 TransactionSynchronizationManager.registerSynchronization()을 사용하면,
             // 트랜잭션이 성공적으로 커밋된 직후에 afterCommit() 콜백이 실행되게 구성할 수 있음.
             // 따라서 이 콜백 안에서 Redis 편집락 해제를 수행하게 하면, 메모 수정이 DB에 완전히 반영된 이후에 락 해제가 이뤄지므로 데이터 정합성을 보장할 수 있음.
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
                     if(isGroupMemo == true) {
-                        redisRepository.unlock(lockKey);
+                        redisRepository.unlockOwner(lockKey, loginUserId);
                     }
                 }
             });
@@ -317,10 +317,20 @@ public class MemoServiceImpl implements MemoService {
         return memo -> memo.getTitle().toLowerCase().contains(lowerSearch) || memo.getContent().toLowerCase().contains(lowerSearch);
     }
 
-    public void checkOwnLock(String key, Long userId) {  // DI된 redisRepository 의존성 인스턴스 변수를 사용하므로, static으로는 선언하지 않는것이 권장됨.
-        boolean isOwnLock = redisRepository.checkOwner(key, userId);
-        if(isOwnLock == false) {
-            throw new Exception423.LockedData(String.format("해당 데이터의 Lock은 사용자(userId=%d)의 소유가 아니거나 존재하지 않습니다.", userId));
+    public void checkOwnLock(String key, Long userId, boolean isRequiredExistKey) {  // DI된 redisRepository 의존성 인스턴스 변수를 사용하므로, static으로는 선언하지 않는것이 권장됨.
+        // 파라미터 isRequiredExistKey==true인 경우 :
+        //      - Redis에 해당 키가 존재하지않을때 검사 실패.
+        //      - Redis에 해당 키가 존재하나, 본인의 락이 아니라면 검사 실패.
+        // 파라미터 isRequiredExistKey==false인 경우 (굳이 키가 존재하지않아도 괜찮음) :
+        //      - Redis에 해당 키가 존재하나, 본인의 락이 아니라면 검사 실패.
+        Boolean isOwnLock = redisRepository.checkOwner(key, userId);
+        if(isOwnLock == null) {
+            if(isRequiredExistKey == true) {  // 반드시 Redis에 키가 존재해야만 하는가?
+                throw new Exception423.LockedData(String.format("해당 데이터의 Lock은 존재하지 않습니다.", userId));
+            }
+        }
+        else if(isOwnLock == false) {  // && isOwnLock != null
+            throw new Exception423.LockedData(String.format("해당 데이터의 Lock은 사용자(userId=%d)의 소유가 아닙니다.", userId));
         }
     }
 

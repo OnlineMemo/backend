@@ -22,9 +22,12 @@ public class RedisRepository {
         return redisTemplate.expire(key, Duration.ofMillis(millisecond));
     }
 
-    public boolean checkOwner(String key, Long userId) {  // 본인의 락이 맞는지 검증
+    public Boolean checkOwner(String key, Long userId) {  // 본인의 락이 맞는지 검증
+        // true : 키가 존재하고, 본인의 락이 맞음.
+        // false : 키는 존재하나, 본인의 락이 아님.
+        // null : 키가 존재하지 않음.
         String value = getValue(key);
-        if(value == null) return false;
+        if(value == null) return null;
         StringTokenizer typeStt = new StringTokenizer(value, ",");
         StringTokenizer fieldStt;
 
@@ -55,9 +58,15 @@ public class RedisRepository {
     }
 
     public Boolean unlockOwner(String key, Long userId) {  // 본인의 락 해제
-        if(checkOwner(key, userId) == true) {
-            return unlock(key);
+        // true : 본인의 락 해제 성공.
+        // false : 본인의 락 해제 실패.
+        // null : 키가 존재하지 않음.
+        // ==> 즉, 본인의 락이 존재할때만 해제함.
+        Boolean isOwnLock = checkOwner(key, userId);
+        if(isOwnLock == null) return null;
+        else {
+            if(isOwnLock == true) return unlock(key);
+            else return false;
         }
-        return false;
     }
 }
