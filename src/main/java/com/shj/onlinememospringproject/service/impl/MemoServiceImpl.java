@@ -276,9 +276,15 @@ public class MemoServiceImpl implements MemoService {
         if(memoHasUsersCount == 1) {  // 해당 메모가 개인메모라면
             memoRepository.delete(memo);  // 그 이후에 부모 테이블인 Memo에서 해당 메모를 삭제. (이후 부모 테이블인 Memo에서 삭제.)
         }
-        else if(memoHasUsersCount == 2) {  // 공동메모인데, 그룹 탈퇴로 메모의 사용자가 2명에서 1명으로 개인메모가 될 경우 (즉, 원래 2명이었을 경우)
-            // 즐겨찾기 여부를 다시 0으로 초기화.
-            memoRepository.updateIsStar(memoId, 0);  // isStar 필드는 수정시각에 영향을 주지않도록, @LastModifiedDate 생명주기에서 제외시켜 따로 JPQL로 직접 업데이트함.
+        else {  // 해당 메모가 공동메모라면
+            if(memoHasUsersCount == 2) {  // 공동메모인데, 그룹 탈퇴로 메모의 사용자가 2명에서 1명으로 개인메모가 될 경우 (즉, 원래 2명이었을 경우)
+                // 즐겨찾기 여부를 다시 0으로 초기화.
+                memoRepository.updateIsStar(memoId, 0);  // isStar 필드는 수정시각에 영향을 주지않도록, @LastModifiedDate 생명주기에서 제외시켜 따로 JPQL로 직접 업데이트함.
+            }
+
+            // 공동메모였을 경우, Redis 내 본인의 편집락 삭제 처리.
+            String lockKey = "memoId:" + memoId;
+            redisRepository.unlockOwner(lockKey, loginUserId);
         }
     }
 
