@@ -24,12 +24,10 @@ import java.util.concurrent.Executors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-public class LockServiceTest {
+public class MemoFacadeTest {
 
     @Autowired
     private MemoFacade memoFacade;
-//    @Autowired
-//    private MemoService memoService;
     @Autowired
     private UserRepository userRepository;
     @Autowired
@@ -59,36 +57,7 @@ public class LockServiceTest {
     }
 
 
-//    @Test
-//    @DisplayName("메모 수정 동시요청_Test")
-//    public void updateMemoFacade_Test() throws InterruptedException {
-//        int requestCnt = 50;  // threadCnt
-//        ExecutorService executorService = Executors.newFixedThreadPool(32);
-//        CountDownLatch latch = new CountDownLatch(requestCnt);
-//
-//        Long memoId = 1L;
-//        for(int i=0; i<requestCnt; i++) {
-//            MemoDto.UpdateRequest updateRequestDto = MemoDto.UpdateRequest.builder()
-//                    .title("testTitle" + requestCnt)
-//                    .content("testContent" + requestCnt)
-//                    .isStar(null)
-//                    .build();
-//            final Long userId = (long) ((i % 5) + 1);  // 1~5번 유저 순환
-//
-//            executorService.submit(() -> {
-//                try {
-//                    memoService.updateMemoFacade(memoId, updateRequestDto, userId);
-//                } finally {
-//                    latch.countDown();  // latch 카운트 감소
-//                }
-//            });
-//        }
-//        latch.await();  // latch 카운트가 0이 될때까지 대기.
-//
-//        assertThat(true).isEqualTo(true);  // 실제값, 기댓값
-//    }
-
-    @Test
+    // @Test
     @DisplayName("동시 수정 Test - 낙관적 락 충돌 감지 확인")
     public void updateMemoFacade_Test() throws InterruptedException {
         int threadCnt = 5;  // requestCnt
@@ -128,11 +97,11 @@ public class LockServiceTest {
 
         // 검증 - 낙관적 락 예외가 최소 1번이라도 발생했는가?
         assertThat(exception409List.size() > 0)
-                .as("(1)검증 실패 - 낙관적 락 충돌이 발생하지 않았습니다.")
+                .as("(1)검증 실패 - 낙관적 락 충돌이 감지되지 않았습니다.")
                 .isTrue();  // 실제값, 기댓값
         // 검증 - 기타 예외는 발생하지 않았는가?
         assertThat(exceptionOtherList.size() == 0)
-                .as("(2)검증 실패 - 예상 외의 예외가 발생했습니다.")
+                .as("(2)검증 실패 - 의도 외의 예외가 발생했습니다.")
                 .isTrue();  // 실제값, 기댓값
     }
 
