@@ -25,8 +25,10 @@ public class MemoDto {
         private List<Long> userIdList;  // 함께 공동메모를 생성할 사용자들 userId 리스트. null 허용. (null일 경우, 개인메모)
     }
 
+    @Builder
     @Getter
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class UpdateRequest {
 
         private String title;

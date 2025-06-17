@@ -3,6 +3,7 @@ package com.shj.onlinememospringproject.controller;
 import com.shj.onlinememospringproject.dto.MemoDto;
 import com.shj.onlinememospringproject.response.ResponseCode;
 import com.shj.onlinememospringproject.response.ResponseData;
+import com.shj.onlinememospringproject.service.MemoFacade;
 import com.shj.onlinememospringproject.service.MemoService;
 import com.shj.onlinememospringproject.service.UserMemoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,6 +20,7 @@ import java.util.List;
 @RequestMapping("/memos")
 public class MemoController {
 
+    private final MemoFacade memoFacade;
     private final MemoService memoService;
     private final UserMemoService userMemoService;
 
@@ -58,7 +60,7 @@ public class MemoController {
     }
 
     @PostMapping("/{memoId}/lock")
-    @Operation(summary = "메모 편집모드 Lock 검사/생성 [JWT O]", description = "!!! 프론트엔드 : <strong>공동 메모</strong>인 경우에만 호출할 것 !!!<br>(비록 백엔드에서 한 번 더 검증하지만, 불필요한 API 호출은 리소스 낭비로 이어지므로 지양해야함.)")
+    @Operation(summary = "메모 편집모드 Lock 검사/생성/연장 [JWT O]", description = "!!! 프론트엔드 : <strong>공동 메모</strong>인 경우에만 호출할 것 !!!<br>(비록 백엔드에서 한 번 더 검증하지만, 불필요한 API 호출은 리소스 낭비로 이어지므로 지양해야함.)")
     public ResponseEntity<ResponseData> checkEditLock(@PathVariable(value = "memoId") Long memoId) {
         memoService.checkEditLock(memoId);
         return ResponseData.toResponseEntity(ResponseCode.LOCK_ACQUIRED);
@@ -78,8 +80,8 @@ public class MemoController {
                     - isStar 필드 : null 허용 (제목/내용 수정인 경우에만)
                     """)
     public ResponseEntity<ResponseData> updateMemo(@PathVariable(value = "memoId") Long memoId, @RequestBody MemoDto.UpdateRequest updateRequestDto) {
-        if(updateRequestDto.getIsStar() != null) memoService.updateMemo(memoId, updateRequestDto);  // Lock은 메모의 즐겨찾기 수정과는 무관하므로, 퍼사드 메소드 호출 X.
-        else memoService.updateMemoFacade(memoId, updateRequestDto);  // 퍼사드 메소드 호출 O.
+        if(updateRequestDto.getIsStar() != null) memoService.updateMemo(memoId, updateRequestDto);  // Lock 제어는 메모의 즐겨찾기 수정과는 무관하므로, 퍼사드 메소드 호출 X.
+        else memoFacade.updateMemoFacade(memoId, updateRequestDto);  // 퍼사드 메소드 호출 O.
         return ResponseData.toResponseEntity(ResponseCode.UPDATE_MEMO);
     }
 

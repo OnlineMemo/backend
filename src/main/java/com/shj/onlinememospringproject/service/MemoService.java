@@ -11,10 +11,10 @@ public interface MemoService {
     MemoDto.CreateResponse createMemo(MemoDto.CreateRequest createRequestDto);
     void checkEditLock(Long memoId);
     void releaseEditLock(Long memoId);
-    void updateMemoFacade(Long memoId, MemoDto.UpdateRequest updateRequestDto);
     void updateMemo(Long memoId, MemoDto.UpdateRequest updateRequestDto);
     void deleteMemo(Long memoId);
 
     // ========== 유틸성 메소드 ========== //
     Memo findMemo(Long memoId);
+    void checkOwnLock(String key, Long userId, boolean isRequiredExistKey);
 }
