@@ -183,7 +183,7 @@ public class MemoServiceImpl implements MemoService {
             // -> Exception409.ConflictData() 재처리 가능
         }
 
-        // - case 2. 즐겨찾기 수정이 아닌, 메모의 제목과 내용 수정인 경우 (2차 검증 - 낙관적 락 기반)
+        // - case 2. 즐겨찾기 수정이 아닌, 메모의 제목과 내용 수정인 경우
         // 2차 검증 : 트랜잭션 커밋 시점에 JPA가 버전 일치 여부로 충돌 판단 (낙관적 락 기반)
         memo.updateTitle(updateRequestDto.getTitle());
         memo.updateContent(updateRequestDto.getContent());
