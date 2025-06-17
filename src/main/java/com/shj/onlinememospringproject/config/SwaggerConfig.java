@@ -53,7 +53,7 @@ public class SwaggerConfig {
         return new Info()
                 .title("OnlineMemo Ver.2 - Swagger API")
                 .description("<a href=\"https://www.onlinememo.kr/\" target=\"blank\">OnlineMemo - Web</a> / <a href=\"https://play.google.com/store/apps/details?id=com.shj.onlinememo\" target=\"blank\">OnlineMemo - App</a>")
-                .version("2.0.0");
+                .version("2.1.0");
     }
 
     private List<Server> apiServer() {
