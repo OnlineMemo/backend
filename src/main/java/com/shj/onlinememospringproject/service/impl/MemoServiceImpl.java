@@ -10,6 +10,7 @@ import com.shj.onlinememospringproject.repository.UserMemoRepository;
 import com.shj.onlinememospringproject.repository.UserRepository;
 import com.shj.onlinememospringproject.response.exception.Exception400;
 import com.shj.onlinememospringproject.response.exception.Exception404;
+import com.shj.onlinememospringproject.response.exception.Exception409;
 import com.shj.onlinememospringproject.response.exception.Exception423;
 import com.shj.onlinememospringproject.service.MemoService;
 import com.shj.onlinememospringproject.service.UserMemoService;
@@ -160,7 +161,7 @@ public class MemoServiceImpl implements MemoService {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
         userMemoService.checkUserInMemo(loginUserId, memoId);  // 사용자의 메모 접근권한 체킹.
 
-        // case 1. 메모의 즐겨찾기 여부 수정인 경우
+        // - case 1. 메모의 즐겨찾기 여부 수정인 경우
         if(updateRequestDto.getIsStar() != null) {
             memoRepository.updateIsStar(memoId, updateRequestDto.getIsStar());
             return;  // 바로 함수 종료.
@@ -170,7 +171,20 @@ public class MemoServiceImpl implements MemoService {
         Memo memo = memoRepository.findByIdWithOptimisticLock(memoId).orElseThrow(
                 () -> new Exception404.NoSuchMemo(String.format("memoId = %d", memoId)));
 
-        // case 2. 즐겨찾기 수정이 아닌, 메모의 제목과 내용 수정인 경우
+        // 1차 검증 : 전달받은 메모의 현재 버전과 DB 조회된 버전이 일치하는지 확인 (수동 필드 기반)
+        Long currentVersion = updateRequestDto.getCurrentVersion();
+        if(currentVersion == null) {
+            throw new Exception400.MemoBadRequest("잘못된 필드값으로 API를 요청하였습니다.");
+        }
+        else if(currentVersion.equals(memo.getVersion()) == false) {  // && currentVersion != null
+            throw new Exception409.ConflictData();
+            // updateMemo 메소드의 Exception409.ConflictData()
+            // -> updateMemoFacade 메소드의 catch(Exception){}
+            // -> Exception409.ConflictData() 재처리 가능
+        }
+
+        // - case 2. 즐겨찾기 수정이 아닌, 메모의 제목과 내용 수정인 경우 (2차 검증 - 낙관적 락 기반)
+        // 2차 검증 : 트랜잭션 커밋 시점에 JPA가 버전 일치 여부로 충돌 판단 (낙관적 락 기반)
         memo.updateTitle(updateRequestDto.getTitle());
         memo.updateContent(updateRequestDto.getContent());
     }

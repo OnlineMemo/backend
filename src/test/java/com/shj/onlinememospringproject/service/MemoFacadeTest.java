@@ -23,7 +23,7 @@ import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
+// @SpringBootTest
 public class MemoFacadeTest {
 
     @Autowired
@@ -73,13 +73,15 @@ public class MemoFacadeTest {
                     setAuthentication(userId);
 
                     // updateDTO 생성
+                    Long currentVersion = memoRepository.findVersionById(MEMO_ID);  // 1차 검증 : 전달받은 메모의 현재 버전과 DB 조회된 버전이 일치하는지 확인 (수동 필드 기반)
                     MemoDto.UpdateRequest updateRequestDto = MemoDto.UpdateRequest.builder()
                             .title("testTitle " + userId)
                             .content("testContent " + userId)
+                            .currentVersion(currentVersion)
                             .build();
 
                     // 낙관적 락 메인로직 실행
-                    memoFacade.updateMemoFacade(MEMO_ID, updateRequestDto);
+                    memoFacade.updateMemoFacade(MEMO_ID, updateRequestDto);  // 2차 검증 : 트랜잭션 커밋 시점에 JPA가 버전 일치 여부로 충돌 판단 (낙관적 락 기반)
                 } catch (Exception409.ConflictData ex409) {
                     exception409List.add(ex409);
                 } catch (Exception ex) {

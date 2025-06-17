@@ -2,6 +2,7 @@ package com.shj.onlinememospringproject.service.impl;
 
 import com.shj.onlinememospringproject.dto.MemoDto;
 import com.shj.onlinememospringproject.repository.RedisRepository;
+import com.shj.onlinememospringproject.response.exception.Exception400;
 import com.shj.onlinememospringproject.response.exception.Exception404;
 import com.shj.onlinememospringproject.response.exception.Exception409;
 import com.shj.onlinememospringproject.response.exception.Exception423;
@@ -41,19 +42,29 @@ public class MemoFacadeImpl implements MemoFacade {
             // 메모 수정 비즈니스 로직
             memoService.updateMemo(memoId, updateRequestDto);
 
-            // - 현재 구조에서는 updateMemo()가 updateMemoFacade() 메소드의 트랜잭션 범위 안에서 실행되므로,
+            // [ After : updateMemo()에 '@Transactional(..REQUIRES_NEW)' 적용 & 클래스 분리 후 ]
+            // - 이 구조에서는 자식 메소드의 트랜잭션이 부모와 분리되어, 자식의 update 쿼리가 DB에 커밋된 이후에야 부모의 다음 코드인 unlockOwner()가 실행됨.
+            // 따라서 이전의 Before 구조와 달리, afterCommit()을 사용해 후속 작업을 제어할 필요가 없음.
+            if(isGroupMemo == true) {
+                redisRepository.unlockOwner(lockKey, loginUserId);
+            }
+
+            // [ Before : updateMemo()에 '@Transactional' 적용 & 클래스 분리 전 ]
+            // - 이 구조에서는 updateMemo()가 updateMemoFacade() 메소드의 트랜잭션 범위 안에서 실행되므로,
             // updateMemo() 종료 시점에는 트랜잭션이 커밋되지 않음. 실제 DB 업데이트 커밋은 updateMemoFacade() 종료 시 발생함.
             // - 이에 TransactionSynchronizationManager.registerSynchronization()을 사용하면,
             // 트랜잭션이 성공적으로 커밋된 직후에 afterCommit() 콜백이 실행되게 구성할 수 있음.
             // 따라서 이 콜백 안에서 Redis 편집락 해제를 수행하게 하면, 메모 수정이 DB에 완전히 반영된 이후에 락 해제가 이뤄지므로 데이터 정합성을 보장할 수 있음.
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    if(isGroupMemo == true) {
-                        redisRepository.unlockOwner(lockKey, loginUserId);
-                    }
-                }
-            });
+//            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+//                @Override
+//                public void afterCommit() {
+//                    if(isGroupMemo == true) {
+//                        redisRepository.unlockOwner(lockKey, loginUserId);
+//                    }
+//                }
+//            });
+        } catch (Exception400.MemoBadRequest ex400) {
+            throw ex400;
         } catch (Exception404.NoSuchMemo ex404) {
             throw ex404;
         } catch (Exception423.LockedData ex423) {
