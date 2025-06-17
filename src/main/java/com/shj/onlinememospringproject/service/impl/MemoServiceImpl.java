@@ -37,7 +37,7 @@ public class MemoServiceImpl implements MemoService {
     private final MemoRepository memoRepository;
     private final UserMemoRepository userMemoRepository;
     private final RedisRepository redisRepository;
-    private static final long EDIT_LOCK_EXPIRE_TIME = 1000L * 60 * 8;  // Redis 편집락 TTL : 8분
+    private static final long EDIT_LOCK_EXPIRE_TIME = 1000L * 60 * 10;  // Redis 편집락 TTL : 10분
 
 
     @Transactional(readOnly = true)
