@@ -49,21 +49,25 @@ public class MemoFacadeTest {
                     .as("404 TEST ERROR - 'USER_ID = %d' 사용자가 DB에 존재해야 합니다.", userId);
         });
 
-        // 메모 내용 초기화
+        // 메모 내용 초기화 (Test 반복 실행 시, 더티 체킹으로 update 쿼리가 누락되는 문제를 방지하기위함.)
         Memo memo = optionalMemo.get();
         memo.updateTitle("testTitle init");
         memo.updateContent("testContent init");
-        memoRepository.flush();
+        memoRepository.saveAndFlush(memo);  // with flush
     }
 
 
     // @Test
-    @DisplayName("동시 수정 Test - 낙관적 락 충돌 감지 확인")
+    @DisplayName("동시수정 Test - 낙관적 락 충돌 감지 확인")
     public void updateMemoFacade_Test() throws InterruptedException {
         int threadCnt = 5;  // requestCnt
         ExecutorService executorService = Executors.newFixedThreadPool(threadCnt);
         CountDownLatch latch = new CountDownLatch(threadCnt);
 
+        // 동시수정 이전의 버전값
+        Long beforeVerion = memoRepository.findVersionById(MEMO_ID);
+
+        // 동시수정 요청
         List<Exception> exception409List = Collections.synchronizedList(new ArrayList<>());
         List<Exception> exceptionOtherList = Collections.synchronizedList(new ArrayList<>());
         for(Long userId : USER_ID_LIST) {
@@ -93,17 +97,24 @@ public class MemoFacadeTest {
         }
         latch.await();  // latch 카운트가 0이 될때까지 대기.
 
+        // 동시수정 이후의 버전값
+        Long afterVerion = memoRepository.findVersionById(MEMO_ID);
+
         // 예외처리 결과 디버깅용
         exception409List.forEach(ex409 -> System.out.println("409 TEST ERROR - 낙관적 락 충돌 발생"));
         exceptionOtherList.forEach(ex -> System.out.println("500 TEST ERROR - " + ex.getMessage()));
 
+        // 검증 - 다수의 동시수정을 요청했음에도 단 1회만 DB에 반영되었는가?
+        assertThat(beforeVerion + 1 == afterVerion)
+                .as("(1)검증 실패 - update 쿼리가 2회 이상 DB에 반영되었습니다.")
+                .isTrue();  // 실제값, 기댓값
         // 검증 - 낙관적 락 예외가 최소 1번이라도 발생했는가?
         assertThat(exception409List.size() > 0)
-                .as("(1)검증 실패 - 낙관적 락 충돌이 감지되지 않았습니다.")
+                .as("(2)검증 실패 - 낙관적 락 충돌이 감지되지 않았습니다.")
                 .isTrue();  // 실제값, 기댓값
         // 검증 - 기타 예외는 발생하지 않았는가?
         assertThat(exceptionOtherList.size() == 0)
-                .as("(2)검증 실패 - 의도 외의 예외가 발생했습니다.")
+                .as("(3)검증 실패 - 의도 외의 예외가 발생했습니다.")
                 .isTrue();  // 실제값, 기댓값
     }
 
