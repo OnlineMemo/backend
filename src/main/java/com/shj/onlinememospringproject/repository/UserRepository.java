@@ -40,6 +40,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u.refreshToken FROM User u WHERE u.id = :userId")
     String findRefreshTokenById(@Param("userId") Long userId);
 
+    // userId로 검색하여 nickname만 가져오는 메소드
+    @Query("SELECT u.nickname FROM User u WHERE u.id = :userId")
+    String findNicknameById(@Param("userId") Long userId);
+
     Optional<User> findByEmail(String email);
     List<User> findByIdIn(List<Long> userIdList);
 }

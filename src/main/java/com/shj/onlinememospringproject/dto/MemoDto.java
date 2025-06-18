@@ -25,13 +25,16 @@ public class MemoDto {
         private List<Long> userIdList;  // 함께 공동메모를 생성할 사용자들 userId 리스트. null 허용. (null일 경우, 개인메모)
     }
 
+    @Builder
     @Getter
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class UpdateRequest {
 
         private String title;
         private String content;
         private Integer isStar;  // null 허용. (null일 경우, 메모 제목과 내용만 수정함을 의미.)
+        private Long currentVersion;  // !!! 수정을 위한 값이 아닌, 수정 이전인 현재의 버전값을 의미. !!!
     }
 
     @Getter
@@ -54,6 +57,7 @@ public class MemoDto {
         private Integer isStar;
         private String modifiedTime;
         private Integer memoHasUsersCount;  // 해당 메모를 가지고 있는 사용자의 수
+        private Long currentVersion;  // 메모의 현재 버전값
 
         public Response(Memo entity) {
             this.memoId = entity.getId();
@@ -62,6 +66,7 @@ public class MemoDto {
             this.isStar = entity.getIsStar();
             this.modifiedTime = TimeConverter.timeToString(entity.getModifiedTime());
             this.memoHasUsersCount = entity.getUserMemoList().size();
+            this.currentVersion = entity.getVersion();
         }
     }
 

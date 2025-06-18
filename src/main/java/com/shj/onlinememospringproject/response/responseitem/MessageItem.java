@@ -41,7 +41,6 @@ public class MessageItem {
     public static final String READ_IS_LOGIN = "SUCCESS - 현재 로그인 여부 조회 성공";
     public static final String UNAUTHORIZED = "ERROR - Unauthorized 에러";
     public static final String FORBIDDEN = "ERROR - Forbidden 에러";
-    public static final String PREVENT_GET_ERROR = "Status 204 - 리소스 및 리다이렉트 GET호출 에러 방지";
 
     // < Token >
     public static final String REISSUE_SUCCESS = "SUCCESS - JWT Access 토큰 재발급 성공";
@@ -50,7 +49,13 @@ public class MessageItem {
     public static final String BAD_REQUEST_TOKEN = "ERROR - 잘못된 토큰 요청 에러";
 
     // < Etc >
+    public static final String LOCK_ACQUIRED = "SUCCESS - Lock 획득 성공";
+    public static final String DELETE_LOCK = "SUCCESS - Lock 삭제 성공";
     public static final String HEALTHY_SUCCESS = "SUCCESS - Health check 성공";
+    public static final String TEST_SUCCESS = "SUCCESS - Test 성공";  // Test 임시 용도
+    public static final String PREVENT_GET_ERROR = "Status 204 - 리소스 및 리다이렉트 GET호출 에러 방지";
     public static final String anonymousUser_ERROR = "ERROR - anonymousUser 에러";
+    public static final String CONFLICT_DATA_ERROR = "ERROR - 데이터 충돌 에러";
+    public static final String LOCKED_DATA_ERROR = "ERROR - 데이터 잠금 에러";
     public static final String INTERNAL_SERVER_ERROR = "ERROR - 서버 내부 에러";
 }

@@ -24,7 +24,7 @@ public class SwaggerConfig {
 
     @Bean
     public OpenAPI openAPI() {
-        if (serverEnv.equals("prod")) {
+        if(serverEnv.equals("prod")) {
             return null;  // prod 환경일 경우 Swagger 설정을 반환하지 않음. (어차피 현재는 properties에 분리해두어 사용X)
         }
 
@@ -53,7 +53,7 @@ public class SwaggerConfig {
         return new Info()
                 .title("OnlineMemo Ver.2 - Swagger API")
                 .description("<a href=\"https://www.onlinememo.kr/\" target=\"blank\">OnlineMemo - Web</a> / <a href=\"https://play.google.com/store/apps/details?id=com.shj.onlinememo\" target=\"blank\">OnlineMemo - App</a>")
-                .version("2.0.0");
+                .version("2.1.0");
     }
 
     private List<Server> apiServer() {

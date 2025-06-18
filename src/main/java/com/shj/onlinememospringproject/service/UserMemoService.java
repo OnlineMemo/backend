@@ -7,4 +7,5 @@ public interface UserMemoService {
 
     // ========== 유틸성 메소드 ========== //
     void checkUserInMemo(Long userId, Long memoId);
+    boolean checkGroupMemo(Long memoId);
 }

@@ -1,9 +1,6 @@
 package com.shj.onlinememospringproject.response;
 
-import com.shj.onlinememospringproject.response.exception.CustomException;
-import com.shj.onlinememospringproject.response.exception.Exception400;
-import com.shj.onlinememospringproject.response.exception.Exception404;
-import com.shj.onlinememospringproject.response.exception.Exception500;
+import com.shj.onlinememospringproject.response.exception.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -38,10 +35,12 @@ public class GlobalExceptionHandler {  // 참고로 Filter에서 throw된 에러
 
     // ========== 커스텀 예외 처리 ========== //
 
-    // < 400,404,500 Exception >
+    // < 400,404,423,500 Exception >
     @ExceptionHandler({
             Exception400.class,
             Exception404.class,
+            Exception409.class,
+            Exception423.class,
             Exception500.class
     })
     public ResponseEntity handleCustomException(CustomException ex) {
@@ -51,13 +50,22 @@ public class GlobalExceptionHandler {  // 참고로 Filter에서 throw된 에러
     // ========== 유틸성 메소드 ========== //
 
     private ResponseEntity logAndResponse(ResponseCode responseCode, String message) {
-        Integer statusItem = responseCode.getHttpStatus();
+        int statusItem = responseCode.getHttpStatus();
         String messageItem = responseCode.getMessage();
 
-        String prefix = (statusItem == 404) ? "==> error_data / " : "==> error_message / ";  // 404 예외처리인 경우에만, 'error_data'로 출력.
-        message = prefix + message;
+        String prefix = (statusItem == 404 || statusItem == 423) ? "==> error_data / " : "==> error_message / ";  // 404 or 423 예외처리인 경우에만, 'error_data'로 출력.
+        StringBuilder logMessageStb = new StringBuilder()
+                .append(statusItem).append(" ").append(messageItem).append("\n")
+                .append(prefix);
 
-        log.error(statusItem + " " + messageItem + "\n" + message);
+        if(statusItem == 423) {
+            logMessageStb.append("Lock user info = ").append(message);
+            log.error(logMessageStb.toString());
+            return ResponseData.toResponseEntity(responseCode, message);  // 423 예외처리인 경우, message는 Lock 사용자의 정보를 가리킴.
+        }
+
+        logMessageStb.append(message);
+        log.error(logMessageStb.toString());
         return ResponseData.toResponseEntity(responseCode);
     }
 }
