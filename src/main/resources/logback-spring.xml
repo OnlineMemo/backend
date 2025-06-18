@@ -46,9 +46,12 @@
 
 
     <springProfile name="local,prod">
-        <logger name="com.shj.onlinememospringproject.response" level="error">
+<!--        <logger name="com.shj.onlinememospringproject.response" level="error">-->
+<!--            <appender-ref ref="CONSOLE" />-->
+<!--        </logger>-->
+        <root level="error">
             <appender-ref ref="CONSOLE" />
-        </logger>
+        </root>
     </springProfile>
 
     <springProfile name="local">
