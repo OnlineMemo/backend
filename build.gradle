@@ -76,30 +76,40 @@ bootJar {
 	doFirst {
 		println "!!! bootJar 시작 !!!"
 
-		println "1. prod 프로필 설정 중..."
+		println "1. properties 파일 존재여부 확인 중..."
 		def defaultFile = file("src/main/resources/application.properties")
 		def prodFile = file("src/main/resources/application-prod.properties")
 		if (!defaultFile.exists()) {
 			println "ERROR : 'application.properties' 파일이 없음"
-			println "❌ prod 프로필 설정 실패"
-			throw new GradleException("❌ 'application.properties' 파일이 없으므로 prod 프로필 설정 실패")
+			println "❌ 빌드 실패"
+			throw new GradleException("❌ 'application.properties' 파일이 없으므로 빌드 실패")
 		}
 		if (!prodFile.exists()) {
 			println "ERROR : 'application-prod.properties' 파일이 없음"
-			println "❌ prod 프로필 설정 실패"
-			throw new GradleException("❌ 'application-prod.properties' 파일이 없으므로 prod 프로필 설정 실패")
+			println "❌ 빌드 실패"
+			throw new GradleException("❌ 'application-prod.properties' 파일이 없으므로 빌드 실패")
 		}
-		defaultFile.text = defaultFile.text.replace(
-				/spring\.profiles\.active=.+/,
-				"spring.profiles.active=prod"
-		)
-		println "✅ prod 프로필 설정 성공"
 
-		println "2. 빌드 진행 중..."
+		println "2. prod 프로필 적용여부 확인 중..."
+		def lines = defaultFile.readLines()
+		def activeLine = lines.find {
+			it.trim().startsWith("spring.profiles.active=")
+		}
+		if (activeLine == null) {
+			println "ERROR : spring.profiles.active=~ 설정이 없음"
+			println "❌ 빌드 실패"
+			throw new GradleException("❌ 'spring.profiles.active=~' 설정이 'application.properties' 파일에 없으므로 빌드 실패")
+		}
+		if (activeLine.trim() != "spring.profiles.active=prod") {
+			println "ERROR : spring.profiles.active=~ 프로필이 prod가 아님"
+			throw new GradleException("❌ 'spring.profiles.active=~' 프로필이 prod가 아니므로 빌드 실패")
+		}
+
+		println "3. 빌드 진행 중..."
 	}
 
 	doLast {
-		println "✅✅ 빌드 성공"
+		println "✅ 빌드 성공"
 		println "!!! bootJar 종료 !!!"
 	}
 }
