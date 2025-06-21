@@ -54,7 +54,7 @@ public class MessageItem {
     public static final String HEALTHY_SUCCESS = "SUCCESS - Health check 성공";
     public static final String TEST_SUCCESS = "SUCCESS - Test 성공";  // Test 임시 용도
     public static final String PREVENT_GET_ERROR = "Status 204 - 리소스 및 리다이렉트 GET호출 에러 방지";
-    public static final String anonymousUser_ERROR = "ERROR - anonymousUser 에러";
+    public static final String ANONYMOUS_USER_ERROR = "ERROR - anonymousUser 에러";
     public static final String CONFLICT_DATA_ERROR = "ERROR - 데이터 충돌 에러";
     public static final String LOCKED_DATA_ERROR = "ERROR - 데이터 잠금 에러";
     public static final String INTERNAL_SERVER_ERROR = "ERROR - 서버 내부 에러";

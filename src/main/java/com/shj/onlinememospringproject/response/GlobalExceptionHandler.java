@@ -3,6 +3,7 @@ package com.shj.onlinememospringproject.response;
 import com.shj.onlinememospringproject.response.exception.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -15,22 +16,28 @@ public class GlobalExceptionHandler {  // 참고로 Filter에서 throw된 에러
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity handleException(Exception ex) {
-        if (ex.getMessage() != null && ex.getMessage().equals("Security Context에 인증 정보가 없습니다.")) {
-            return logAndResponse(ResponseCode.anonymousUser_ERROR, ex.getMessage());  // 시큐리티 헤더의 로그인 정보가 없을때 값을 조회하면 발생.
-        }
-        return logAndResponse(ResponseCode.INTERNAL_SERVER_ERROR, ex.getMessage());
+        String exMessage = (ex.getMessage() != null) ? ex.getMessage() : "null";
+        String exClassName = ex.getClass().getName();
+        StringBuilder exStb = new StringBuilder()
+                .append(exMessage).append(" (").append(exClassName).append(")");
+        return logAndResponse(ResponseCode.INTERNAL_SERVER_ERROR, exStb.toString());
     }
 
-    @ExceptionHandler(AuthenticationException.class)
+    @ExceptionHandler({
+            AuthenticationException.class,
+            BadCredentialsException.class
+    })
     public ResponseEntity handleUnauthorizedException(Exception ex) {
         return logAndResponse(ResponseCode.UNAUTHORIZED_ERROR, ex.getMessage());
-        // 예외처리권한이 JwtAuthenticationEntryPoint로 넘어가기에 크롬콘솔에선 설정한방식대로 출력되지않지만, 이는 postman 프로그램에서 확인이 가능하기에 명시하였음.
+        // 참고로 AuthenticationException 경우에는 예외처리권한이 JwtAuthenticationEntryPoint로 넘어가기에
+        // 크롬콘솔에선 설정한방식대로 출력되지않지만, 이는 postman 프로그램에서 확인이 가능하여 명시하였음.
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity handleForbiddenException(Exception ex) {
         return logAndResponse(ResponseCode.FORBIDDEN_ERROR, ex.getMessage());
-        // 예외처리권한이 JwtAccessDeniedHandler로 넘어가기에 크롬콘솔에선 설정한방식대로 출력되지않지만, 이는 postman 프로그램에서 확인이 가능하기에 명시하였음.
+        // 참고로 AccessDeniedException 경우에는 예외처리권한이 JwtAccessDeniedHandler로 넘어가기에
+        // 크롬콘솔에선 설정한방식대로 출력되지않지만, 이는 postman 프로그램에서 확인이 가능하여 명시하였음.
     }
 
     // ========== 커스텀 예외 처리 ========== //

@@ -2,7 +2,6 @@ package com.shj.onlinememospringproject.jwt;
 
 import com.shj.onlinememospringproject.domain.User;
 import com.shj.onlinememospringproject.repository.UserRepository;
-import com.shj.onlinememospringproject.response.exception.Exception404;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -23,12 +22,13 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Transactional
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String username) {
         // 이 파라미터의 username은 로그인Email을 의미.
 
         return userRepository.findByEmail(username)
                 .map(this::createUserDetails)
-                .orElseThrow(() -> new Exception404.NoSuchUser(String.format("email = %s", username)));
+                .orElseThrow(() -> new UsernameNotFoundException(String.format("email = %s", username)));
+                // !!! 하지만 이는 BadCredentialsException 예외로 다시 변환되어 throw 되므로, 여기서 위의 email 로그는 띄워지지않음 !!!
     }
 
     private UserDetails createUserDetails(User user) {

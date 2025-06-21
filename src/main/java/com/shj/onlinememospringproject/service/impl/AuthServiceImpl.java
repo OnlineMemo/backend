@@ -17,6 +17,7 @@ import com.shj.onlinememospringproject.service.UserService;
 import com.shj.onlinememospringproject.util.SecurityUtil;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
@@ -63,7 +64,12 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthDto.TokenResponse login(AuthDto.LoginRequest loginRequestDto) {
         UsernamePasswordAuthenticationToken authenticationToken = toAuthentication(loginRequestDto.getEmail(), loginRequestDto.getPassword());
-        Authentication authentication = managerBuilder.getObject().authenticate(authenticationToken);  // 아이디와 비밀번호가 일치하는지 검증.
+        Authentication authentication;
+        try {
+            authentication = managerBuilder.getObject().authenticate(authenticationToken);  // 아이디와 비밀번호가 일치하는지 검증.
+        } catch (BadCredentialsException ex) {
+            throw new BadCredentialsException(String.format("email = %s", loginRequestDto.getEmail()), ex);
+        }
 
         User user = userService.findUser(Long.valueOf(authentication.getName()));
         String refreshToken = user.getRefreshToken();

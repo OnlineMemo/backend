@@ -27,4 +27,14 @@ public class TestController {
     public ResponseEntity<ResponseData> preventGetError() {
         return ResponseData.toResponseEntity(ResponseCode.PREVENT_GET_ERROR);
     }
+
+
+    // ========== Test 메소드 ========== //
+
+//    @GetMapping("/test")
+//    @Operation(summary = "Test API [JWT X]")
+//    public ResponseEntity<ResponseData<String>> getTestResult() {
+//        String testResult = "Test ResponseStr";
+//        return ResponseData.toResponseEntity(ResponseCode.TEST_SUCCESS, testResult);
+//    }
 }
