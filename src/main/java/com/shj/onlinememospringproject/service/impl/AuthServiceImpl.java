@@ -139,7 +139,7 @@ public class AuthServiceImpl implements AuthService {
 
         // Refresh Token 유효성 검사
         if(tokenProvider.validateToken(refreshToken) == false) {
-            throw new JwtException("입력한 Refresh Token은 잘못된 토큰입니다.");
+            throw new JwtException("입력한 Refresh Token은 만료되었거나 유효하지 않습니다.");
         }
 
         // Access Token에서 userId 가져오기
@@ -149,7 +149,7 @@ public class AuthServiceImpl implements AuthService {
         // DB의 사용자 Refresh Token 값과, 전달받은 Refresh Token의 불일치 여부 검사
         String dbRefreshToken = userRepository.findRefreshTokenById(userId);
         if(dbRefreshToken == null || !(dbRefreshToken.equals(refreshToken))) {
-            throw new Exception400.TokenBadRequest("Refresh Token = " + refreshToken);
+            throw new Exception400.TokenBadRequest("입력한 Refresh Token은 DB 데이터와 일치하지 않습니다.");
         }
 
         AuthDto.TokenResponse tokenResponseDto = tokenProvider.generateAccessTokenByRefreshToken(authentication, refreshToken);

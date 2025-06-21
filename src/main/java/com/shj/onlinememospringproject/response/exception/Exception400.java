@@ -47,7 +47,7 @@ public class Exception400 extends CustomException {
         }
     }
 
-    public static class TokenBadRequest extends Exception400 {
+    public static class TokenBadRequest extends Exception400 {  // 이는 JwtException 경우와 다르게, JWT 자체는 유효하나 DB에 저장된 토큰과 일치하지 않을때 발생.
         public TokenBadRequest(String message) {
             super(ResponseCode.BAD_REQUEST_TOKEN, message);
         }

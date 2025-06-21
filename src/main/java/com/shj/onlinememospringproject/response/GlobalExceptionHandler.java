@@ -1,6 +1,7 @@
 package com.shj.onlinememospringproject.response;
 
 import com.shj.onlinememospringproject.response.exception.*;
+import io.jsonwebtoken.JwtException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -23,9 +24,14 @@ public class GlobalExceptionHandler {  // 참고로 Filter에서 throw된 에러
         return logAndResponse(ResponseCode.INTERNAL_SERVER_ERROR, exStb.toString());
     }
 
+    @ExceptionHandler(JwtException.class)  // Filter 단계 이후에 JWT 토큰 검증시 (Filter 단계에서는 JwtExceptionFilter가 대신 처리.)
+    public ResponseEntity handleJwtException(Exception ex) {
+        return logAndResponse(ResponseCode.TOKEN_ERROR, ex.getMessage());
+    }
+
     @ExceptionHandler({
             AuthenticationException.class,
-            BadCredentialsException.class
+            BadCredentialsException.class  // 로그인 실패시
     })
     public ResponseEntity handleUnauthorizedException(Exception ex) {
         return logAndResponse(ResponseCode.UNAUTHORIZED_ERROR, ex.getMessage());
