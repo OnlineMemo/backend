@@ -1,4 +1,4 @@
-# OnlineMemo - Backend Refactor
+# OnlineMemo - Backend Refactor (24.08.17)
 유저로부터 메모페이지 속도 지연 피드백을 받음.<br>
 성능 측정 결과 문제가 확인되어, Backend 대규모 리팩토링을 진행.<br>
 DB 재설계 · 쿼리 튜닝 · API 다중호출 개선 등 여러 최적화를 수행.
@@ -11,6 +11,7 @@ DB 재설계 · 쿼리 튜닝 · API 다중호출 개선 등 여러 최적화를
 ### Project
 - 프로젝트 설명 & 아키텍처&nbsp;:&nbsp;&nbsp;<a href="https://github.com/OnlineMemo">README.md</a>
 - 전체 레포지토리&nbsp;:&nbsp;&nbsp;<a href="https://github.com/orgs/OnlineMemo/repositories?q=sort%3Aname-asc">FullStack Repo</a>
+- <strong>OnlineMemo - Backend Refactor (25.06.19)</strong>&nbsp;:&nbsp;&nbsp;<a href="https://github.com/OnlineMemo/backend/pull/5">Click!</a>
 
 <!--
 ### Refactor
