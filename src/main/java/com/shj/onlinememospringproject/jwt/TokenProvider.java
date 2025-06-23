@@ -137,6 +137,17 @@ public class TokenProvider {
         }
     }
 
+    public Boolean checkTokenStatus(String token) {
+        try {
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+            return true;  // 유효한 토큰
+        } catch (ExpiredJwtException e) {
+            return null;  // 만료된 토큰
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;  // 유효하지 않은 토큰
+        }
+    }
+
     public boolean isExpiredToken(String accessToken) {  // 반환결과가 true면 토큰이 만료됨을 의미.
         try {
             Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(accessToken).getBody();

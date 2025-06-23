@@ -137,9 +137,13 @@ public class AuthServiceImpl implements AuthService {
         String accessToken = reissueRequestDto.getAccessToken();
         String refreshToken = reissueRequestDto.getRefreshToken();
 
-        // Refresh Token 유효성 검사
-        if(tokenProvider.validateToken(refreshToken) == false) {
-            throw new JwtException("입력한 Refresh Token은 만료되었거나 유효하지 않습니다.");
+        // Refresh Token 만료 및 유효성 검사
+        Boolean tokenStatus = tokenProvider.checkTokenStatus(refreshToken);
+        if(tokenStatus == null) {
+            throw new JwtException("전달된 Refresh Token은 만료되었습니다.");
+        }
+        else if(tokenStatus == false) {
+            throw new JwtException("전달된 Refresh Token은 유효하지 않습니다.");
         }
 
         // Access Token에서 userId 가져오기
@@ -149,7 +153,7 @@ public class AuthServiceImpl implements AuthService {
         // DB의 사용자 Refresh Token 값과, 전달받은 Refresh Token의 불일치 여부 검사
         String dbRefreshToken = userRepository.findRefreshTokenById(userId);
         if(dbRefreshToken == null || !(dbRefreshToken.equals(refreshToken))) {
-            throw new Exception400.TokenBadRequest("입력한 Refresh Token은 DB 데이터와 일치하지 않습니다.");
+            throw new Exception400.TokenBadRequest("전달된 Refresh Token은 DB 데이터와 일치하지 않습니다.");
         }
 
         AuthDto.TokenResponse tokenResponseDto = tokenProvider.generateAccessTokenByRefreshToken(authentication, refreshToken);
