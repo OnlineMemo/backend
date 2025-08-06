@@ -1,12 +1,16 @@
 # OnlineMemo - Backend Refactor (24.08.17)
+
+#### "대규모 리팩토링 - DB 재설계 · Query 튜닝 · API 다중호출 개선"
 유저로부터 메모페이지 속도 지연 피드백을 받음.<br>
 성능 측정 결과 문제가 확인되어, Backend 대규모 리팩토링을 진행.<br>
-DB 재설계 · 쿼리 튜닝 · API 다중호출 개선 등 여러 최적화를 수행.
+DB 재설계 · 쿼리 튜닝 · API 다중호출 개선 등 여러 최적화를 수행.<br>
+&#8658;&nbsp;&nbsp;서비스 전반에 걸쳐 3400줄의 코드 리팩토링 진행.
 
 >[ 메모페이지 응답 개선 ]<br>
 ◦&nbsp;&nbsp;API 호출 횟수 :&nbsp;&nbsp;91회 &#8594; 2회<br>
 ◦&nbsp;&nbsp;쿼리 발생 횟수 :&nbsp;&nbsp;100회 이상 &#8594; 1~2회<br>
 ◦&nbsp;&nbsp;페이지 렌더링 속도 :&nbsp;&nbsp;11.27초 &#8594; 0.19초&nbsp;&nbsp;**(60배 ↑, 98% ↑)**
+<br>
 
 ### Project
 - 프로젝트 설명 & 아키텍처&nbsp;:&nbsp;&nbsp;<a href="https://github.com/OnlineMemo">README.md</a>
