@@ -48,6 +48,10 @@ public class MessageItem {
     public static final String TOKEN_ERROR = "ERROR - 잘못된 JWT 토큰 에러";
     public static final String BAD_REQUEST_TOKEN = "ERROR - 잘못된 토큰 요청 에러";
 
+    // < Ga4Filtered >
+    public static final String READ_GA4FILTERED = "SUCCESS - GA4지표 조회 성공";
+    public static final String BAD_REQUEST_GA4FILTERED = "ERROR - 잘못된 GA4지표 요청 에러";
+
     // < Etc >
     public static final String LOCK_ACQUIRED = "SUCCESS - Lock 획득 성공";
     public static final String DELETE_LOCK = "SUCCESS - Lock 삭제 성공";

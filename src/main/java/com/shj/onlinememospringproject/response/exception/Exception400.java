@@ -52,4 +52,10 @@ public class Exception400 extends CustomException {
             super(ResponseCode.BAD_REQUEST_TOKEN, message);
         }
     }
+
+    public static class Ga4FilteredBadRequest extends Exception400 {
+        public Ga4FilteredBadRequest(String message) {
+            super(ResponseCode.BAD_REQUEST_GA4FILTERED, message);
+        }
+    }
 }

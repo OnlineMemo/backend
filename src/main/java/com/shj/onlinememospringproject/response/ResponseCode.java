@@ -73,6 +73,14 @@ public enum ResponseCode {
 
     // ===================== //
 
+    // Ga4Filtered 성공 응답
+    READ_GA4FILTERED(StatusItem.OK, MessageItem.READ_GA4FILTERED),
+
+    // Ga4Filtered 실패 응답
+    BAD_REQUEST_GA4FILTERED(StatusItem.BAD_REQUEST, MessageItem.BAD_REQUEST_GA4FILTERED),
+
+    // ===================== //
+
     // 기타 성공 응답
     READ_IS_LOGIN(StatusItem.OK, MessageItem.READ_IS_LOGIN),
     LOGIN_SUCCESS(StatusItem.OK, MessageItem.LOGIN_SUCCESS),
