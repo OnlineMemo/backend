@@ -1,5 +1,6 @@
 package com.shj.onlinememospringproject.domain;
 
+import com.shj.onlinememospringproject.domain.common.BaseCreatedEntity;
 import com.shj.onlinememospringproject.domain.enums.Authority;
 import com.shj.onlinememospringproject.domain.mapping.UserMemo;
 import jakarta.persistence.*;
@@ -18,7 +19,7 @@ import java.util.Set;
 
 @Table(name = "user")
 @Entity
-public class User implements Serializable {
+public class User extends BaseCreatedEntity implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
