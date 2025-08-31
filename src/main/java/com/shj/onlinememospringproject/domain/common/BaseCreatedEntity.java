@@ -12,9 +12,9 @@ import java.time.LocalDateTime;
 @Getter
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
-public class BaseCreatedEntity {
+public abstract class BaseCreatedEntity {
 
     @CreatedDate
-    @Column(name = "created_time", updatable = false)
-    private LocalDateTime createdTime;
+    @Column(name = "created_time")
+    protected LocalDateTime createdTime;
 }
