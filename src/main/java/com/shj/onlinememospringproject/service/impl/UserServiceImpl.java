@@ -35,7 +35,7 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     @Override
     public UserDto.CountResponse countUsers() {
-        long signupUserCount = userRepository.findTopByOrderByIdDesc().orElse(Long.valueOf(0));
+        long signupUserCount = userRepository.findMaxUserId().orElse(0L);
         long remainUserCount = userRepository.count();
         return UserDto.CountResponse.builder()
                 .signupUserCount(signupUserCount)
