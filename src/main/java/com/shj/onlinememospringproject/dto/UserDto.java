@@ -50,5 +50,6 @@ public class UserDto {
 
         private long signupUserCount;  // 총 가입자 수
         private long remainUserCount;  // 탈퇴자 제외 회원 수 (남은 가입자 수)
+        private long withdrawnUserCount;  // 탈퇴한 회원 수
     }
 }

@@ -56,6 +56,22 @@ public class BackOfficeController {
         return ResponseData.toResponseEntity(ResponseCode.READ_GA4FILTERED, calcResponseDtoList);
     }
 
+    @GetMapping("/ga4/statistics")
+    @Operation(summary = "페이지별 이용자 통계 조회 [JWT O]",
+            description = """
+                    <strong>< RequestParam ></strong>
+                    - <strong>startDatetime, endDatetime</strong> : "2025-08-29 23:59:59" 형태의 날짜시각  \n
+                    <strong>< URI ></strong>
+                    - <strong>예시 URI</strong> : /back-office/ga4/statistics?startDatetime=2025-08-01%2015:30:00&endDatetime=2025-08-29%2023:59:59
+                    - <strong>참고 사항</strong> : 중간의 '%20'은 공백을 의미
+                    """)
+    public ResponseEntity<ResponseData<List<Ga4FilteredDto.StatisticResponse>>> calculateStatistic(
+            @RequestParam(value = "startDatetime", required = true) String startDatetime,
+            @RequestParam(value = "endDatetime", required = true) String endDatetime) {
+        List<Ga4FilteredDto.StatisticResponse> statisticResponseDtoList = ga4FilteredService.calculateStatistic(startDatetime, endDatetime);
+        return ResponseData.toResponseEntity(ResponseCode.READ_GA4FILTERED, statisticResponseDtoList);
+    }
+
     @GetMapping("/users/statistics")
     @Operation(summary = "회원 수 통계 조회 [JWT O]")
     public ResponseEntity<ResponseData<UserDto.CountResponse>> countUsers() {

@@ -21,7 +21,7 @@ public class Ga4Filtered {
 
     @Indexed
     @Field("event_datetime")
-    private LocalDateTime eventDatetime;  // MongoDB 저장값: UTC, MongoDB 검색파라미터: UTC, Spring 조회결과: KST
+    private LocalDateTime eventDatetime;  // Spring 저장값: KST, MongoDB 자동 저장값: UTC, MongoDB 검색파라미터: KST, Spring 조회결과: KST
 
     @Field("user_pseudo_id")
     private String userPseudoId;

@@ -40,6 +40,7 @@ public class UserServiceImpl implements UserService {
         return UserDto.CountResponse.builder()
                 .signupUserCount(signupUserCount)
                 .remainUserCount(remainUserCount)
+                .withdrawnUserCount(signupUserCount - remainUserCount)
                 .build();
     }
 

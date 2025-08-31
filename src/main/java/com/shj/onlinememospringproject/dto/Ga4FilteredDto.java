@@ -3,6 +3,8 @@ package com.shj.onlinememospringproject.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.shj.onlinememospringproject.domain.backoffice.Ga4Filtered;
 import com.shj.onlinememospringproject.util.TimeConverter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -97,5 +99,19 @@ public class Ga4FilteredDto {
         private String geo_country;
         private String geo_region;
         private String geo_city;
+    }
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class StatisticResponse {
+
+        private String pagePath;  // 페이지 경로
+        private long uniqueUserCount;  // 실사용자 수
+        private long loginUserCount;  // 로그인 사용자 수
+        private long activeUserCount;  // 활성 사용자 수
+        private long pageViewCount;  // 조회수
+        private long unauthBlockedCount;  // 미인증 접근 차단
     }
 }
