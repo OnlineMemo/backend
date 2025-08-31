@@ -46,11 +46,15 @@ dependencies {
 	implementation 'org.jsoup:jsoup:1.15.3'
 	implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
 
-	// MySQL & Redis
+	// MySQL & Redis & MongoDB
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 
-	// Swagger API
+	// External API Client
+	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+
+	// Swagger API Docs
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.2")
 
 	// JWT
