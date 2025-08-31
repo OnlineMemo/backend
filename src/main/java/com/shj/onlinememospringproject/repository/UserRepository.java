@@ -46,4 +46,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByEmail(String email);
     List<User> findByIdIn(List<Long> userIdList);
+
+    Optional<Long> findTopByOrderByIdDesc();  // 총 가입자 수
+    long count();  // 탈퇴자 제외한 남은 회원 수
 }

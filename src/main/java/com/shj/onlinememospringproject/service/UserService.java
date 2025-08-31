@@ -6,6 +6,7 @@ import com.shj.onlinememospringproject.dto.UserDto;
 public interface UserService {
     UserDto.Response findUserProfile();
     void updateUserProfile(UserDto.UpdateRequest updateRequestDto);
+    UserDto.CountResponse countUsers();
 
     // ========== 유틸성 메소드 ========== //
     User findUser(Long userId);
