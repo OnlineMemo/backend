@@ -1,6 +1,6 @@
 package com.shj.onlinememospringproject.domain;
 
-import com.shj.onlinememospringproject.domain.common.BaseEntity;
+import com.shj.onlinememospringproject.domain.common.BaseModifiedEntity;
 import com.shj.onlinememospringproject.domain.mapping.UserMemo;
 import jakarta.persistence.*;
 import lombok.Builder;
@@ -19,7 +19,7 @@ import java.util.Set;
 
 @Table(name = "memo")
 @Entity
-public class Memo extends BaseEntity implements Serializable {
+public class Memo extends BaseModifiedEntity implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

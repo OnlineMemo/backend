@@ -9,7 +9,7 @@ import java.util.StringTokenizer;
 
 @Repository
 @RequiredArgsConstructor
-public class RedisRepository {
+public class RedisRepository {  // Redis DB
 
     private final RedisTemplate<String, String> redisTemplate;
 

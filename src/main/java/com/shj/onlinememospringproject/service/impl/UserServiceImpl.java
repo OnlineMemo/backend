@@ -32,6 +32,18 @@ public class UserServiceImpl implements UserService {
         user.updateNickName(updateRequestDto.getNickname());
     }
 
+    @Transactional(readOnly = true)
+    @Override
+    public UserDto.CountResponse countUsers() {
+        long signupUserCount = userRepository.findMaxUserId().orElse(0L);
+        long remainUserCount = userRepository.count();
+        return UserDto.CountResponse.builder()
+                .signupUserCount(signupUserCount)
+                .remainUserCount(remainUserCount)
+                .withdrawnUserCount(signupUserCount - remainUserCount)
+                .build();
+    }
+
 
     // ========== 유틸성 메소드 ========== //
 

@@ -21,6 +21,7 @@ public class FriendshipDto {
         private Integer isAccept;  // 거절:0 or 수락:1
     }
 
+
     // ======== < Response DTO > ======== //
 
 }

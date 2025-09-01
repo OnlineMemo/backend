@@ -44,6 +44,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u.nickname FROM User u WHERE u.id = :userId")
     String findNicknameById(@Param("userId") Long userId);
 
+    // 총 가입자 수
+    @Query("SELECT MAX(u.id) FROM User u")
+    Optional<Long> findMaxUserId();
+
+    // 탈퇴자 제외한 남은 회원 수
+    long count();
+
     Optional<User> findByEmail(String email);
     List<User> findByIdIn(List<Long> userIdList);
 }
