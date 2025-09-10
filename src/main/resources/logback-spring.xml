@@ -25,6 +25,20 @@
             <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS, ${logback.timezone:-Asia/Seoul}} / %msg%n---------------------------------------------------------------------------%n%n</pattern>
         </encoder>
     </appender>
+    <appender name="LOCAL-SCHEDULER" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOCAL_LOGS_PATH}/log_scheduler.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOCAL_LOGS_PATH}/store_scheduler/log_scheduler_%d{yyyy-MM-dd, ${logback.timezone:-Asia/Seoul}}_%i.gz</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>30MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>7</maxHistory>
+            <totalSizeCap>300MB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS, ${logback.timezone:-Asia/Seoul}} / %msg%n---------------------------------------------------------------------------%n%n</pattern>
+        </encoder>
+    </appender>
 
     <appender name="CLOUDWATCH-ERROR" class="ca.pjer.logback.AwsLogsAppender">
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
@@ -37,6 +51,23 @@
         <logStreamUuidPrefix>onlinememo-error-log-</logStreamUuidPrefix>
         <logRegion>ap-northeast-2</logRegion>
         <maxBatchLogEvents>50</maxBatchLogEvents>
+        <maxFlushTimeMillis>30000</maxFlushTimeMillis>
+        <maxBlockTimeMillis>5000</maxBlockTimeMillis>
+        <retentionTimeDays>7</retentionTimeDays>
+        <accessKeyId>${AWS_ACCESS_KEY}</accessKeyId>
+        <secretAccessKey>${AWS_SECRET_KEY}</secretAccessKey>
+    </appender>
+    <appender name="CLOUDWATCH-SCHEDULER" class="ca.pjer.logback.AwsLogsAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+        <layout>
+            <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS, ${logback.timezone:-Asia/Seoul}} / %msg</pattern>
+        </layout>
+        <logGroupName>onlinememo/scheduler-log</logGroupName>
+        <logStreamUuidPrefix>onlinememo-scheduler-log-</logStreamUuidPrefix>
+        <logRegion>ap-northeast-2</logRegion>
+        <maxBatchLogEvents>1</maxBatchLogEvents>
         <maxFlushTimeMillis>30000</maxFlushTimeMillis>
         <maxBlockTimeMillis>5000</maxBlockTimeMillis>
         <retentionTimeDays>7</retentionTimeDays>
@@ -58,11 +89,17 @@
         <logger name="com.shj.onlinememospringproject.response" level="error">
             <appender-ref ref="LOCAL-ERROR" />
         </logger>
+        <logger name="com.shj.onlinememospringproject.repository.Ga4FilteredBatchRepository" level="info">
+            <appender-ref ref="LOCAL-SCHEDULER" />
+        </logger>
     </springProfile>
 
     <springProfile name="prod">
         <logger name="com.shj.onlinememospringproject.response" level="error">
             <appender-ref ref="CLOUDWATCH-ERROR" />
+        </logger>
+        <logger name="com.shj.onlinememospringproject.repository.Ga4FilteredBatchRepository" level="info">
+            <appender-ref ref="CLOUDWATCH-SCHEDULER" />
         </logger>
     </springProfile>
 </configuration>
