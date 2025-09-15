@@ -33,6 +33,7 @@ import java.util.List;
 @Component
 public class SecurityConfig {
 
+    private static final String[] SWAGGER_PATHS = {"/v3/api-docs/**", "/swagger-ui/**", "/swagger/**"};
     private final TokenProvider tokenProvider;
     private final ObjectMapper objectMapper;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
@@ -67,7 +68,8 @@ public class SecurityConfig {
                             .requestMatchers(HttpMethod.POST, "/").denyAll()  // "/"에 대한 POST 요청을 막음. (이처럼 위쪽에 작성해야 정상 적용가능.)
 
                             // < All (User, Admin) >
-                            .requestMatchers("/", "/error", "/favicon.ico", "/webjars/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger/**", "/health", "/test").permitAll()
+                            .requestMatchers("/", "/error", "/favicon.ico", "/webjars/**", "/health", "/test").permitAll()
+                            .requestMatchers(serverEnv.equals("prod") ? new String[]{} : SWAGGER_PATHS).permitAll()  // 프로덕션 환경의 경우, Swagger 401 응답 처리함.
                             .requestMatchers("/login", "/signup", "/password", "/reissue").permitAll()
 
                             // < Admin >

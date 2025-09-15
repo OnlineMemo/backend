@@ -19,6 +19,7 @@ public class JwtFilter extends OncePerRequestFilter {  // HTTP 요청을 중간�
 
     public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String BEARER_PREFIX = "Bearer ";
+    private static final String[] EXCLUDE_PATHS = {"/health", "/test", "/reissue", "/login", "/signup", "/password"};
     private final TokenProvider tokenProvider;
 
 
@@ -49,8 +50,7 @@ public class JwtFilter extends OncePerRequestFilter {  // HTTP 요청을 중간�
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-        String[] excludePath = {"/health", "/test", "/reissue", "/login", "/signup", "/password"};
         String path = request.getRequestURI();
-        return Arrays.stream(excludePath).anyMatch(path::startsWith);
+        return Arrays.stream(EXCLUDE_PATHS).anyMatch(path::startsWith);
     }
 }
