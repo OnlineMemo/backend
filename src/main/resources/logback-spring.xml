@@ -3,11 +3,12 @@
     <springProperty name="AWS_ACCESS_KEY" source="cloud.aws.credentials.accessKey"/>
     <springProperty name="AWS_SECRET_KEY" source="cloud.aws.credentials.secretKey"/>
     <property name="LOCAL_LOGS_PATH" value="./logs"/>
+    <property name="LOGS_DIVIDER" value="---------------------------------------------------------------------------"/>
 
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS, ${logback.timezone:-Asia/Seoul}} / %.-160msg%n---------------------------------------------------------------------------%n</pattern>
+            <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS, ${logback.timezone:-Asia/Seoul}} / %msg%n${LOGS_DIVIDER}%n</pattern> <!-- %.-160msg%n${LOGS_DIVIDER}%n -->
         </encoder>
     </appender>
 
@@ -22,7 +23,7 @@
             <totalSizeCap>300MB</totalSizeCap>
         </rollingPolicy>
         <encoder>
-            <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS, ${logback.timezone:-Asia/Seoul}} / %msg%n---------------------------------------------------------------------------%n%n</pattern>
+            <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS, ${logback.timezone:-Asia/Seoul}} / %msg%n${LOGS_DIVIDER}%n%n</pattern>
         </encoder>
     </appender>
     <appender name="LOCAL-SCHEDULER" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -36,7 +37,7 @@
             <totalSizeCap>300MB</totalSizeCap>
         </rollingPolicy>
         <encoder>
-            <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS, ${logback.timezone:-Asia/Seoul}} / %msg%n---------------------------------------------------------------------------%n%n</pattern>
+            <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS, ${logback.timezone:-Asia/Seoul}} / %msg%n${LOGS_DIVIDER}%n%n</pattern>
         </encoder>
     </appender>
 

@@ -10,22 +10,49 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import javax.naming.AuthenticationException;
 import java.nio.file.AccessDeniedException;
+import java.util.regex.Pattern;
 
 @Slf4j
 @RestControllerAdvice
-public class GlobalExceptionHandler {  // 참고로 Filter에서 throw된 에러는 이보다 앞단에 위치하여 잡아내지 못함.
+public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(DispatcherServlet 외부)에 위치해, 여기서 감지 X.
+
+    private static final String PROJECT_PACKAGE = "com.shj.onlinememospringproject";
+    private static final String EXCEPTION_FILTER_CLASSNAME = "JwtExceptionFilter";
+    private static final String CGLIB_STRING = "$$SpringCGLIB$$";
+    private static final Pattern CGLIB_PATTERN = Pattern.compile("\\$\\$SpringCGLIB\\$\\$\\d+");  // CGLIB 프록시 패턴
+
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity handleException(Exception ex) {
+        StringBuilder exStb = new StringBuilder();
+        StringBuilder traceStb = new StringBuilder();
+
+        // [ 예외 정보 로깅 (error_message) ]
         String exMessage = (ex.getMessage() != null) ? ex.getMessage() : "null";
         String exClassName = ex.getClass().getName();
-        StringBuilder exStb = new StringBuilder()
-                .append(exMessage).append(" (").append(exClassName).append(")");
+        exStb.append(exMessage).append(" (").append(exClassName).append(")");
 
-        StackTraceElement exTrace = ex.getStackTrace()[0];  // 500 예외처리인 경우, 발생 지점의 세부위치까지 추가 로깅.
-        exStb.append("\n==> error_trace / ")
-                .append(exTrace.getClassName()).append(".").append(exTrace.getMethodName())
-                .append(" (Line:").append(exTrace.getLineNumber()).append(")");
+        // [ 예외 호출경로 로깅 (error_trace) ]
+        StackTraceElement[] traces = ex.getStackTrace();  // 500 예외처리인 경우, 상세 위치까지 추가로 기록.
+        String traceClassName;
+
+        // Trace 우선순위 1: 내 서비스 코드 발생위치
+        for(StackTraceElement trace : traces) {
+            traceClassName = trace.getClassName();
+
+            if(traceClassName.startsWith(PROJECT_PACKAGE)) {
+                if(traceClassName.contains(EXCEPTION_FILTER_CLASSNAME)) continue;  // 모든 Trace는 필터로 귀결되므로 제외.
+                if(traceClassName.contains(CGLIB_STRING)) continue;  // CGLIB 프록시는 출력이 중복되므로 제외.
+                appendTraceInfo(traceStb, trace, traceClassName);
+            }
+        }
+
+        // Trace 우선순위 2: 첫번째 스택 발생위치
+        if(traceStb.isEmpty() && traces.length > 0) {
+            traceClassName = CGLIB_PATTERN.matcher(traces[0].getClassName()).replaceAll("");
+            appendTraceInfo(traceStb, traces[0], traceClassName);
+        }
+        exStb.append(traceStb);
 
         return logAndResponse(ResponseCode.INTERNAL_SERVER_ERROR, exStb.toString());
     }
@@ -68,7 +95,18 @@ public class GlobalExceptionHandler {  // 참고로 Filter에서 throw된 에러
 
     // ========== 유틸성 메소드 ========== //
 
-    private ResponseEntity logAndResponse(ResponseCode responseCode, String message) {
+    private static void appendTraceInfo(StringBuilder traceStb, StackTraceElement trace, String traceClassName) {
+        boolean isFirstTrace = traceStb.isEmpty();
+        traceStb.append(isFirstTrace ? "\n==> error_trace / " : "\n                  ")
+                .append(traceClassName).append(".").append(trace.getMethodName());
+
+        int traceLineNumber = trace.getLineNumber();
+        if(traceLineNumber > 0) {
+            traceStb.append(" (Line:").append(traceLineNumber).append(")");
+        }
+    }
+
+    private static ResponseEntity logAndResponse(ResponseCode responseCode, String message) {
         int statusItem = responseCode.getHttpStatus();
         String messageItem = responseCode.getMessage();
 
