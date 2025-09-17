@@ -21,6 +21,12 @@ public class GlobalExceptionHandler {  // 참고로 Filter에서 throw된 에러
         String exClassName = ex.getClass().getName();
         StringBuilder exStb = new StringBuilder()
                 .append(exMessage).append(" (").append(exClassName).append(")");
+
+        StackTraceElement exTrace = ex.getStackTrace()[0];  // 500 예외처리인 경우, 발생 지점의 세부위치까지 추가 로깅.
+        exStb.append("\n==> error_trace / ")
+                .append(exTrace.getClassName()).append(".").append(exTrace.getMethodName())
+                .append(" (Line:").append(exTrace.getLineNumber()).append(")");
+
         return logAndResponse(ResponseCode.INTERNAL_SERVER_ERROR, exStb.toString());
     }
 
