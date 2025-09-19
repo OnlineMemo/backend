@@ -2,13 +2,18 @@ package com.shj.onlinememospringproject.response;
 
 import com.shj.onlinememospringproject.response.exception.*;
 import io.jsonwebtoken.JwtException;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.ServletWebRequest;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.HandlerMethod;
 
 import javax.naming.AuthenticationException;
 import java.nio.file.AccessDeniedException;
@@ -16,8 +21,9 @@ import java.util.regex.Pattern;
 
 @Slf4j
 @RestControllerAdvice
-public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(DispatcherServlet 외부)에 위치해, 여기서 감지 X.
+public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(DispatcherServlet 외부)에 위치하므로, 여기서 감지 X.
 
+    private static final String HANDLER_ATTRIBUTE = "org.springframework.web.servlet.HandlerMapping.bestMatchingHandler";
     private static final String PROJECT_PACKAGE = "com.shj.onlinememospringproject";
     private static final String EXCEPTION_FILTER_CLASSNAME = "JwtExceptionFilter";
     private static final String CGLIB_STRING = "$$SpringCGLIB$$";
@@ -26,14 +32,17 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
 
     // < 500 Exception >
     @ExceptionHandler(Exception.class)
-    public ResponseEntity handleException(Exception ex) {
-        StringBuilder exStb = new StringBuilder();
+    public ResponseEntity handleException(Exception ex, WebRequest webRequest) {
+        StringBuilder exStb = new StringBuilder();  // with 'StringBuilder requestStb'
         StringBuilder traceStb = new StringBuilder();
 
         // [ 예외 정보 로깅 (error_message) ]
         String exMessage = (ex.getMessage() != null) ? ex.getMessage() : "null";
         String exClassName = ex.getClass().getName();
         exStb.append(exMessage).append(" (").append(exClassName).append(")");
+
+        // [ 예외 요청값 로깅 (error_request) ]
+        appendRequestInfo(exStb, webRequest);
 
         // [ 예외 호출경로 로깅 (error_trace) ]
         StackTraceElement[] traces = ex.getStackTrace();  // 500 예외처리인 경우, 상세 위치까지 추가로 기록.
@@ -55,8 +64,8 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
             traceClassName = CGLIB_PATTERN.matcher(traces[0].getClassName()).replaceAll("");
             appendTraceInfo(traceStb, traces[0], traceClassName);
         }
-        exStb.append(traceStb);
 
+        exStb.append(traceStb);
         return logAndResponse(ResponseCode.INTERNAL_SERVER_ERROR, exStb.toString());
     }
 
@@ -85,22 +94,35 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
         // 크롬콘솔에선 설정한방식대로 출력되지않지만, 이는 postman 프로그램에서 확인이 가능하여 명시하였음.
     }
 
-    // < 405,406 Exception >
+    // < 405,406,415 Exception >
     @ExceptionHandler({
             HttpRequestMethodNotSupportedException.class,  // 405
-            HttpMediaTypeNotAcceptableException.class  // 406
+            HttpMediaTypeNotAcceptableException.class,  // 406
+            HttpMediaTypeNotSupportedException.class  // 415
     })
-    public ResponseEntity handleInvalidHttpException(Exception ex) {
+    public ResponseEntity handleInvalidHttpException(Exception ex, WebRequest webRequest) {
+        StringBuilder exStb = new StringBuilder();  // with 'StringBuilder requestStb'
+
+        // [ 예외 정보 로깅 (error_message) ]
+        exStb.append(ex.getMessage());
+
+        // [ 예외 요청값 로깅 (error_request) ]
+        appendRequestInfo(exStb, webRequest);
+
+        // 우선순위: HttpMethod 행위 (405) -> ContentType 요청타입 (415) -> Accept 응답타입 (406)
         if(ex instanceof HttpRequestMethodNotSupportedException) {
-            return logAndResponse(ResponseCode.NOT_ALLOWED_METHOD, ex.getMessage());
+            return logAndResponse(ResponseCode.NOT_ALLOWED_METHOD, exStb.toString());
         }
-        return logAndResponse(ResponseCode.NOT_ACCEPTABLE_TYPE, ex.getMessage());  // instanceof HttpMediaTypeNotAcceptableException
+        else if(ex instanceof HttpMediaTypeNotSupportedException) {
+            return logAndResponse(ResponseCode.UNSUPPORTED_TYPE, exStb.toString());
+        }
+        return logAndResponse(ResponseCode.NOT_ACCEPTABLE_TYPE, exStb.toString());  // instanceof HttpMediaTypeNotAcceptableException
     }
 
 
     // ========== 커스텀 예외 처리 ========== //
 
-    // < 400,404,423,500 Exception - Custom >
+    // < 400,404,409,423,500 Exception >
     @ExceptionHandler({
             Exception400.class,
             Exception404.class,
@@ -114,6 +136,34 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
 
 
     // ========== 유틸성 메소드 ========== //
+
+    private static void appendRequestInfo(StringBuilder requestStb, WebRequest webRequest) {
+        if(!(webRequest instanceof ServletWebRequest servletWebRequest)) return;
+        HttpServletRequest httpServletRequest = servletWebRequest.getRequest();
+        requestStb.append("\n==> error_request / ");
+
+        // controller method
+        Object handler = httpServletRequest.getAttribute(HANDLER_ATTRIBUTE);
+        if(handler instanceof HandlerMethod handlerMethod) {
+            requestStb.append(handlerMethod.getBeanType().getSimpleName()).append(".").append(handlerMethod.getMethod().getName());
+        }
+        else requestStb.append("Unknown Controller");
+
+        // URI
+        requestStb.append(" (URI:").append(httpServletRequest.getRequestURI());
+        if(httpServletRequest.getQueryString() != null) {
+            requestStb.append("?").append(httpServletRequest.getQueryString());
+        }
+
+        // HTTP method
+        requestStb.append("[").append(httpServletRequest.getMethod()).append("]");
+
+        // Content-Type header
+        requestStb.append(", Content-Type:").append(httpServletRequest.getContentType());  // 널체크없이 "null" 문자열로도 로깅 허용.
+
+        // Accept header
+        requestStb.append(", Accept:").append(httpServletRequest.getHeader("Accept")).append(")");  // 널체크없이 "null" 문자열로도 로깅 허용.
+    }
 
     private static void appendTraceInfo(StringBuilder traceStb, StackTraceElement trace, String traceClassName) {
         boolean isFirstTrace = traceStb.isEmpty();
