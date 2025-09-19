@@ -5,6 +5,8 @@ import io.jsonwebtoken.JwtException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -22,6 +24,7 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
     private static final Pattern CGLIB_PATTERN = Pattern.compile("\\$\\$SpringCGLIB\\$\\$\\d+");  // CGLIB 프록시 패턴
 
 
+    // < 500 Exception >
     @ExceptionHandler(Exception.class)
     public ResponseEntity handleException(Exception ex) {
         StringBuilder exStb = new StringBuilder();
@@ -57,11 +60,13 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
         return logAndResponse(ResponseCode.INTERNAL_SERVER_ERROR, exStb.toString());
     }
 
+    // < 401 Exception - JWT >
     @ExceptionHandler(JwtException.class)  // Filter 단계 이후에 JWT 토큰 검증시 (Filter 단계에서는 JwtExceptionFilter가 대신 처리.)
     public ResponseEntity handleJwtException(Exception ex) {
         return logAndResponse(ResponseCode.TOKEN_ERROR, ex.getMessage());
     }
 
+    // < 401 Exception - UNAUTHORIZED >
     @ExceptionHandler({
             AuthenticationException.class,
             BadCredentialsException.class  // 로그인 실패시
@@ -72,6 +77,7 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
         // 크롬콘솔에선 설정한방식대로 출력되지않지만, 이는 postman 프로그램에서 확인이 가능하여 명시하였음.
     }
 
+    // < 403 Exception >
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity handleForbiddenException(Exception ex) {
         return logAndResponse(ResponseCode.FORBIDDEN_ERROR, ex.getMessage());
@@ -79,9 +85,22 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
         // 크롬콘솔에선 설정한방식대로 출력되지않지만, 이는 postman 프로그램에서 확인이 가능하여 명시하였음.
     }
 
+    // < 405,406 Exception >
+    @ExceptionHandler({
+            HttpRequestMethodNotSupportedException.class,  // 405
+            HttpMediaTypeNotAcceptableException.class  // 406
+    })
+    public ResponseEntity handleInvalidHttpException(Exception ex) {
+        if(ex instanceof HttpRequestMethodNotSupportedException) {
+            return logAndResponse(ResponseCode.NOT_ALLOWED_METHOD, ex.getMessage());
+        }
+        return logAndResponse(ResponseCode.NOT_ACCEPTABLE_TYPE, ex.getMessage());  // instanceof HttpMediaTypeNotAcceptableException
+    }
+
+
     // ========== 커스텀 예외 처리 ========== //
 
-    // < 400,404,423,500 Exception >
+    // < 400,404,423,500 Exception - Custom >
     @ExceptionHandler({
             Exception400.class,
             Exception404.class,
@@ -92,6 +111,7 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
     public ResponseEntity handleCustomException(CustomException ex) {
         return logAndResponse(ex.getErrorResponseCode(), ex.getMessage());
     }
+
 
     // ========== 유틸성 메소드 ========== //
 
