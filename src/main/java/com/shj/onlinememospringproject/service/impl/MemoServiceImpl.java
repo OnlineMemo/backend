@@ -258,7 +258,7 @@ public class MemoServiceImpl implements MemoService {
         Boolean isOwnLock = redisRepository.checkOwner(key, userId);
         if(isOwnLock == null) {
             if(isRequiredExistKey == true) {  // 반드시 Redis에 키가 존재해야만 하는가?
-                throw new Exception423.LockedData(String.format("해당 데이터의 Lock은 존재하지 않습니다.", userId));
+                throw new Exception423.LockedData("해당 데이터의 Lock은 존재하지 않습니다.");
             }
         }
         else if(isOwnLock == false) {  // && isOwnLock != null

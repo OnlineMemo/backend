@@ -185,14 +185,21 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
                 .append(statusItem).append(" ").append(messageItem).append("\n")
                 .append(prefix);
 
-        if(statusItem == 423) {
+        if(statusItem == 423) {  // 423 예외처리인 경우, message는 Lock 사용자의 정보를 가리킴.
             logMessageStb.append("Lock user info = ").append(message);
             log.error(logMessageStb.toString());
-            return ResponseData.toResponseEntity(responseCode, message);  // 423 예외처리인 경우, message는 Lock 사용자의 정보를 가리킴.
+            return ResponseData.toResponseEntity(responseCode, message);  // 메모가 잠겼으므로 클라이언트에 편집자 정보(message)를 포함해 응답해야함.
         }
 
         logMessageStb.append(message);
         log.error(logMessageStb.toString());
         return ResponseData.toResponseEntity(responseCode);
     }
+
+//    private static ResponseEntity responseWithoutLog(ResponseCode responseCode, String message) {
+//        if(responseCode.getHttpStatus() == 423) {  // 423 예외처리인 경우, message는 Lock 사용자의 정보를 가리킴.
+//            return ResponseData.toResponseEntity(responseCode, message);  // 메모가 잠겼으므로 클라이언트에 편집자 정보(message)를 포함해 응답해야함.
+//        }
+//        return ResponseData.toResponseEntity(responseCode);
+//    }
 }

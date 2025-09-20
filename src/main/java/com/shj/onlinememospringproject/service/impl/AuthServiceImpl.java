@@ -15,6 +15,7 @@ import com.shj.onlinememospringproject.response.exception.Exception404;
 import com.shj.onlinememospringproject.service.AuthService;
 import com.shj.onlinememospringproject.service.UserService;
 import com.shj.onlinememospringproject.util.SecurityUtil;
+import com.shj.onlinememospringproject.util.TimeConverter;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -25,10 +26,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.io.IOException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -140,7 +139,14 @@ public class AuthServiceImpl implements AuthService {
         // Refresh Token 만료 및 유효성 검사
         Boolean tokenStatus = tokenProvider.checkTokenStatus(refreshToken);
         if(tokenStatus == null) {
-            throw new JwtException("전달된 Refresh Token은 만료되었습니다.");
+            try {
+                Object jwtExpObj = tokenProvider.decodeByBase64(refreshToken, "exp");  // 유효성을 이미 검증한 토큰이므로, Base64로 디코딩해도 무방하며 더 효율적임.
+                long jwtExp = ((Number) jwtExpObj).longValue();
+                String timeStr = TimeConverter.longToStringForLog(jwtExp);
+                throw new JwtException(String.format("전달된 Refresh Token은 만료되었습니다. (JWT.exp = '%s')", timeStr));
+            } catch (IOException ex) {
+                throw new JwtException("전달된 Refresh Token은 유효하지 않습니다. (Base64 디코딩 중 IOException)");  // 실상 발생 가능성은 전무하나, 안전장치로 기재.
+            }
         }
         else if(tokenStatus == false) {
             throw new JwtException("전달된 Refresh Token은 유효하지 않습니다.");
