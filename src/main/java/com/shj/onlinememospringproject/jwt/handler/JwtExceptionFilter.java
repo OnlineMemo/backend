@@ -26,13 +26,13 @@ public class JwtExceptionFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         try {
             filterChain.doFilter(request, response);
-        } catch (JwtException e) {
+        } catch (JwtException ex) {
             response.setStatus(401);
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             response.setCharacterEncoding("UTF-8");
 
             ResponseEntity responseEntity = ResponseData.toResponseEntity(ResponseCode.TOKEN_ERROR);
-            if(e.getMessage().equals("토큰 만료 - ExpiredJwtException")) {
+            if(ex.getMessage().equals("토큰 만료 - ExpiredJwtException")) {
                 responseEntity = ResponseData.toResponseEntity(ResponseCode.TOKEN_EXPIRED);
             }
 
@@ -43,7 +43,14 @@ public class JwtExceptionFilter extends OncePerRequestFilter {
             JsonNode dataNode = rootNode.path("body");
             String jsonData = objectMapper.writeValueAsString(dataNode);
 
-            response.getWriter().write(jsonData);
+            try {
+                response.getWriter().write(jsonData);
+            } catch (IOException ioEx) {
+                if(response.isCommitted()) {  // 클라이언트가 이미 연결을 종료한 경우
+                    return;  // 불필요한 'IOException: Broken pipe' 발생과 로깅을 방지.
+                }
+                throw ioEx;
+            }
         }
     }
 }

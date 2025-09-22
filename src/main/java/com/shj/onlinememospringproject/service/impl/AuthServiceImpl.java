@@ -144,7 +144,7 @@ public class AuthServiceImpl implements AuthService {
                 long jwtExp = ((Number) jwtExpObj).longValue();
                 String timeStr = TimeConverter.longToStringForLog(jwtExp);
                 throw new JwtException(String.format("전달된 Refresh Token은 만료되었습니다. (JWT.exp = '%s')", timeStr));
-            } catch (IOException ex) {
+            } catch (IOException ioEx) {
                 throw new JwtException("전달된 Refresh Token은 유효하지 않습니다. (Base64 디코딩 중 IOException)");  // 실상 발생 가능성은 전무하나, 안전장치로 기재.
             }
         }
