@@ -1,5 +1,6 @@
 package com.shj.onlinememospringproject.service.impl;
 
+import com.shj.onlinememospringproject.client.OpenAIClient;
 import com.shj.onlinememospringproject.domain.Memo;
 import com.shj.onlinememospringproject.domain.User;
 import com.shj.onlinememospringproject.domain.mapping.UserMemo;
@@ -8,19 +9,19 @@ import com.shj.onlinememospringproject.repository.MemoRepository;
 import com.shj.onlinememospringproject.repository.RedisRepository;
 import com.shj.onlinememospringproject.repository.UserMemoRepository;
 import com.shj.onlinememospringproject.repository.UserRepository;
-import com.shj.onlinememospringproject.response.exception.Exception400;
-import com.shj.onlinememospringproject.response.exception.Exception404;
-import com.shj.onlinememospringproject.response.exception.Exception409;
-import com.shj.onlinememospringproject.response.exception.Exception423;
+import com.shj.onlinememospringproject.response.exception.*;
 import com.shj.onlinememospringproject.service.MemoService;
 import com.shj.onlinememospringproject.service.UserMemoService;
 import com.shj.onlinememospringproject.service.UserService;
 import com.shj.onlinememospringproject.util.SecurityUtil;
+import com.shj.onlinememospringproject.util.TimeConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -37,7 +38,10 @@ public class MemoServiceImpl implements MemoService {
     private final MemoRepository memoRepository;
     private final UserMemoRepository userMemoRepository;
     private final RedisRepository redisRepository;
-    private static final long EDIT_LOCK_EXPIRE_TIME = 1000L * 60 * 10;  // Redis 편집락 TTL : 10분
+    private final OpenAIClient openAIClient;
+    private static final long EDIT_LOCK_EXPIRE_TIME = 1000L * 60 * 10;  // Redis 편집락 TTL = 10분
+    private static final int MAX_SUMMARY_CONTENT_LENGTH = 6000;  // OpenAI 호출용 메모 최대 요약길이 = 6000자 이하
+    private static final int MAX_DAILY_OPENID_USAGE = 10;  // OpenAI 일일 최대 호출횟수 = 10회
 
 
     @Transactional(readOnly = true)
@@ -219,6 +223,57 @@ public class MemoServiceImpl implements MemoService {
                 redisRepository.unlockOwner(lockKey, loginUserId);  // Redis 내 본인의 편집락 해제. (락 소유자만 가능)
             }
         }
+    }
+
+
+    @Transactional
+    @Override
+    public MemoDto.TitleResponse generateTitleByOpenAI(Long memoId) {
+        Long loginUserId = SecurityUtil.getCurrentMemberId();
+        userMemoService.checkUserInMemo(loginUserId, memoId);
+
+        // check OpenAIUsage
+        String openAIUsageKey = String.format("userId:%d:openai_usage", loginUserId);
+        String value = redisRepository.getValue(openAIUsageKey);
+        int openAIUsage = (value != null) ? Integer.parseInt(value) : 0;
+        if(openAIUsage >= MAX_DAILY_OPENID_USAGE) {  // 400 예외 응답
+            throw new Exception400.MemoBadRequest(String.format("사용자(userId=%d)는 이미 OpenAI 일일 호출횟수(%d회)를 모두 소진했습니다.", loginUserId, MAX_DAILY_OPENID_USAGE));
+        }
+
+        // summarize memoContent
+        String content = memoRepository.findContentById(memoId);
+        // ...
+        if(content.length() > MAX_SUMMARY_CONTENT_LENGTH) {
+            // ...
+        }
+
+        // generate memoTitle (call OpenAI)
+        String generatedTitle = null;
+        // ...
+        String prompt = "미작성 상태";  // ...
+        // ...
+        try {
+            // ...
+            generatedTitle = openAIClient.getChatAnswer(prompt);
+            // ...
+        } catch (Exception429.ExcessRequestOpenAI ex429) {  // 429 예외 응답
+            throw ex429;  // 자식 메소드가 throw한 예외를 그대로 재전파.
+        } catch (Exception ex) {  // 500 예외 응답
+            throw new Exception500.ExternalServer(String.format("OpenAIClient API 호출 에러 (%s)", ex.getMessage()));
+        }
+
+        // increase OpenAIUsage
+        Long restMillisecond = null;
+        if(openAIUsage == 0) {  // 당일 첫 호출인 경우
+            LocalDateTime now = LocalDateTime.now(TimeConverter.KST_ZONEID);
+            LocalDateTime midnight = now.toLocalDate().plusDays(1).atStartOfDay();
+            restMillisecond = Duration.between(now, midnight).toMillis();
+        }
+        redisRepository.updateValue(openAIUsageKey, String.valueOf(++openAIUsage), restMillisecond);
+
+        return MemoDto.TitleResponse.builder()
+                .title(generatedTitle)
+                .build();
     }
 
 

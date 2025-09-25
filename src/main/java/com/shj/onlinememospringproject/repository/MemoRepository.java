@@ -33,6 +33,10 @@ public interface MemoRepository extends JpaRepository<Memo, Long> {
     @Query("UPDATE Memo m SET m.isStar = :isStar WHERE m.id = :memoId")  // 네이티브쿼리 말고, JPQL로 작성하였음.
     void updateIsStar(@Param("memoId") Long memoId, @Param("isStar") Integer isStar);
 
+    // memoId로 검색하여 content만 가져오는 메소드
+    @Query("SELECT m.content FROM Memo m WHERE m.id = :memoId")
+    String findContentById(@Param("memoId") Long memoId);
+
     // memoId로 검색하여 version만 가져오는 메소드
     @Query("SELECT m.version FROM Memo m WHERE m.id = :memoId")
     Long findVersionById(@Param("memoId") Long memoId);

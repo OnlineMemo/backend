@@ -9,9 +9,9 @@ import java.util.Locale;
 
 public class TimeConverter {
 
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy. M. d. a h:mm").withLocale(Locale.forLanguageTag("ko"));
-    private static final DateTimeFormatter LOG_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");  // "yyyy-MM-dd HH:mm:ss.SSS"
-    private static final ZoneId KST_ZONEID = ZoneId.of("Asia/Seoul");
+    public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy. M. d. a h:mm").withLocale(Locale.forLanguageTag("ko"));
+    public static final DateTimeFormatter LOG_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");  // "yyyy-MM-dd HH:mm:ss.SSS"
+    public static final ZoneId KST_ZONEID = ZoneId.of("Asia/Seoul");
 
 
     public static String timeToString(LocalDateTime localDateTime) {

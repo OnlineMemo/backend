@@ -87,6 +87,15 @@ public class MemoDto {
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class TitleResponse {
+
+        private String title;
+    }
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class MemoPageResponse {
 
         // Memo
