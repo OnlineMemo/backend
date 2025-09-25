@@ -44,6 +44,13 @@ public class MemoDto {
         private List<Long> userIdList;  // 추가적으로 초대할 사용자들 userId 리스트
     }
 
+    @Getter
+    @NoArgsConstructor
+    public static class GenerateRequest {
+
+        private String content;
+    }
+
 
     // ======== < Response DTO > ======== //
 
@@ -87,7 +94,7 @@ public class MemoDto {
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class TitleResponse {
+    public static class GenerateResponse {
 
         private String title;
     }

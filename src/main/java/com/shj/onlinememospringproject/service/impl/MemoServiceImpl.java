@@ -228,7 +228,7 @@ public class MemoServiceImpl implements MemoService {
 
     @Transactional
     @Override
-    public MemoDto.TitleResponse generateTitleByOpenAI(Long memoId) {
+    public MemoDto.GenerateResponse generateTitleByOpenAI(Long memoId, MemoDto.GenerateRequest generateRequestDto) {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
         userMemoService.checkUserInMemo(loginUserId, memoId);
 
@@ -241,7 +241,7 @@ public class MemoServiceImpl implements MemoService {
         }
 
         // summarize memoContent
-        String content = memoRepository.findContentById(memoId);
+        String content = generateRequestDto.getContent();
         // ...
         if(content.length() > MAX_SUMMARY_CONTENT_LENGTH) {
             // ...
@@ -271,7 +271,7 @@ public class MemoServiceImpl implements MemoService {
         }
         redisRepository.updateValue(openAIUsageKey, String.valueOf(++openAIUsage), restMillisecond);
 
-        return MemoDto.TitleResponse.builder()
+        return MemoDto.GenerateResponse.builder()
                 .title(generatedTitle)
                 .build();
     }

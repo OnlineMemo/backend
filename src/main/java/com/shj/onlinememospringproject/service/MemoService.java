@@ -13,7 +13,7 @@ public interface MemoService {
     void releaseEditLock(Long memoId);
     void updateMemo(Long memoId, MemoDto.UpdateRequest updateRequestDto);
     void deleteMemo(Long memoId);
-    MemoDto.TitleResponse generateTitleByOpenAI(Long memoId);
+    MemoDto.GenerateResponse generateTitleByOpenAI(Long memoId, MemoDto.GenerateRequest generateRequestDto);
 
     // ========== 유틸성 메소드 ========== //
     Memo findMemo(Long memoId);
