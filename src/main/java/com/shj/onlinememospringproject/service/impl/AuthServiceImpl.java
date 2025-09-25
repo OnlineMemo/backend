@@ -18,6 +18,7 @@ import com.shj.onlinememospringproject.util.SecurityUtil;
 import com.shj.onlinememospringproject.util.TimeConverter;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -56,7 +57,18 @@ public class AuthServiceImpl implements AuthService {
                 .password(toEncodePassword(signupRequestDto.getPassword()))
                 .nickname(signupRequestDto.getNickname())
                 .build();
-        userRepository.save(user);
+
+        // < 회원가입 동시성 문제, 최초 발생 (프로덕션 CloudWatch 로그 감지) >
+        // 1. [트랜잭션 1] findByEmail -> 중복계정 없음
+        // 2. [트랜잭션 2] findByEmail -> 중복계정 없음
+        // 3. [트랜잭션 1] save -> 2025-09-25 20:03:47.057 / 회원가입 성공(200)
+        // 4. [트랜잭션 2] save -> 2025-09-25 20:03:47.096 / EmailDuplicate(400)가 아닌 DataIntegrityViolationException(500) 발생
+        // ==> 발생 가능성은 극히 낮으나, 동시성에도 안전한 응답(400)을 위해 try-catch 처리.
+        try {
+            userRepository.save(user);
+        } catch (DataIntegrityViolationException ex) {
+            throw new Exception400.EmailDuplicate(newEmail);
+        }
     }
 
     @Transactional
