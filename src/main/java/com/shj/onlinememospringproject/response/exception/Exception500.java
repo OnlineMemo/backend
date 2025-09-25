@@ -20,4 +20,10 @@ public class Exception500 extends CustomException {
             super(ResponseCode.ANONYMOUS_USER_ERROR, message);
         }
     }
+
+    public static class ExternalServer extends Exception500 {
+        public ExternalServer(String message) {  // message 값 = 외부 API Client 종류 기재할것.
+            super(ResponseCode.EXTERNAL_SERVER_ERROR, message);
+        }
+    }
 }

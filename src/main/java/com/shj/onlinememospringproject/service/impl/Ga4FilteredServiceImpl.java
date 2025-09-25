@@ -6,6 +6,7 @@ import com.shj.onlinememospringproject.dto.Ga4FilteredDto;
 import com.shj.onlinememospringproject.repository.Ga4FilteredBatchRepository;
 import com.shj.onlinememospringproject.repository.Ga4FilteredRepository;
 import com.shj.onlinememospringproject.response.exception.Exception400;
+import com.shj.onlinememospringproject.response.exception.Exception500;
 import com.shj.onlinememospringproject.service.Ga4FilteredService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,7 +45,12 @@ public class Ga4FilteredServiceImpl implements Ga4FilteredService {
         checkValidDatetime(startDatetimeStr, endDatetimeStr);
 
         // filter from BigQuery
-        ResponseEntity<List<Ga4FilteredDto.ClientResponse>> responseEntity = ga4Client.filterFromBigQuery(authToken, startDatetimeStr, endDatetimeStr);
+        ResponseEntity<List<Ga4FilteredDto.ClientResponse>> responseEntity;
+        try {
+            responseEntity = ga4Client.filterFromBigQuery(authToken, startDatetimeStr, endDatetimeStr);
+        } catch (Exception ex) {
+            throw new Exception500.ExternalServer(String.format("Ga4Client API 호출 에러 (%s)", ex.getMessage()));
+        }
         List<Ga4FilteredDto.ClientResponse> clientResponseDtoList = responseEntity.getBody();
 
         // save to MongoDB
