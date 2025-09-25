@@ -177,10 +177,10 @@ public class MemoServiceImpl implements MemoService {
             throw new Exception400.MemoBadRequest("잘못된 필드값으로 API를 요청하였습니다.");
         }
         else if(currentVersion.equals(memo.getVersion()) == false) {  // && currentVersion != null
-            throw new Exception409.ConflictData();
-            // updateMemo 메소드의 Exception409.ConflictData()
+            throw new Exception409.ConflictData(null);  // 이는 부모에서 catch 로깅되므로, 불필요한 중복 메세지를 null로 지정.
+            // updateMemo 메소드의 Exception409.ConflictData(null)
             // -> updateMemoFacade 메소드의 catch(Exception){}
-            // -> Exception409.ConflictData() 재처리 가능
+            // -> Exception409.ConflictData(memoId) 재처리 가능
         }
 
         // - case 2. 즐겨찾기 수정이 아닌, 메모의 제목과 내용 수정인 경우

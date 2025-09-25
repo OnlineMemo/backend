@@ -70,7 +70,7 @@ public class MemoFacadeImpl implements MemoFacade {
         } catch (Exception423.LockedData ex423) {
             throw ex423;
         } catch (Exception ex) {
-            throw new Exception409.ConflictData();
+            throw new Exception409.ConflictData(String.format("memoId = %d", memoId));
         }
     }
 

@@ -180,7 +180,9 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
         int statusItem = responseCode.getHttpStatus();
         String messageItem = responseCode.getMessage();
 
-        String prefix = (statusItem == 404 || statusItem == 423) ? "==> error_data / " : "==> error_message / ";  // 404 or 423 예외처리인 경우에만, 'error_data'로 출력.
+        String prefix = (statusItem == 404 || statusItem == 409 || statusItem == 423)
+                ? "==> error_data / "  // 404 or 409 or 423 예외처리인 경우에만, 'error_data'로 로깅.
+                : "==> error_message / ";
         StringBuilder logMessageStb = new StringBuilder()
                 .append(statusItem).append(" ").append(messageItem).append("\n")
                 .append(prefix);
