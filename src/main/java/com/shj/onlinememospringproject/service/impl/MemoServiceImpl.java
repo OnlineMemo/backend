@@ -114,7 +114,7 @@ public class MemoServiceImpl implements MemoService {
         StringBuilder lockValueStb = new StringBuilder();
         lockValueStb.append("userId:").append(loginUserId).append(",").append("userNickname:").append(loginUserNickname);
 
-        String lockKey = "memoId:" + memoId;
+        String lockKey = String.format("memoId:%d:lock", memoId);
         String lockValue = lockValueStb.toString();
         long lockTTL = EDIT_LOCK_EXPIRE_TIME;
 
@@ -144,7 +144,7 @@ public class MemoServiceImpl implements MemoService {
         userMemoService.checkUserInMemo(loginUserId, memoId);  // 사용자의 메모 접근권한 체킹.
         if(!userMemoService.checkGroupMemo(memoId)) return;  // 공동메모 여부 체킹. (개인메모라면 락 제어는 불필요하므로 즉시 종료.)
 
-        String lockKey = "memoId:" + memoId;
+        String lockKey = String.format("memoId:%d:lock", memoId);
         redisRepository.unlockOwner(lockKey, loginUserId);
     }
 
@@ -208,7 +208,7 @@ public class MemoServiceImpl implements MemoService {
             memoRepository.delete(memo);  // 그 이후에 부모 테이블인 Memo에서 해당 메모를 삭제. (이후 부모 테이블인 Memo에서 삭제.)
         }
         else {  // 해당 메모가 공동메모라면
-            String lockKey = "memoId:" + memoId;
+            String lockKey = String.format("memoId:%d:lock", memoId);
             if(memoHasUsersCount == 2) {  // 공동메모인데, 그룹 탈퇴로 메모의 사용자가 2명에서 1명으로 개인메모가 될 경우 (즉, 원래 2명이었을 경우)
                 // isStar 필드는 수정시각에 영향을 주지않도록, @LastModifiedDate 생명주기에서 제외시켜 따로 JPQL로 직접 업데이트함.
                 memoRepository.updateIsStar(memoId, 0);  // 즐겨찾기 여부를 다시 0으로 초기화.

@@ -30,7 +30,7 @@ public class MemoFacadeImpl implements MemoFacade {
     @Override
     public void updateMemoFacade(Long memoId, MemoDto.UpdateRequest updateRequestDto) {  // 메모의 제목 또는 내용을 수정할 경우에 호출하는 메소드
         try {
-            String lockKey = "memoId:" + memoId;
+            String lockKey = String.format("memoId:%d:lock", memoId);
             Long loginUserId = SecurityUtil.getCurrentMemberId();
 
             boolean isGroupMemo = userMemoService.checkGroupMemo(memoId);  // 공동메모 여부 체킹. (개인메모라면 락 제어는 불필요하므로 리소스 낭비를 방지하기위함.)
@@ -86,7 +86,7 @@ public class MemoFacadeImpl implements MemoFacade {
 //        StringBuilder lockValueStb = new StringBuilder();
 //        lockValueStb.append("userId:").append(loginUserId).append(",").append("userNickname:").append(loginUserNickname);
 //
-//        String lockKey = "memoId:" + memoId;
+//        String lockKey = String.format("memoId:%d:lock", memoId);
 //        String lockValue = lockValueStb.toString();
 //        Long lockTTL = 1000L * 5;  // TTL 5초
 //
