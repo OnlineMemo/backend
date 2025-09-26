@@ -16,6 +16,8 @@ import com.shj.onlinememospringproject.service.UserService;
 import com.shj.onlinememospringproject.util.SecurityUtil;
 import com.shj.onlinememospringproject.util.TimeConverter;
 import lombok.RequiredArgsConstructor;
+import org.recap.Summarizer;
+import org.recap.graph.Graph;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +42,7 @@ public class MemoServiceImpl implements MemoService {
     private final RedisRepository redisRepository;
     private final OpenAIClient openAIClient;
     private static final long EDIT_LOCK_EXPIRE_TIME = 1000L * 60 * 10;  // Redis 편집락 TTL = 10분
+    private static final int MAX_TITLE_LENGTH = 15;  // 메모 제목의 최대 길이 = 15자 이하
     private static final int MAX_SUMMARY_CONTENT_LENGTH = 6000;  // OpenAI 호출용 메모 최대 요약길이 = 6000자 이하
     private static final int MAX_DAILY_OPENID_USAGE = 10;  // OpenAI 일일 최대 호출횟수 = 10회
 
@@ -242,9 +245,27 @@ public class MemoServiceImpl implements MemoService {
 
         // summarize memoContent
         String content = generateRequestDto.getContent();
-        // ...
-        if(content.length() > MAX_SUMMARY_CONTENT_LENGTH) {
-            // ...
+        int contentLen = content.length();
+        if(contentLen <= MAX_TITLE_LENGTH) {
+            return MemoDto.GenerateResponse.builder()
+                    .title(content)  // 이미 내용이 최대 제목길이보다 짧다면, AI 호출 없이 그대로 제목으로 사용.
+                    .build();
+        }
+        if(contentLen > MAX_SUMMARY_CONTENT_LENGTH) {
+            Summarizer summarizer = new Summarizer();
+            List<String> summarizedSentenceList = summarizer.summarizeByTextLen(
+                    content,  // 요약할 원본 텍스트
+                    Graph.SimilarityMethods.COSINE_SIMILARITY,  // 문장 간 유사도 계산 및 측정법 (COSINE or JACCARD)
+                    MAX_SUMMARY_CONTENT_LENGTH  // 요약될 최대 전체글자수 제한 (null이면 자동 계산식 적용)
+            );
+
+            StringBuilder summarizedStb = new StringBuilder();  // 또는 'String.join("\n", summarizedSentenceList);'
+            int summarizedLen = summarizedSentenceList.size();
+            for(int i=0; i<summarizedLen-1; i++) {
+                summarizedStb.append(summarizedSentenceList.get(i)).append("\n");
+            }
+            if(summarizedLen > 0) summarizedStb.append(summarizedSentenceList.get(summarizedLen-1));
+            content = summarizedStb.toString();
         }
 
         // generate memoTitle (call OpenAI)
