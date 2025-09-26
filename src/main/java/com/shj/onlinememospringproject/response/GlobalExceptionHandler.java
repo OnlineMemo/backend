@@ -3,7 +3,10 @@ package com.shj.onlinememospringproject.response;
 import com.shj.onlinememospringproject.response.exception.*;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.basjes.parse.useragent.UserAgent;
+import nl.basjes.parse.useragent.UserAgentAnalyzer;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
@@ -21,7 +24,10 @@ import java.util.regex.Pattern;
 
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(DispatcherServlet 외부)에 위치하므로, 여기서 감지 X.
+
+    private final UserAgentAnalyzer userAgentAnalyzer;
 
     private static final String HANDLER_ATTRIBUTE = "org.springframework.web.servlet.HandlerMapping.bestMatchingHandler";
     private static final String PROJECT_PACKAGE = "com.shj.onlinememospringproject";
@@ -138,7 +144,7 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
 
     // ========== 유틸성 메소드 ========== //
 
-    private static void appendRequestInfo(StringBuilder requestStb, WebRequest webRequest) {
+    private void appendRequestInfo(StringBuilder requestStb, WebRequest webRequest) {
         if(!(webRequest instanceof ServletWebRequest servletWebRequest)) return;
         HttpServletRequest httpServletRequest = servletWebRequest.getRequest();
         requestStb.append("\n==> error_request / ");
@@ -163,7 +169,21 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
         requestStb.append(", Content-Type:").append(httpServletRequest.getContentType());  // 널체크없이 "null" 문자열로도 로깅 허용.
 
         // Accept header
-        requestStb.append(", Accept:").append(httpServletRequest.getHeader("Accept")).append(")");  // 널체크없이 "null" 문자열로도 로깅 허용.
+        requestStb.append(", Accept:").append(httpServletRequest.getHeader("Accept"));  // 널체크없이 "null" 문자열로도 로깅 허용.
+
+        // User-Agent header
+        String userAgentStr = httpServletRequest.getHeader("User-Agent");
+        requestStb.append(", User-Agent:");
+        try {
+            UserAgent userAgent = userAgentAnalyzer.parse(userAgentStr);
+            String agentName = userAgent.getValue("AgentName");
+            String deviceClass = userAgent.getValue("DeviceClass");
+            String operatingSystemName = userAgent.getValue("OperatingSystemName");
+            requestStb.append(agentName).append(",").append(deviceClass).append(",").append(operatingSystemName);
+        } catch (Exception ex) {
+            requestStb.append(userAgentStr);  // 널체크없이 "null" 문자열로도 로깅 허용.
+        }
+        requestStb.append(")");
     }
 
     private static void appendTraceInfo(StringBuilder traceStb, StackTraceElement trace, String traceClassName) {

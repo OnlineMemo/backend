@@ -7,6 +7,7 @@ import com.shj.onlinememospringproject.jwt.handler.JwtAccessDeniedHandler;
 import com.shj.onlinememospringproject.jwt.handler.JwtAuthenticationEntryPoint;
 import com.shj.onlinememospringproject.jwt.handler.JwtExceptionFilter;
 import lombok.RequiredArgsConstructor;
+import nl.basjes.parse.useragent.UserAgentAnalyzer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,6 +33,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private static final String[] SWAGGER_PATHS = {"/v3/api-docs/**", "/swagger-ui/**", "/swagger/**"};
+
     private final TokenProvider tokenProvider;
     private final ObjectMapper objectMapper;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
@@ -103,5 +105,14 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
+    }
+
+    @Bean  // Security와 직접적인 관련은 없으나, 이 또한 웹요청 파서이므로 이곳에 빈을 등록함.
+    public UserAgentAnalyzer userAgentAnalyzer() {
+        return UserAgentAnalyzer
+                .newBuilder()
+                .hideMatcherLoadStats()
+                .withCache(10000)
+                .build();
     }
 }
