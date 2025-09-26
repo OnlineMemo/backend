@@ -235,7 +235,7 @@ public class MemoServiceImpl implements MemoService {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
         userMemoService.checkUserInMemo(loginUserId, memoId);
 
-        // check OpenAIUsage
+        // 개인별 일일 AI 호출한도 체크 (check OpenAIUsage)
         String openAIUsageKey = String.format("userId:%d:openai_usage", loginUserId);
         String value = redisRepository.getValue(openAIUsageKey);
         int openAIUsage = (value != null) ? Integer.parseInt(value) : 0;
@@ -243,7 +243,7 @@ public class MemoServiceImpl implements MemoService {
             throw new Exception400.MemoBadRequest(String.format("사용자(userId=%d)는 이미 OpenAI 일일 호출횟수(%d회)를 모두 소진했습니다.", loginUserId, MAX_DAILY_OPENID_USAGE));
         }
 
-        // summarize memoContent
+        // AI 호출 전 메모내용 요약 (summarize memoContent)
         String content = generateRequestDto.getContent();
         int contentLen = content.length();
         if(contentLen <= MAX_TITLE_LENGTH) {
@@ -268,22 +268,46 @@ public class MemoServiceImpl implements MemoService {
             content = summarizedStb.toString();
         }
 
-        // generate memoTitle (call OpenAI)
+        // AI Prompt 생성 (make AI Prompt)
+        String prevTitle = generateRequestDto.getPrevTitle();
+        String extraPrompt = (prevTitle != null)
+                ? String.format("\n- 이 제목은 절대 사용 금지: \"%s\" (동일한 경우 무효)", prevTitle.strip()) : "";
+        String prompt = String.format("""
+                아래 글에 어울리는 새로운 제목을 작성해 주세요.
+
+                # 조건
+                - 글자 수 %d자 이하 (공백 포함, 초과 시 무효)
+                - 가능한 한 %d자에 가깝게 작성%s
+                - 제목만 작성, 다른 설명 금지
+                - 위 조건들을 반드시 준수
+
+                # 글
+                %s
+                """, MAX_TITLE_LENGTH, MAX_TITLE_LENGTH, extraPrompt, content);
+
+        // OpenAI 호출 & 제목 생성 (generate memoTitle)
         String generatedTitle = null;
-        // ...
-        String prompt = "미작성 상태";  // ...
-        // ...
+        int retryInner = 3;
         try {
-            // ...
-            generatedTitle = openAIClient.getChatAnswer(prompt);
-            // ...
+            while(retryInner-- > 0) {
+                generatedTitle = openAIClient.getChatAnswer(prompt);
+                if(generatedTitle != null) {
+                    generatedTitle = generatedTitle.strip();
+                    if(generatedTitle.length() <= MAX_TITLE_LENGTH && (!generatedTitle.isBlank() && !generatedTitle.equals(prevTitle))) {
+                        break;
+                    }
+                }
+            }
+            if(generatedTitle == null || generatedTitle.isBlank()) {
+                generatedTitle = "빈 제목";
+            }
         } catch (Exception429.ExcessRequestOpenAI ex429) {  // 429 예외 응답
             throw ex429;  // 자식 메소드가 throw한 예외를 그대로 재전파.
         } catch (Exception ex) {  // 500 예외 응답
             throw new Exception500.ExternalServer(String.format("OpenAIClient API 호출 에러 (%s)", ex.getMessage()));
         }
 
-        // increase OpenAIUsage
+        // 개인별 일일 AI 호출횟수 증가 (increase OpenAIUsage)
         Long restMillisecond = null;
         if(openAIUsage == 0) {  // 당일 첫 호출인 경우
             LocalDateTime now = LocalDateTime.now(TimeConverter.KST_ZONEID);

@@ -48,6 +48,7 @@ public class MemoDto {
     @NoArgsConstructor
     public static class GenerateRequest {
 
+        private String prevTitle;  // null 허용
         private String content;
     }
 

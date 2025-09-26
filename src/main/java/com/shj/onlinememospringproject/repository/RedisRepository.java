@@ -71,7 +71,7 @@ public class RedisRepository {  // Redis DB
         }
     }
 
-    public void updateValue(String key, String value, Long millisecond) {  // millisecond = null 가능
+    public void updateValue(String key, String value, Long millisecond) {  // millisecond = null 허용
         Long currentTTL = redisTemplate.getExpire(key, TimeUnit.MILLISECONDS);
         if(currentTTL == null || currentTTL == -2) return;  // 키가 존재하지 않는 경우
 
