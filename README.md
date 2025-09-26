@@ -17,6 +17,7 @@ DB 재설계 · 쿼리 튜닝 · API 다중호출 개선 등 여러 최적화를
 - 전체 레포지토리&nbsp;:&nbsp;&nbsp;<a href="https://github.com/orgs/OnlineMemo/repositories?q=sort%3Aname-asc">FullStack Repo</a>
 - <strong>OnlineMemo - Backend Refactor (25.06.19)</strong>&nbsp;:&nbsp;&nbsp;<a href="https://github.com/OnlineMemo/backend/pull/5">Click!</a>
 - <strong>OnlineMemo - Backend Refactor (25.09.01)</strong>&nbsp;:&nbsp;&nbsp;<a href="https://github.com/OnlineMemo/backend/pull/9">Click!</a>
+- <strong>OnlineMemo - Backend Refactor (25.09.26)</strong>&nbsp;:&nbsp;&nbsp;<a href="https://github.com/OnlineMemo/backend/pull/10">Click!</a>
 
 <!--
 ### Refactor
