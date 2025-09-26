@@ -7,6 +7,7 @@ import com.shj.onlinememospringproject.jwt.handler.JwtAccessDeniedHandler;
 import com.shj.onlinememospringproject.jwt.handler.JwtAuthenticationEntryPoint;
 import com.shj.onlinememospringproject.jwt.handler.JwtExceptionFilter;
 import lombok.RequiredArgsConstructor;
+import nl.basjes.parse.useragent.UserAgent;
 import nl.basjes.parse.useragent.UserAgentAnalyzer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -109,10 +110,12 @@ public class SecurityConfig {
 
     @Bean  // Security와 직접적인 관련은 없으나, 이 또한 웹요청 파서이므로 이곳에 빈을 등록함.
     public UserAgentAnalyzer userAgentAnalyzer() {
-        return UserAgentAnalyzer
-                .newBuilder()
+        return UserAgentAnalyzer.newBuilder()
+                .withField(UserAgent.AGENT_NAME)
+                .withField(UserAgent.DEVICE_CLASS)
+                .withField(UserAgent.OPERATING_SYSTEM_NAME)
                 .hideMatcherLoadStats()
-                .withCache(10000)
+                .withCache(500)
                 .build();
     }
 }
