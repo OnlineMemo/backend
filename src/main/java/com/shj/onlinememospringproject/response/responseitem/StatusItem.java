@@ -13,6 +13,7 @@ public class StatusItem {
     public static final int CONFLICT = 409;
     public static final int UNSUPPORTED_MEDIA_TYPE = 415;
     public static final int LOCKED = 423;
+    public static final int TO_MANY_REQUESTS = 429;
     public static final int INTERNAL_SERVER_ERROR = 500;
     // public static final int SERVICE_UNAVAILABLE = 503;
     // public static final int DB_ERROR = 600;

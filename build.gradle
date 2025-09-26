@@ -21,15 +21,18 @@ configurations {
 
 repositories {
 	mavenCentral()
+	maven { url 'https://jitpack.io' }
 }
 
 ext {
 	set('springCloudVersion', "2023.0.2")
+	set('springAiVersion', "1.0.2")
 }
 
 dependencyManagement {
 	imports {
 		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+		mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
 	}
 }
 
@@ -53,9 +56,14 @@ dependencies {
 
 	// External API Client
 	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+	implementation 'org.springframework.ai:spring-ai-starter-model-openai'
 
 	// Swagger API Docs
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.2")
+
+	// TextRank Summarize
+	implementation 'kr.bydelta:koalanlp-hnn:2.1.4:assembly'
+	implementation 'com.github.shj1106:recap-plus:v2.0.4'
 
 	// JWT
 	implementation group: 'io.jsonwebtoken', name: 'jjwt-api', version: '0.11.2'

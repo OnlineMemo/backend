@@ -61,11 +61,15 @@ public class MessageItem {
     public static final String DELETE_LOCK = "SUCCESS - Lock 삭제 성공";
     public static final String CONFLICT_DATA_ERROR = "ERROR - 데이터 충돌 에러";  // Status 409
     public static final String LOCKED_DATA_ERROR = "ERROR - 데이터 잠금 에러";  // Status 423
+    // - OpenAI
+    public static final String SUCCESS_RESPONSE_OPENAI = "SUCCESS - AI 응답 성공";
+    public static final String EXCESS_REQUEST_OPENAI = "ERROR - AI 요청 제한 초과";  // Status 429
     // - Client (HTTP)
     public static final String NOT_ALLOWED_METHOD = "ERROR - 지원되지 않는 HTTP 메서드";  // Status 405
     public static final String NOT_ACCEPTABLE_TYPE = "ERROR - 지원되지 않는 응답 타입 (Accept)";  // Status 406 : 클라이언트가 원하는 응답형식(Accept)을 서버가 제공할 수 없음.
     public static final String UNSUPPORTED_TYPE = "ERROR - 지원되지 않는 요청 타입 (Content-Type)";  // Status 415 : 클라이언트가 보낸 요청본문(Content-Type)을 서버가 처리할 수 없음.
-    // - Server (Internal)
+    // - Server (Internal, Client)
     public static final String ANONYMOUS_USER_ERROR = "ERROR - anonymousUser 에러";  // Status 500
     public static final String INTERNAL_SERVER_ERROR = "ERROR - 서버 내부 에러";  // Status 500
+    public static final String EXTERNAL_SERVER_ERROR = "ERROR - 외부 API 호출 에러";  // Status 500
 }

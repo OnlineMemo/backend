@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
 import java.util.StringTokenizer;
+import java.util.concurrent.TimeUnit;
 
 @Repository
 @RequiredArgsConstructor
@@ -68,5 +69,14 @@ public class RedisRepository {  // Redis DB
             if(isOwnLock == true) return unlock(key);
             else return false;
         }
+    }
+
+    public void updateValue(String key, String value, Long millisecond) {  // millisecond = null 허용
+        Long currentTTL = redisTemplate.getExpire(key, TimeUnit.MILLISECONDS);
+        if(currentTTL == null || currentTTL == -2) return;  // 키가 존재하지 않는 경우
+
+        // true면 value와 TTL 모두 업데이트, false면 value만 업데이트하고 TTL은 기존대로 유지.
+        Long nextTTL = (millisecond != null) ? millisecond : currentTTL;
+        redisTemplate.opsForValue().set(key, value, Duration.ofMillis(nextTTL));
     }
 }

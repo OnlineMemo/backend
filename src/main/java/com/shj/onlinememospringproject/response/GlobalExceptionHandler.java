@@ -122,12 +122,13 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
 
     // ========== 커스텀 예외 처리 ========== //
 
-    // < 400,404,409,423,500 Exception >
+    // < 400,404,409,423,429,500 Exception >
     @ExceptionHandler({
             Exception400.class,
             Exception404.class,
             Exception409.class,
             Exception423.class,
+            Exception429.class,
             Exception500.class
     })
     public ResponseEntity handleCustomException(CustomException ex) {
@@ -180,8 +181,8 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
         int statusItem = responseCode.getHttpStatus();
         String messageItem = responseCode.getMessage();
 
-        String prefix = (statusItem == 404 || statusItem == 409 || statusItem == 423)
-                ? "==> error_data / "  // 404 or 409 or 423 예외처리인 경우에만, 'error_data'로 로깅.
+        String prefix = (statusItem == 404)
+                ? "==> error_data / "  // 404 예외처리인 경우에만, 'error_data'로 로깅. (존재하지 않는 데이터의 상세 정보임을 명시하기 위함.)
                 : "==> error_message / ";
         StringBuilder logMessageStb = new StringBuilder()
                 .append(statusItem).append(" ").append(messageItem).append("\n")

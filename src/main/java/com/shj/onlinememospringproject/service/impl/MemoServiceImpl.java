@@ -1,5 +1,6 @@
 package com.shj.onlinememospringproject.service.impl;
 
+import com.shj.onlinememospringproject.client.OpenAIClient;
 import com.shj.onlinememospringproject.domain.Memo;
 import com.shj.onlinememospringproject.domain.User;
 import com.shj.onlinememospringproject.domain.mapping.UserMemo;
@@ -8,19 +9,21 @@ import com.shj.onlinememospringproject.repository.MemoRepository;
 import com.shj.onlinememospringproject.repository.RedisRepository;
 import com.shj.onlinememospringproject.repository.UserMemoRepository;
 import com.shj.onlinememospringproject.repository.UserRepository;
-import com.shj.onlinememospringproject.response.exception.Exception400;
-import com.shj.onlinememospringproject.response.exception.Exception404;
-import com.shj.onlinememospringproject.response.exception.Exception409;
-import com.shj.onlinememospringproject.response.exception.Exception423;
+import com.shj.onlinememospringproject.response.exception.*;
 import com.shj.onlinememospringproject.service.MemoService;
 import com.shj.onlinememospringproject.service.UserMemoService;
 import com.shj.onlinememospringproject.service.UserService;
 import com.shj.onlinememospringproject.util.SecurityUtil;
+import com.shj.onlinememospringproject.util.TimeConverter;
 import lombok.RequiredArgsConstructor;
+import org.recap.Summarizer;
+import org.recap.graph.Graph;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -37,7 +40,11 @@ public class MemoServiceImpl implements MemoService {
     private final MemoRepository memoRepository;
     private final UserMemoRepository userMemoRepository;
     private final RedisRepository redisRepository;
-    private static final long EDIT_LOCK_EXPIRE_TIME = 1000L * 60 * 10;  // Redis 편집락 TTL : 10분
+    private final OpenAIClient openAIClient;
+    private static final long EDIT_LOCK_EXPIRE_TIME = 1000L * 60 * 10;  // Redis 편집락 TTL = 10분
+    private static final int MAX_TITLE_LENGTH = 15;  // 메모 제목의 최대 길이 = 15자 이하
+    private static final int MAX_SUMMARY_CONTENT_LENGTH = 6000;  // OpenAI 호출용 메모 최대 요약길이 = 6000자 이하
+    private static final int MAX_DAILY_OPENID_USAGE = 10;  // OpenAI 일일 최대 호출횟수 = 10회
 
 
     @Transactional(readOnly = true)
@@ -219,6 +226,99 @@ public class MemoServiceImpl implements MemoService {
                 redisRepository.unlockOwner(lockKey, loginUserId);  // Redis 내 본인의 편집락 해제. (락 소유자만 가능)
             }
         }
+    }
+
+
+    @Transactional
+    @Override
+    public MemoDto.GenerateResponse generateTitleByOpenAI(Long memoId, MemoDto.GenerateRequest generateRequestDto) {
+        Long loginUserId = SecurityUtil.getCurrentMemberId();
+        userMemoService.checkUserInMemo(loginUserId, memoId);
+
+        // 개인별 일일 AI 호출한도 체크 (check OpenAIUsage)
+        String openAIUsageKey = String.format("userId:%d:openai_usage", loginUserId);
+        String value = redisRepository.getValue(openAIUsageKey);
+        int openAIUsage = (value != null) ? Integer.parseInt(value) : 0;
+        if(openAIUsage >= MAX_DAILY_OPENID_USAGE) {  // 400 예외 응답
+            throw new Exception400.MemoBadRequest(String.format("사용자(userId=%d)는 이미 OpenAI 일일 호출횟수(%d회)를 모두 소진했습니다.", loginUserId, MAX_DAILY_OPENID_USAGE));
+        }
+
+        // AI 호출 전 메모내용 요약 (summarize memoContent)
+        String content = generateRequestDto.getContent();
+        int contentLen = content.length();
+        if(contentLen <= MAX_TITLE_LENGTH) {
+            return MemoDto.GenerateResponse.builder()
+                    .title(content)  // 이미 내용이 최대 제목길이보다 짧다면, AI 호출 없이 그대로 제목으로 사용.
+                    .build();
+        }
+        if(contentLen > MAX_SUMMARY_CONTENT_LENGTH) {
+            Summarizer summarizer = new Summarizer();
+            List<String> summarizedSentenceList = summarizer.summarizeByTextLen(
+                    content,  // 요약할 원본 텍스트
+                    Graph.SimilarityMethods.COSINE_SIMILARITY,  // 문장 간 유사도 계산 및 측정법 (COSINE or JACCARD)
+                    MAX_SUMMARY_CONTENT_LENGTH  // 요약될 최대 전체글자수 제한 (null이면 자동 계산식 적용)
+            );
+
+            StringBuilder summarizedStb = new StringBuilder();  // 또는 'String.join("\n", summarizedSentenceList);'
+            int summarizedLen = summarizedSentenceList.size();
+            for(int i=0; i<summarizedLen-1; i++) {
+                summarizedStb.append(summarizedSentenceList.get(i)).append("\n");
+            }
+            if(summarizedLen > 0) summarizedStb.append(summarizedSentenceList.get(summarizedLen-1));
+            content = summarizedStb.toString();
+        }
+
+        // AI Prompt 생성 (make AI Prompt)
+        String prevTitle = generateRequestDto.getPrevTitle();
+        String extraPrompt = (prevTitle != null)
+                ? String.format("\n- 이 제목은 절대 사용 금지: \"%s\" (동일한 경우 무효)", prevTitle.strip()) : "";
+        String prompt = String.format("""
+                아래 글에 어울리는 새로운 제목을 작성해 주세요.
+
+                # 조건
+                - 글자 수 %d자 이하 (공백 포함, 초과 시 무효)
+                - 가능한 한 %d자에 가깝게 작성%s
+                - 제목만 작성, 다른 설명 금지
+                - 위 조건들을 반드시 준수
+
+                # 글
+                %s
+                """, MAX_TITLE_LENGTH, MAX_TITLE_LENGTH, extraPrompt, content);
+
+        // OpenAI 호출 & 제목 생성 (generate memoTitle)
+        String generatedTitle = null;
+        int retryInner = 3;
+        try {
+            while(retryInner-- > 0) {
+                generatedTitle = openAIClient.getChatAnswer(prompt);
+                if(generatedTitle != null) {
+                    generatedTitle = generatedTitle.strip();
+                    if(generatedTitle.length() <= MAX_TITLE_LENGTH && (!generatedTitle.isBlank() && !generatedTitle.equals(prevTitle))) {
+                        break;
+                    }
+                }
+            }
+            if(generatedTitle == null || generatedTitle.isBlank()) {
+                generatedTitle = "빈 제목";
+            }
+        } catch (Exception429.ExcessRequestOpenAI ex429) {  // 429 예외 응답
+            throw ex429;  // 자식 메소드가 throw한 예외를 그대로 재전파.
+        } catch (Exception ex) {  // 500 예외 응답
+            throw new Exception500.ExternalServer(String.format("OpenAIClient API 호출 에러 (%s)", ex.getMessage()));
+        }
+
+        // 개인별 일일 AI 호출횟수 증가 (increase OpenAIUsage)
+        Long restMillisecond = null;
+        if(openAIUsage == 0) {  // 당일 첫 호출인 경우
+            LocalDateTime now = LocalDateTime.now(TimeConverter.KST_ZONEID);
+            LocalDateTime midnight = now.toLocalDate().plusDays(1).atStartOfDay();
+            restMillisecond = Duration.between(now, midnight).toMillis();
+        }
+        redisRepository.updateValue(openAIUsageKey, String.valueOf(++openAIUsage), restMillisecond);
+
+        return MemoDto.GenerateResponse.builder()
+                .title(generatedTitle)
+                .build();
     }
 
 
