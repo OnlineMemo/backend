@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 
 @Getter
 @NoArgsConstructor
-
 @Document(collection = "ga4_filtered")  // 백오피스 전용 데이터는 MongoDB로 관리.
 public class Ga4Filtered {
 

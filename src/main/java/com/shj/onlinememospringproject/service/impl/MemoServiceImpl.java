@@ -34,6 +34,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MemoServiceImpl implements MemoService {
 
+    private static final long EDIT_LOCK_EXPIRE_TIME = 1000L * 60 * 10;  // Redis 편집락 TTL = 10분
+    private static final int MAX_TITLE_LENGTH = 15;  // 메모 제목의 최대 길이 = 15자 이하
+    private static final int MAX_SUMMARY_CONTENT_LENGTH = 6000;  // OpenAI 호출용 메모 최대 요약길이 = 6000자 이하
+    private static final int MAX_DAILY_OPENID_USAGE = 10;  // OpenAI 일일 최대 호출횟수 = 10회
+
     private final UserService userService;
     private final UserMemoService userMemoService;
     private final UserRepository userRepository;
@@ -41,10 +46,6 @@ public class MemoServiceImpl implements MemoService {
     private final UserMemoRepository userMemoRepository;
     private final RedisRepository redisRepository;
     private final OpenAIClient openAIClient;
-    private static final long EDIT_LOCK_EXPIRE_TIME = 1000L * 60 * 10;  // Redis 편집락 TTL = 10분
-    private static final int MAX_TITLE_LENGTH = 15;  // 메모 제목의 최대 길이 = 15자 이하
-    private static final int MAX_SUMMARY_CONTENT_LENGTH = 6000;  // OpenAI 호출용 메모 최대 요약길이 = 6000자 이하
-    private static final int MAX_DAILY_OPENID_USAGE = 10;  // OpenAI 일일 최대 호출횟수 = 10회
 
 
     @Transactional(readOnly = true)
@@ -299,7 +300,13 @@ public class MemoServiceImpl implements MemoService {
                 }
             }
             if(generatedTitle == null || generatedTitle.isBlank()) {
-                generatedTitle = "빈 제목";
+                generatedTitle = "좋은 제목을 찾지 못했어요";  // 14자
+                if(generatedTitle.length() > MAX_TITLE_LENGTH) {  // 안전 장치
+                    generatedTitle = "제목 없음";  // 5자
+                }
+            }
+            else if(generatedTitle.length() > MAX_TITLE_LENGTH) {
+                generatedTitle = generatedTitle.substring(0, MAX_TITLE_LENGTH);
             }
         } catch (Exception429.ExcessRequestOpenAI ex429) {  // 429 예외 응답
             throw ex429;  // 자식 메소드가 throw한 예외를 그대로 재전파.

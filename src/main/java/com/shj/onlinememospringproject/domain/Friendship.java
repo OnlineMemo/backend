@@ -10,7 +10,6 @@ import java.io.Serializable;
 
 @Getter
 @NoArgsConstructor
-
 @Table(name = "friendship")  // 사실상 이 테이블도, User과 User의 mapping 다대다 테이블이다.
 @Entity
 public class Friendship implements Serializable {

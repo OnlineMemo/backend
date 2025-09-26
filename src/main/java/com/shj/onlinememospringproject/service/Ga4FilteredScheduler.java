@@ -14,9 +14,10 @@ import java.time.format.DateTimeFormatter;
 @RequiredArgsConstructor
 public class Ga4FilteredScheduler {
 
+    private final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
     private final Ga4FilteredService ga4FilteredService;
     private final Ga4FilteredRepository ga4FilteredRepository;
-    private final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
 
     @Scheduled(cron = "0 0 15 * * ?", zone = "Asia/Seoul")  // 매일 오후 3시에 실행

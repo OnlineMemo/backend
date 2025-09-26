@@ -24,16 +24,16 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class Ga4FilteredServiceImpl implements Ga4FilteredService {
 
-    private final Ga4FilteredRepository ga4FilteredRepository;
-    private final Ga4FilteredBatchRepository ga4FilteredBatchRepository;
-    private final Ga4Client ga4Client;
-
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final String ALL_PAGE_ALIAS = "전체 페이지 합계";
     private static final String AUTH_PAGE_ALIAS = "회원용 페이지 합계";
     private static final String PUBLIC_PAGE_ALIAS = "공개 페이지 합계";
     private static final Set<String> AUTH_PAGE_SET = Set.of("/users", "/friends", "/senders", "/memos", "/memos/:memoId", "/memos/new-memo");  // 회원용 페이지
     private static final Set<String> PUBLIC_PAGE_SET = Set.of("/", "/signup", "/password", "/information", "/notice", "/download", "/404");  // 공개 페이지
+
+    private final Ga4FilteredRepository ga4FilteredRepository;
+    private final Ga4FilteredBatchRepository ga4FilteredBatchRepository;
+    private final Ga4Client ga4Client;
 
     @Value("${feignclient.ga4.auth-token}")
     private String authToken;

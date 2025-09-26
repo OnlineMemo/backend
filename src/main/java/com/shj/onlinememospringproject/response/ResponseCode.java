@@ -5,8 +5,8 @@ import com.shj.onlinememospringproject.response.responseitem.StatusItem;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-@AllArgsConstructor
 @Getter
+@AllArgsConstructor
 public enum ResponseCode {
 
     // Swagger API 응답값 미리보기 용도

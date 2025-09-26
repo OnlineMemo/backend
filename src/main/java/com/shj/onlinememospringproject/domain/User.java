@@ -16,7 +16,6 @@ import java.util.Set;
 
 @Getter
 @NoArgsConstructor
-
 @Table(name = "user")
 @Entity
 public class User extends BaseCreatedEntity implements Serializable {

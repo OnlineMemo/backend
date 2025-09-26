@@ -15,8 +15,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserMemoBatchRepository {  // 대용량 데이터의 batch 처리를 위한 JDBC Repository
 
-    private final JdbcTemplate jdbcTemplate;
     private static final int BATCH_SIZE = 1000;  // 배치 크기 설정 (메모리 오버헤드 방지)
+    private final JdbcTemplate jdbcTemplate;
 
 
     public void batchInsert(List<UserMemo> userMemoList) {

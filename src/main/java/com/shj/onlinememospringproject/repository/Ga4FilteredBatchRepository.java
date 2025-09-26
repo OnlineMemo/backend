@@ -17,10 +17,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class Ga4FilteredBatchRepository {  // 대용량 데이터의 batch 처리를 위한 BulkOps Repository
 
-    private final Ga4FilteredRepository ga4FilteredRepository;
-    private final MongoTemplate mongoTemplate;
     private static final int BATCH_SIZE = 1000;  // 배치 크기 설정 (메모리 오버헤드 방지)
     private static final int MAX_RETRY = 3;  // 삽입 재시도 최대 횟수
+
+    private final Ga4FilteredRepository ga4FilteredRepository;
+    private final MongoTemplate mongoTemplate;
 
 
     public void batchInsert(List<Ga4Filtered> ga4FilteredList) {  // 참고로 단일 MongoDB 환경에서는 트랜잭션을 미지원함.

@@ -16,7 +16,6 @@ import java.util.Set;
 
 @Getter
 @NoArgsConstructor
-
 @Table(name = "memo")
 @Entity
 public class Memo extends BaseModifiedEntity implements Serializable {

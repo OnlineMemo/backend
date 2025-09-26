@@ -20,6 +20,7 @@ public class JwtFilter extends OncePerRequestFilter {  // HTTP 요청을 중간�
     public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String BEARER_PREFIX = "Bearer ";
     private static final String[] EXCLUDE_PATHS = {"/health", "/test", "/reissue", "/login", "/signup", "/password"};
+
     private final TokenProvider tokenProvider;
 
 
