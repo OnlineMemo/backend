@@ -158,19 +158,19 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
         else requestStb.append("Unknown Controller");
 
         // URI
-        requestStb.append(" (URI:").append(httpServletRequest.getRequestURI());
+        requestStb.append(" (URI: ").append(httpServletRequest.getRequestURI());
         if(httpServletRequest.getQueryString() != null) {
             requestStb.append("?").append(httpServletRequest.getQueryString());
         }
 
         // HTTP method
-        requestStb.append("[").append(httpServletRequest.getMethod()).append("]");
+        requestStb.append("[").append(httpServletRequest.getMethod()).append("]").append(")");
 
         // Content-Type header
-        requestStb.append(", Content-Type:").append(httpServletRequest.getContentType());  // 널체크없이 "null" 문자열로도 로깅 허용.
+        requestStb.append("\n                    Content-Type: ").append(httpServletRequest.getContentType());  // 널체크없이 "null" 문자열로도 로깅 허용.
 
         // Accept header
-        requestStb.append(", Accept:").append(httpServletRequest.getHeader("Accept")).append(")");  // 널체크없이 "null" 문자열로도 로깅 허용.
+        requestStb.append(", Accept: ").append(httpServletRequest.getHeader("Accept"));  // 널체크없이 "null" 문자열로도 로깅 허용.
 
         // User-Agent header
         String userAgentStr = httpServletRequest.getHeader("User-Agent");
