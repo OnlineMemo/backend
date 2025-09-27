@@ -1,5 +1,9 @@
 package com.shj.onlinememospringproject.config;
 
+import com.blueconic.browscap.BrowsCapField;
+import com.blueconic.browscap.ParseException;
+import com.blueconic.browscap.UserAgentParser;
+import com.blueconic.browscap.UserAgentService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shj.onlinememospringproject.jwt.JwtFilter;
 import com.shj.onlinememospringproject.jwt.TokenProvider;
@@ -7,8 +11,6 @@ import com.shj.onlinememospringproject.jwt.handler.JwtAccessDeniedHandler;
 import com.shj.onlinememospringproject.jwt.handler.JwtAuthenticationEntryPoint;
 import com.shj.onlinememospringproject.jwt.handler.JwtExceptionFilter;
 import lombok.RequiredArgsConstructor;
-import nl.basjes.parse.useragent.UserAgent;
-import nl.basjes.parse.useragent.UserAgentAnalyzer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,6 +27,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -33,7 +36,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private static final String[] SWAGGER_PATHS = {"/v3/api-docs/**", "/swagger-ui/**", "/swagger/**"};
+    private static final String[] SWAGGER_TEST_PATHS = {"/v3/api-docs/**", "/swagger-ui/**", "/swagger/**", "/test"};
 
     private final TokenProvider tokenProvider;
     private final ObjectMapper objectMapper;
@@ -69,8 +72,8 @@ public class SecurityConfig {
                             .requestMatchers(HttpMethod.POST, "/").denyAll()  // "/"에 대한 POST 요청을 막음. (이처럼 위쪽에 작성해야 정상 적용가능.)
 
                             // < All (User, Admin) >
-                            .requestMatchers("/", "/error", "/favicon.ico", "/webjars/**", "/health", "/test").permitAll()
-                            .requestMatchers(serverEnv.equals("prod") ? new String[]{} : SWAGGER_PATHS).permitAll()  // 프로덕션 환경의 경우, Swagger 401 응답 처리함.
+                            .requestMatchers("/", "/error", "/favicon.ico", "/webjars/**", "/health").permitAll()
+                            .requestMatchers(serverEnv.equals("prod") ? new String[]{} : SWAGGER_TEST_PATHS).permitAll()  // 프로덕션 환경의 경우, Swagger 및 Test 401 응답 처리함.
                             .requestMatchers("/login", "/signup", "/password", "/reissue").permitAll()
 
                             // < Admin >
@@ -109,13 +112,15 @@ public class SecurityConfig {
     }
 
     @Bean  // Security와 직접적인 관련은 없으나, 이 또한 웹요청 파서이므로 이곳에 빈을 등록함.
-    public UserAgentAnalyzer userAgentAnalyzer() {
-        return UserAgentAnalyzer.newBuilder()
-                .withField(UserAgent.AGENT_NAME)
-                .withField(UserAgent.DEVICE_CLASS)
-                .withField(UserAgent.OPERATING_SYSTEM_NAME)
-                .hideMatcherLoadStats()
-                .withCache(500)
-                .build();
+    public UserAgentParser UserAgentParser() throws IOException, ParseException {
+        return new UserAgentService().loadParser(Arrays.asList(
+                BrowsCapField.BROWSER,
+                BrowsCapField.BROWSER_TYPE,
+                BrowsCapField.DEVICE_TYPE,
+                BrowsCapField.PLATFORM,
+                BrowsCapField.IS_CRAWLER,
+                BrowsCapField.IS_FAKE,
+                BrowsCapField.IS_MODIFIED
+        ));
     }
 }

@@ -1,12 +1,13 @@
 package com.shj.onlinememospringproject.response;
 
+import com.blueconic.browscap.BrowsCapField;
+import com.blueconic.browscap.Capabilities;
+import com.blueconic.browscap.UserAgentParser;
 import com.shj.onlinememospringproject.response.exception.*;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.basjes.parse.useragent.UserAgent;
-import nl.basjes.parse.useragent.UserAgentAnalyzer;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
@@ -27,7 +28,7 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(DispatcherServlet 외부)에 위치하므로, 여기서 감지 X.
 
-    private final UserAgentAnalyzer userAgentAnalyzer;
+    private final UserAgentParser userAgentParser;
 
     private static final String HANDLER_ATTRIBUTE = "org.springframework.web.servlet.HandlerMapping.bestMatchingHandler";
     private static final String PROJECT_PACKAGE = "com.shj.onlinememospringproject";
@@ -169,21 +170,21 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
         requestStb.append(", Content-Type:").append(httpServletRequest.getContentType());  // 널체크없이 "null" 문자열로도 로깅 허용.
 
         // Accept header
-        requestStb.append(", Accept:").append(httpServletRequest.getHeader("Accept"));  // 널체크없이 "null" 문자열로도 로깅 허용.
+        requestStb.append(", Accept:").append(httpServletRequest.getHeader("Accept")).append(")");  // 널체크없이 "null" 문자열로도 로깅 허용.
 
         // User-Agent header
         String userAgentStr = httpServletRequest.getHeader("User-Agent");
-        requestStb.append(", User-Agent:");
+        requestStb.append("\n                    User-Agent: ");
         try {
-            UserAgent userAgent = userAgentAnalyzer.parse(userAgentStr);
-            String agentName = userAgent.getValue("AgentName");
-            String deviceClass = userAgent.getValue("DeviceClass");
-            String operatingSystemName = userAgent.getValue("OperatingSystemName");
-            requestStb.append(agentName).append(",").append(deviceClass).append(",").append(operatingSystemName);
+            Capabilities capabilities = userAgentParser.parse(userAgentStr);
+            requestStb.append("browser=").append(capabilities.getBrowserType()).append("(").append(capabilities.getBrowser()).append(")")  // browser=%s(%s)
+                    .append(", device=").append(capabilities.getDeviceType()).append("(").append(capabilities.getPlatform()).append(")")  // device=%s(%s)
+                    .append(", isCrawler=").append(capabilities.getValue(BrowsCapField.IS_CRAWLER).equals("true") ? 'O' : 'X')  // isCrawler=%c
+                    .append(", isFake=").append(capabilities.getValue(BrowsCapField.IS_FAKE).equals("true") ? 'O' : 'X')  // isFake=%c
+                    .append(", isModified=").append(capabilities.getValue(BrowsCapField.IS_MODIFIED).equals("true") ? 'O' : 'X');  // isModified=%c
         } catch (Exception ex) {
             requestStb.append(userAgentStr);  // 널체크없이 "null" 문자열로도 로깅 허용.
         }
-        requestStb.append(")");
     }
 
     private static void appendTraceInfo(StringBuilder traceStb, StackTraceElement trace, String traceClassName) {
