@@ -29,14 +29,13 @@ public class TokenProvider {
     private static final String BEARER_TYPE = "bearer";
     private static final long ACCESS_TOKEN_EXPIRE_TIME = 1000 * 60 * 180;  // 180분 = 3시간
     private static final long REFRESH_TOKEN_EXPIRE_TIME = 1000 * 60 * 1440 * 14;  // 1440분 x 14 = 24시간 x 14 = 14일 = 2주
+
+    private final ObjectReader claimsReader;
     private final Key key;
 
-    // 개선 여지 : 차후 테스트용 객체의 외부 주입이 필요할 경우, DI 방식으로 전환해 결합도를 낮출 예정.
-    private static final ObjectReader claimsReader  // 다른 클래스에서는 이를 사용하지 않으므로, 보안상 public 없이 private 선언함.
-            = new ObjectMapper().readerFor(Map.class);  // decodeByBase64()에서 호출할 Map 변환용 ObjectReader
-
     // 주의 : 밑의 @Value는 'springframework.beans.factory.annotation.Value' 소속임. lombok의 @Value와 혼동하지 말것.
-    public TokenProvider(@Value("${jwt.secret}") String secretKey) {
+    public TokenProvider(ObjectMapper objectMapper, @Value("${jwt.secret}") String secretKey) {
+        this.claimsReader = objectMapper.readerFor(Map.class);  // objectMapper는 Bean 등록이 되어있음. (재사용성 최적화)
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         this.key = Keys.hmacShaKeyFor(keyBytes);
     }

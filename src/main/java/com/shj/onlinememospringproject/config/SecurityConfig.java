@@ -47,6 +47,8 @@ public class SecurityConfig {
     private String serverEnv;
 
 
+    // ========= Security Setting ========= //
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -111,7 +113,10 @@ public class SecurityConfig {
         return source;
     }
 
-    @Bean  // Security와 직접적인 관련은 없으나, 이 또한 웹요청 파서이므로 이곳에 빈을 등록함.
+
+    // ============ Web Setting ============ //
+
+    @Bean
     public UserAgentParser UserAgentParser() throws IOException, ParseException {
         return new UserAgentService().loadParser(Arrays.asList(
                 BrowsCapField.BROWSER,
@@ -123,4 +128,10 @@ public class SecurityConfig {
                 BrowsCapField.IS_MODIFIED
         ));
     }
+
+    // Spring Boot에서는 ObjectMapper 빈이 기본 등록되므로 비활성화 처리함.
+//    @Bean
+//    public ObjectMapper objectMapper() {
+//        return new ObjectMapper();
+//    }
 }
