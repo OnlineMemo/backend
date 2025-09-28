@@ -5,6 +5,7 @@
     <springProperty name="AWS_SECRET_KEY" source="cloud.aws.credentials.secretKey"/>
 
     <!-- common variable -->
+    <property name="PROJECT_PACKAGE" value="com.shj.onlinememospringproject"/>
     <property name="LOCAL_LOGS_PATH" value="./logs"/>
     <property name="COMMON_MESSAGE" value="[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS, ${logback.timezone:-Asia/Seoul}} / %msg"/>
     <property name="DIVIDER_MESSAGE" value="---------------------------------------------------------------------------"/>
@@ -15,7 +16,7 @@
     <property name="CLOUDWATCH_PATTERN" value="${COMMON_MESSAGE}"/>
 
 
-    <!-- ====================== Console Log ====================== -->
+    <!-- ================== Console Appender (Print) ================== -->
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
@@ -24,7 +25,7 @@
     </appender>
 
 
-    <!-- ======================= Local Log ======================= -->
+    <!-- ==================== Local Appender (File) ==================== -->
 
     <appender name="LOCAL-ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOCAL_LOGS_PATH}/log_error.log</file>
@@ -66,7 +67,7 @@
             <maxHistory>7</maxHistory>
             <totalSizeCap>300MB</totalSizeCap>
         </rollingPolicy>
-        <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+        <filter class="ch.qos.logback.core.filter.EvaluatorFilter"> <!-- filter by Marker -->
             <evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator">
                 <marker>ADMIN_LOG</marker>
             </evaluator>
@@ -79,12 +80,9 @@
     </appender>
 
 
-    <!-- ============ Production Log (AWS CloudWatch) ============ -->
+    <!-- ============ Production Appender (AWS CloudWatch) ============ -->
 
     <appender name="CLOUDWATCH-ERROR" class="ca.pjer.logback.AwsLogsAppender">
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>ERROR</level>
-        </filter>
         <layout>
             <pattern>${CLOUDWATCH_PATTERN}</pattern>
         </layout>
@@ -100,9 +98,6 @@
     </appender>
 
     <appender name="CLOUDWATCH-SCHEDULER" class="ca.pjer.logback.AwsLogsAppender">
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>INFO</level>
-        </filter>
         <layout>
             <pattern>${CLOUDWATCH_PATTERN}</pattern>
         </layout>
@@ -118,10 +113,7 @@
     </appender>
 
     <appender name="CLOUDWATCH-ADMIN" class="ca.pjer.logback.AwsLogsAppender">
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>INFO</level>
-        </filter>
-        <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+        <filter class="ch.qos.logback.core.filter.EvaluatorFilter"> <!-- filter by Marker -->
             <evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator">
                 <marker>ADMIN_LOG</marker>
             </evaluator>
@@ -143,37 +135,37 @@
     </appender>
 
 
-    <!-- ========================================================= -->
+    <!-- ============================================================== -->
 
+    <!-- Console -->
     <springProfile name="local,prod">
-<!--        <logger name="com.shj.onlinememospringproject.response" level="error">-->
-<!--            <appender-ref ref="CONSOLE" />-->
-<!--        </logger>-->
-        <root level="error">
+        <root level="error"> <!-- <logger name="${PROJECT_PACKAGE}.response" level="error">same</logger> -->
             <appender-ref ref="CONSOLE" />
         </root>
     </springProfile>
 
+    <!-- Local -->
     <springProfile name="local">
-        <logger name="com.shj.onlinememospringproject.response" level="error">
+        <logger name="${PROJECT_PACKAGE}.response" level="error">
             <appender-ref ref="LOCAL-ERROR" />
         </logger>
-        <logger name="com.shj.onlinememospringproject.repository.Ga4FilteredBatchRepository" level="info">
+        <logger name="${PROJECT_PACKAGE}.repository.Ga4FilteredBatchRepository" level="info">
             <appender-ref ref="LOCAL-SCHEDULER" />
         </logger>
-        <logger name="com.shj.onlinememospringproject.service" level="info">
+        <logger name="${PROJECT_PACKAGE}.service" level="info">
             <appender-ref ref="LOCAL-ADMIN" />
         </logger>
     </springProfile>
 
+    <!-- Production -->
     <springProfile name="prod">
-        <logger name="com.shj.onlinememospringproject.response" level="error">
+        <logger name="${PROJECT_PACKAGE}.response" level="error">
             <appender-ref ref="CLOUDWATCH-ERROR" />
         </logger>
-        <logger name="com.shj.onlinememospringproject.repository.Ga4FilteredBatchRepository" level="info">
+        <logger name="${PROJECT_PACKAGE}.repository.Ga4FilteredBatchRepository" level="info">
             <appender-ref ref="CLOUDWATCH-SCHEDULER" />
         </logger>
-        <logger name="com.shj.onlinememospringproject.service" level="info">
+        <logger name="${PROJECT_PACKAGE}.service" level="info">
             <appender-ref ref="CLOUDWATCH-ADMIN" />
         </logger>
     </springProfile>

@@ -65,7 +65,7 @@ public class OpenAIConfig {
                         if(throwable instanceof HttpClientErrorException.TooManyRequests ex429) {
                             // - OpenAI 429 응답사유 1 : TPM RPM TPD 등, 시간 내 최대 요청횟수 제한에 도달한 경우
                             // - OpenAI 429 응답사유 2 : 크레딧이 부족하거나 월 최대 지출액에 도달한 경우
-                            throw new Exception429.ExcessRequestOpenAI(String.format("OpenAI API 키 소유자의 최대 제한에 도달했습니다. (%s)", ex429.getMessage()));  // 이는 부모에서 catch 후 다시 재전파되므로, 로깅 메세지를 그대로 포함함.
+                            throw new Exception429.ExcessRequestOpenAI(String.format("OpenAI API 키 소유자가 최대 한도에 도달했습니다. (%s)", ex429.getMessage()));  // 이는 부모에서 catch 후 다시 재전파되므로, 로깅 메세지를 그대로 포함함.
                         }
                     }
                 })
