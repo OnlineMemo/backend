@@ -27,6 +27,8 @@ public class JwtExceptionFilter extends OncePerRequestFilter {
         try {
             filterChain.doFilter(request, response);
         } catch (JwtException ex) {
+            if(response.isCommitted()) return;  // 클라이언트가 이미 연결을 종료한 경우
+
             response.setStatus(401);
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             response.setCharacterEncoding("UTF-8");
@@ -43,14 +45,7 @@ public class JwtExceptionFilter extends OncePerRequestFilter {
             JsonNode dataNode = rootNode.path("body");
             String jsonData = objectMapper.writeValueAsString(dataNode);
 
-            try {
-                response.getWriter().write(jsonData);
-            } catch (IOException ioEx) {
-                if(response.isCommitted()) {  // 클라이언트가 이미 연결을 종료한 경우
-                    return;  // 불필요한 'IOException: Broken pipe' 발생과 로깅을 방지.
-                }
-                throw ioEx;
-            }
+            response.getWriter().write(jsonData);
         }
     }
 }
