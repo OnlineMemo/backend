@@ -1,16 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
+    <!-- spring property -->
     <springProperty name="AWS_ACCESS_KEY" source="cloud.aws.credentials.accessKey"/>
     <springProperty name="AWS_SECRET_KEY" source="cloud.aws.credentials.secretKey"/>
+
+    <!-- common variable -->
     <property name="LOCAL_LOGS_PATH" value="./logs"/>
-    <property name="LOGS_DIVIDER" value="---------------------------------------------------------------------------"/>
+    <property name="COMMON_MESSAGE" value="[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS, ${logback.timezone:-Asia/Seoul}} / %msg"/>
+    <property name="DIVIDER_MESSAGE" value="---------------------------------------------------------------------------"/>
+
+    <!-- encoder pattern -->
+    <property name="CONSOLE_PATTERN" value="${COMMON_MESSAGE}%n${DIVIDER_MESSAGE}%n"/>
+    <property name="LOCAL_PATTERN" value="${COMMON_MESSAGE}%n${DIVIDER_MESSAGE}%n%n"/>
+    <property name="CLOUDWATCH_PATTERN" value="${COMMON_MESSAGE}"/>
 
 
     <!-- ====================== Console Log ====================== -->
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS, ${logback.timezone:-Asia/Seoul}} / %msg%n${LOGS_DIVIDER}%n</pattern> <!-- %.-160msg%n${LOGS_DIVIDER}%n -->
+            <pattern>${CONSOLE_PATTERN}</pattern> <!-- %.-160msg%n${DIVIDER_MESSAGE}%n -->
         </encoder>
     </appender>
 
@@ -28,7 +37,7 @@
             <totalSizeCap>300MB</totalSizeCap>
         </rollingPolicy>
         <encoder>
-            <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS, ${logback.timezone:-Asia/Seoul}} / %msg%n${LOGS_DIVIDER}%n%n</pattern>
+            <pattern>${LOCAL_PATTERN}</pattern>
         </encoder>
     </appender>
 
@@ -43,7 +52,7 @@
             <totalSizeCap>300MB</totalSizeCap>
         </rollingPolicy>
         <encoder>
-            <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS, ${logback.timezone:-Asia/Seoul}} / %msg%n${LOGS_DIVIDER}%n%n</pattern>
+            <pattern>${LOCAL_PATTERN}</pattern>
         </encoder>
     </appender>
 
@@ -65,7 +74,7 @@
             <onMatch>ACCEPT</onMatch>
         </filter>
         <encoder>
-            <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS, ${logback.timezone:-Asia/Seoul}} / %msg%n${LOGS_DIVIDER}%n%n</pattern>
+            <pattern>${LOCAL_PATTERN}</pattern>
         </encoder>
     </appender>
 
@@ -77,7 +86,7 @@
             <level>ERROR</level>
         </filter>
         <layout>
-            <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS, ${logback.timezone:-Asia/Seoul}} / %msg</pattern>
+            <pattern>${CLOUDWATCH_PATTERN}</pattern>
         </layout>
         <logGroupName>onlinememo/error-log</logGroupName>
         <logStreamUuidPrefix>onlinememo-error-log-</logStreamUuidPrefix>
@@ -95,7 +104,7 @@
             <level>INFO</level>
         </filter>
         <layout>
-            <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS, ${logback.timezone:-Asia/Seoul}} / %msg</pattern>
+            <pattern>${CLOUDWATCH_PATTERN}</pattern>
         </layout>
         <logGroupName>onlinememo/scheduler-log</logGroupName>
         <logStreamUuidPrefix>onlinememo-scheduler-log-</logStreamUuidPrefix>
@@ -120,7 +129,7 @@
             <onMatch>ACCEPT</onMatch>
         </filter>
         <layout>
-            <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS, ${logback.timezone:-Asia/Seoul}} / %msg</pattern>
+            <pattern>${CLOUDWATCH_PATTERN}</pattern>
         </layout>
         <logGroupName>onlinememo/admin-log</logGroupName>
         <logStreamUuidPrefix>onlinememo-admin-log-</logStreamUuidPrefix>
