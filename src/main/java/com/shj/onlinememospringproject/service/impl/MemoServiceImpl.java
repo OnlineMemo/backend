@@ -229,7 +229,6 @@ public class MemoServiceImpl implements MemoService {
         }
     }
 
-
     @Transactional
     @Override
     public MemoDto.GenerateResponse generateTitleByOpenAI(Long memoId, MemoDto.GenerateRequest generateRequestDto) {

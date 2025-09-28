@@ -6,11 +6,16 @@
     <property name="LOGS_DIVIDER" value="---------------------------------------------------------------------------"/>
 
 
+    <!-- ====================== Console Log ====================== -->
+
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS, ${logback.timezone:-Asia/Seoul}} / %msg%n${LOGS_DIVIDER}%n</pattern> <!-- %.-160msg%n${LOGS_DIVIDER}%n -->
         </encoder>
     </appender>
+
+
+    <!-- ======================= Local Log ======================= -->
 
     <appender name="LOCAL-ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOCAL_LOGS_PATH}/log_error.log</file>
@@ -26,6 +31,7 @@
             <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS, ${logback.timezone:-Asia/Seoul}} / %msg%n${LOGS_DIVIDER}%n%n</pattern>
         </encoder>
     </appender>
+
     <appender name="LOCAL-SCHEDULER" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOCAL_LOGS_PATH}/log_scheduler.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -40,6 +46,31 @@
             <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS, ${logback.timezone:-Asia/Seoul}} / %msg%n${LOGS_DIVIDER}%n%n</pattern>
         </encoder>
     </appender>
+
+    <appender name="LOCAL-ADMIN" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOCAL_LOGS_PATH}/log_admin.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOCAL_LOGS_PATH}/store_admin/log_admin_%d{yyyy-MM-dd, ${logback.timezone:-Asia/Seoul}}_%i.gz</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>30MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>7</maxHistory>
+            <totalSizeCap>300MB</totalSizeCap>
+        </rollingPolicy>
+        <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+            <evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator">
+                <marker>ADMIN_LOG</marker>
+            </evaluator>
+            <onMismatch>DENY</onMismatch>
+            <onMatch>ACCEPT</onMatch>
+        </filter>
+        <encoder>
+            <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS, ${logback.timezone:-Asia/Seoul}} / %msg%n${LOGS_DIVIDER}%n%n</pattern>
+        </encoder>
+    </appender>
+
+
+    <!-- ============ Production Log (AWS CloudWatch) ============ -->
 
     <appender name="CLOUDWATCH-ERROR" class="ca.pjer.logback.AwsLogsAppender">
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
@@ -58,6 +89,7 @@
         <accessKeyId>${AWS_ACCESS_KEY}</accessKeyId>
         <secretAccessKey>${AWS_SECRET_KEY}</secretAccessKey>
     </appender>
+
     <appender name="CLOUDWATCH-SCHEDULER" class="ca.pjer.logback.AwsLogsAppender">
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>INFO</level>
@@ -76,6 +108,33 @@
         <secretAccessKey>${AWS_SECRET_KEY}</secretAccessKey>
     </appender>
 
+    <appender name="CLOUDWATCH-ADMIN" class="ca.pjer.logback.AwsLogsAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+        <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+            <evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator">
+                <marker>ADMIN_LOG</marker>
+            </evaluator>
+            <onMismatch>DENY</onMismatch>
+            <onMatch>ACCEPT</onMatch>
+        </filter>
+        <layout>
+            <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS, ${logback.timezone:-Asia/Seoul}} / %msg</pattern>
+        </layout>
+        <logGroupName>onlinememo/admin-log</logGroupName>
+        <logStreamUuidPrefix>onlinememo-admin-log-</logStreamUuidPrefix>
+        <logRegion>ap-northeast-2</logRegion>
+        <maxBatchLogEvents>1</maxBatchLogEvents>
+        <maxFlushTimeMillis>30000</maxFlushTimeMillis>
+        <maxBlockTimeMillis>5000</maxBlockTimeMillis>
+        <retentionTimeDays>7</retentionTimeDays>
+        <accessKeyId>${AWS_ACCESS_KEY}</accessKeyId>
+        <secretAccessKey>${AWS_SECRET_KEY}</secretAccessKey>
+    </appender>
+
+
+    <!-- ========================================================= -->
 
     <springProfile name="local,prod">
 <!--        <logger name="com.shj.onlinememospringproject.response" level="error">-->
@@ -93,6 +152,9 @@
         <logger name="com.shj.onlinememospringproject.repository.Ga4FilteredBatchRepository" level="info">
             <appender-ref ref="LOCAL-SCHEDULER" />
         </logger>
+        <logger name="com.shj.onlinememospringproject.service" level="info">
+            <appender-ref ref="LOCAL-ADMIN" />
+        </logger>
     </springProfile>
 
     <springProfile name="prod">
@@ -101,6 +163,9 @@
         </logger>
         <logger name="com.shj.onlinememospringproject.repository.Ga4FilteredBatchRepository" level="info">
             <appender-ref ref="CLOUDWATCH-SCHEDULER" />
+        </logger>
+        <logger name="com.shj.onlinememospringproject.service" level="info">
+            <appender-ref ref="CLOUDWATCH-ADMIN" />
         </logger>
     </springProfile>
 </configuration>

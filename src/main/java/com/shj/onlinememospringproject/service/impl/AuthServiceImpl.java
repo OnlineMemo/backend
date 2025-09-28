@@ -3,6 +3,7 @@ package com.shj.onlinememospringproject.service.impl;
 import com.shj.onlinememospringproject.domain.Friendship;
 import com.shj.onlinememospringproject.domain.Memo;
 import com.shj.onlinememospringproject.domain.User;
+import com.shj.onlinememospringproject.domain.enums.Authority;
 import com.shj.onlinememospringproject.domain.mapping.UserMemo;
 import com.shj.onlinememospringproject.dto.AuthDto;
 import com.shj.onlinememospringproject.jwt.TokenProvider;
@@ -18,6 +19,9 @@ import com.shj.onlinememospringproject.util.SecurityUtil;
 import com.shj.onlinememospringproject.util.TimeConverter;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -31,9 +35,12 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
+
+    private static final Marker ADMIN_LOG_MARKER = MarkerFactory.getMarker("ADMIN_LOG");
 
     private final UserService userService;
     private final UserRepository userRepository;
@@ -93,6 +100,14 @@ public class AuthServiceImpl implements AuthService {
         else {  // DB에 만료되지않은 정상적인 Refresh Token을 갖고있는 경우
             tokenResponseDto = tokenProvider.generateAccessTokenByRefreshToken(authentication, refreshToken);  // 오직 Access Token 하나만을 재발급.
         }
+
+        // Admin 유저의 로그인은 기록
+        if(user.getAuthority() == Authority.ROLE_ADMIN) {
+            log.info(ADMIN_LOG_MARKER,
+                    "Admin 로그인 - userId = {}, email = {}, nickname = {}",
+                    user.getId(), user.getEmail(), user.getNickname());
+        }
+
         return tokenResponseDto;  // 로그인 성공. JWT 토큰 생성.
     }
 
