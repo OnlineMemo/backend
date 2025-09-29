@@ -37,7 +37,7 @@ public class MemoServiceImpl implements MemoService {
     private static final long EDIT_LOCK_EXPIRE_TIME = 1000L * 60 * 10;  // Redis 편집락 TTL = 10분
     private static final int MAX_TITLE_LENGTH = 15;  // 메모 제목의 최대 길이 = 15자 이하
     private static final int MAX_SUMMARY_CONTENT_LENGTH = 6000;  // OpenAI 호출용 메모 최대 요약길이 = 6000자 이하
-    private static final int MAX_DAILY_OPENAI_USAGE = 100;  // OpenAI 일일 최대 호출횟수 = 10회
+    private static final int MAX_DAILY_OPENAI_USAGE = 10;  // OpenAI 일일 최대 호출횟수 = 10회
     private static final String FALLBACK_LONG_TITLE = "좋은 제목을 찾지 못했어요";  // 대체 제목 1 (14자)
     private static final String FALLBACK_SHORT_TITLE = "제목 없음";  // 대체 제목 2 (5자)
 
@@ -233,9 +233,8 @@ public class MemoServiceImpl implements MemoService {
 
     @Transactional
     @Override
-    public MemoDto.GenerateResponse generateTitleByOpenAI(Long memoId, MemoDto.GenerateRequest generateRequestDto) {  // 여기서 memoId는 단지 메모 소유자 검사용으로만 쓰임.
+    public MemoDto.GenerateResponse generateTitleByOpenAI(MemoDto.GenerateRequest generateRequestDto) {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
-        userMemoService.checkUserInMemo(loginUserId, memoId);
 
         // 개인별 일일 AI 호출한도 체크 (check OpenAIUsage)
         String openAIUsageKey = String.format("userId:%d:openai_usage", loginUserId);
@@ -275,7 +274,7 @@ public class MemoServiceImpl implements MemoService {
         if(FALLBACK_LONG_TITLE.equals(prevTitle) || FALLBACK_SHORT_TITLE.equals(prevTitle)) {  // 주의: 순서 반대면 'null.equals(String)'으로 NPE 에러 위험.
             prevTitle = null;
         }
-        int titleLenInPrompt = (MAX_TITLE_LENGTH - 2 > 0) ? MAX_TITLE_LENGTH - 2 : MAX_TITLE_LENGTH;
+        int titleLenInPrompt = (MAX_TITLE_LENGTH-2 > 0) ? MAX_TITLE_LENGTH-2 : MAX_TITLE_LENGTH;
         String extraPrompt = (prevTitle != null)
                 ? String.format("\n- 이 제목은 절대 사용 금지: \"%s\" (동일한 경우 무효)", prevTitle.strip()) : "";
         String prompt = String.format("""

@@ -99,10 +99,10 @@ public class MemoController {
         return ResponseData.toResponseEntity(ResponseCode.DELETE_MEMO);
     }
 
-    @PostMapping("/{memoId}/ai/title")
+    @PostMapping("/ai/title")
     @Operation(summary = "메모 내용 기반의 AI 제목 생성 [JWT O]", description = "- prevTitle 필드 : null 허용 (동일메모 내 첫 시도인 경우에만)")
-    public ResponseEntity<ResponseData<MemoDto.GenerateResponse>> generateTitleByOpenAI(@PathVariable(value = "memoId") Long memoId, @RequestBody MemoDto.GenerateRequest generateRequestDto) {
-        MemoDto.GenerateResponse generateResponseDto = memoService.generateTitleByOpenAI(memoId, generateRequestDto);
+    public ResponseEntity<ResponseData<MemoDto.GenerateResponse>> generateTitleByOpenAI(@RequestBody MemoDto.GenerateRequest generateRequestDto) {
+        MemoDto.GenerateResponse generateResponseDto = memoService.generateTitleByOpenAI(generateRequestDto);
         return ResponseData.toResponseEntity(ResponseCode.SUCCESS_RESPONSE_OPENAI, generateResponseDto);
     }
 }
