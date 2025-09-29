@@ -37,7 +37,9 @@ public class MemoServiceImpl implements MemoService {
     private static final long EDIT_LOCK_EXPIRE_TIME = 1000L * 60 * 10;  // Redis 편집락 TTL = 10분
     private static final int MAX_TITLE_LENGTH = 15;  // 메모 제목의 최대 길이 = 15자 이하
     private static final int MAX_SUMMARY_CONTENT_LENGTH = 6000;  // OpenAI 호출용 메모 최대 요약길이 = 6000자 이하
-    private static final int MAX_DAILY_OPENID_USAGE = 10;  // OpenAI 일일 최대 호출횟수 = 10회
+    private static final int MAX_DAILY_OPENAI_USAGE = 100;  // OpenAI 일일 최대 호출횟수 = 10회
+    private static final String FALLBACK_LONG_TITLE = "좋은 제목을 찾지 못했어요";  // 대체 제목 1 (14자)
+    private static final String FALLBACK_SHORT_TITLE = "제목 없음";  // 대체 제목 2 (5자)
 
     private final UserService userService;
     private final UserMemoService userMemoService;
@@ -231,7 +233,7 @@ public class MemoServiceImpl implements MemoService {
 
     @Transactional
     @Override
-    public MemoDto.GenerateResponse generateTitleByOpenAI(Long memoId, MemoDto.GenerateRequest generateRequestDto) {
+    public MemoDto.GenerateResponse generateTitleByOpenAI(Long memoId, MemoDto.GenerateRequest generateRequestDto) {  // 여기서 memoId는 단지 메모 소유자 검사용으로만 쓰임.
         Long loginUserId = SecurityUtil.getCurrentMemberId();
         userMemoService.checkUserInMemo(loginUserId, memoId);
 
@@ -239,8 +241,8 @@ public class MemoServiceImpl implements MemoService {
         String openAIUsageKey = String.format("userId:%d:openai_usage", loginUserId);
         String value = redisRepository.getValue(openAIUsageKey);
         int openAIUsage = (value != null) ? Integer.parseInt(value) : 0;
-        if(openAIUsage >= MAX_DAILY_OPENID_USAGE) {  // 400 예외 응답
-            throw new Exception400.MemoBadRequest(String.format("사용자(userId=%d)는 이미 OpenAI 일일 호출횟수(%d회)를 모두 소진했습니다.", loginUserId, MAX_DAILY_OPENID_USAGE));
+        if(openAIUsage >= MAX_DAILY_OPENAI_USAGE) {  // 400 예외 응답
+            throw new Exception400.MemoBadRequest(String.format("사용자(userId=%d)는 이미 OpenAI 일일 호출횟수(%d회)를 모두 소진했습니다.", loginUserId, MAX_DAILY_OPENAI_USAGE));
         }
 
         // AI 호출 전 메모내용 요약 (summarize memoContent)
@@ -270,6 +272,10 @@ public class MemoServiceImpl implements MemoService {
 
         // AI Prompt 생성 (make AI Prompt)
         String prevTitle = generateRequestDto.getPrevTitle();
+        if(FALLBACK_LONG_TITLE.equals(prevTitle) || FALLBACK_SHORT_TITLE.equals(prevTitle)) {  // 주의: 순서 반대면 'null.equals(String)'으로 NPE 에러 위험.
+            prevTitle = null;
+        }
+        int titleLenInPrompt = (MAX_TITLE_LENGTH - 2 > 0) ? MAX_TITLE_LENGTH - 2 : MAX_TITLE_LENGTH;
         String extraPrompt = (prevTitle != null)
                 ? String.format("\n- 이 제목은 절대 사용 금지: \"%s\" (동일한 경우 무효)", prevTitle.strip()) : "";
         String prompt = String.format("""
@@ -283,7 +289,7 @@ public class MemoServiceImpl implements MemoService {
 
                 # 글
                 %s
-                """, MAX_TITLE_LENGTH, MAX_TITLE_LENGTH, extraPrompt, content);
+                """, titleLenInPrompt, titleLenInPrompt, extraPrompt, content);
 
         // OpenAI 호출 & 제목 생성 (generate memoTitle)
         String generatedTitle = null;
@@ -299,9 +305,9 @@ public class MemoServiceImpl implements MemoService {
                 }
             }
             if(generatedTitle == null || generatedTitle.isBlank()) {
-                generatedTitle = "좋은 제목을 찾지 못했어요";  // 14자
+                generatedTitle = FALLBACK_LONG_TITLE;  // 14자
                 if(generatedTitle.length() > MAX_TITLE_LENGTH) {  // 안전 장치
-                    generatedTitle = "제목 없음";  // 5자
+                    generatedTitle = FALLBACK_SHORT_TITLE;  // 5자
                 }
             }
             else if(generatedTitle.length() > MAX_TITLE_LENGTH) {
@@ -314,16 +320,22 @@ public class MemoServiceImpl implements MemoService {
         }
 
         // 개인별 일일 AI 호출횟수 증가 (increase OpenAIUsage)
-        Long restMillisecond = null;
         if(openAIUsage == 0) {  // 당일 첫 호출인 경우
             LocalDateTime now = LocalDateTime.now(TimeConverter.KST_ZONEID);
             LocalDateTime midnight = now.toLocalDate().plusDays(1).atStartOfDay();
-            restMillisecond = Duration.between(now, midnight).toMillis();
+            Long restMillisecond = Duration.between(now, midnight).toMillis();
+            redisRepository.setValue(openAIUsageKey, "1", restMillisecond);
+            openAIUsage = 1;
         }
-        redisRepository.updateValue(openAIUsageKey, String.valueOf(++openAIUsage), restMillisecond);
+        else {
+            Long dailyOpenAIUsage = redisRepository.updateCount(openAIUsageKey, 1);  // 파라미터를 1로 넣었으므로 null 체크 필요없음.
+            openAIUsage = dailyOpenAIUsage.intValue();
+        }
 
         return MemoDto.GenerateResponse.builder()
                 .title(generatedTitle)
+                .dailyAIUsage(openAIUsage)
+                .isMaxDailyAIUsage(openAIUsage >= MAX_DAILY_OPENAI_USAGE)
                 .build();
     }
 

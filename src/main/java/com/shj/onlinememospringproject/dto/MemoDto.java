@@ -98,6 +98,8 @@ public class MemoDto {
     public static class GenerateResponse {
 
         private String title;
+        private Integer dailyAIUsage;  // 호출 이후의 일일 AI 사용량
+        private Boolean isMaxDailyAIUsage;  // 일일 AI 사용량 한도에 도달했는가? (boolean 원시타입은 앞의 "is"가 제거된 필드명으로 응답되므로 주의할것.)
     }
 
     @Builder
