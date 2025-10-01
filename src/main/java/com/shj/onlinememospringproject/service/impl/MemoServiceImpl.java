@@ -310,7 +310,7 @@ public class MemoServiceImpl implements MemoService {
                 }
             }
             else if(generatedTitle.length() > MAX_TITLE_LENGTH) {
-                generatedTitle = generatedTitle.substring(0, MAX_TITLE_LENGTH);
+                generatedTitle = generatedTitle.substring(0, MAX_TITLE_LENGTH).strip();
             }
         } catch (Exception429.ExcessRequestOpenAI ex429) {  // 429 예외 응답
             throw ex429;  // 자식 메소드가 throw한 예외를 그대로 재전파.

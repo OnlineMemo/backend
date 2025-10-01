@@ -12,7 +12,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+
+import static com.shj.onlinememospringproject.service.BackOfficeScheduler.MB_DIVISOR;
 
 @Tag(name = "BackOffice")
 @RestController
@@ -77,5 +81,25 @@ public class BackOfficeController {
     public ResponseEntity<ResponseData<UserDto.CountResponse>> countUsers() {
         UserDto.CountResponse countResponseDto = userService.countUsers();
         return ResponseData.toResponseEntity(ResponseCode.READ_USER, countResponseDto);
+    }
+
+    @GetMapping("/memory/heap")
+    @Operation(summary = "힙메모리 사용량 조회 [JWT O]")
+    public ResponseEntity<ResponseData<Map<String, String>>> getHeapMemoryUsage() {
+        Map<String, String> heapMemoryMap = new LinkedHashMap<>();
+        Runtime runtime = Runtime.getRuntime();
+
+        double limitMaxMB = runtime.maxMemory() / MB_DIVISOR;  // 설정된 JVM 한도의 최대 힙메모리 (한계치)
+        double currentMaxMB = runtime.totalMemory() / MB_DIVISOR;  // 현재 OS에서 할당받은 최대 힙메모리 (점점 늘어남)
+        double usedMB = currentMaxMB - (runtime.freeMemory() / MB_DIVISOR);
+        double remainMB = limitMaxMB - usedMB;
+        double usedPercent = usedMB * 100 / limitMaxMB;
+        usedPercent = Math.round(usedPercent * 100) / 100.0;
+
+        heapMemoryMap.put("maxHeap", String.format("100%% (%.2fMB · %.2fGB)", limitMaxMB, limitMaxMB/1024));  // 최대
+        heapMemoryMap.put("usedHeap", String.format("%.2f%% (%.2fMB · %.2fGB)", usedPercent, usedMB, usedMB/1024));  // 사용
+        heapMemoryMap.put("remainHeap", String.format("%.2f%% (%.2fMB · %.2fGB)", remainMB*100/limitMaxMB, remainMB, remainMB/1024));  // 잔여
+
+        return ResponseData.toResponseEntity(ResponseCode.READ_MEMORY, heapMemoryMap);
     }
 }

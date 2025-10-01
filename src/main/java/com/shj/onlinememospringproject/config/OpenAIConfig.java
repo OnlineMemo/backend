@@ -9,6 +9,7 @@ import org.springframework.ai.retry.TransientAiException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.retry.RetryCallback;
 import org.springframework.retry.RetryContext;
 import org.springframework.retry.RetryListener;
@@ -58,14 +59,17 @@ public class OpenAIConfig {
                 .maxAttempts(3)  // 총 3회까지 실패 재시도 (첫시도 1회 + 재시도 2회)
                 .retryOn(TransientAiException.class)
                 .retryOn(ResourceAccessException.class)
+                .retryOn(HttpClientErrorException.class)  // onError()에서 처리하기위함.
                 .fixedBackoff(Duration.ofMillis(200))  // 0.2초 간격
                 .withListener(new RetryListener() {
                     @Override
                     public <T extends Object, E extends Throwable> void onError(RetryContext context, RetryCallback<T, E> callback, Throwable throwable) {
-                        if(throwable instanceof HttpClientErrorException.TooManyRequests ex429) {
+                        if(throwable instanceof HttpClientErrorException ex && ex.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
                             // - OpenAI 429 응답사유 1 : TPM RPM TPD 등, 시간 내 최대 요청횟수 제한에 도달한 경우
                             // - OpenAI 429 응답사유 2 : 크레딧이 부족하거나 월 최대 지출액에 도달한 경우
-                            throw new Exception429.ExcessRequestOpenAI(String.format("OpenAI API 키 소유자가 최대 한도에 도달했습니다. (%s)", ex429.getMessage()));  // 이는 부모에서 catch 후 다시 재전파되므로, 로깅 메세지를 그대로 포함함.
+                            throw new Exception429.ExcessRequestOpenAI(
+                                    String.format("OpenAI API 키 소유자가 최대 한도에 도달했습니다. (%s)", ex.getMessage())  // 또는 'ex.getResponseBodyAsString()'
+                            );  // 이는 부모에서 catch 후 다시 재전파되므로, 로깅 메세지를 그대로 포함함.
                         }
                     }
                 })

@@ -3,6 +3,9 @@
     <!-- spring property -->
     <springProperty name="AWS_ACCESS_KEY" source="cloud.aws.credentials.accessKey"/>
     <springProperty name="AWS_SECRET_KEY" source="cloud.aws.credentials.secretKey"/>
+    <springProperty name="SLACK_WEBHOOK_URI_ERROR_500" source="logging.slack.webhook-url.error-500"/>
+    <springProperty name="SLACK_WEBHOOK_URI_OPENAI_429" source="logging.slack.webhook-url.openai-429"/>
+    <springProperty name="SLACK_WEBHOOK_URI_WARN_OOM" source="logging.slack.webhook-url.warn-oom"/>
 
     <!-- common variable -->
     <property name="PROJECT_PACKAGE" value="com.shj.onlinememospringproject"/>
@@ -14,6 +17,7 @@
     <property name="CONSOLE_PATTERN" value="${COMMON_MESSAGE}%n${DIVIDER_MESSAGE}%n"/>
     <property name="LOCAL_PATTERN" value="${COMMON_MESSAGE}%n${DIVIDER_MESSAGE}%n%n"/>
     <property name="CLOUDWATCH_PATTERN" value="${COMMON_MESSAGE}"/>
+    <property name="SLACK_PATTERN" value="${COMMON_MESSAGE}"/>
 
 
     <!-- ================== Console Appender (Print) ================== -->
@@ -37,43 +41,6 @@
             <maxHistory>7</maxHistory>
             <totalSizeCap>300MB</totalSizeCap>
         </rollingPolicy>
-        <encoder>
-            <pattern>${LOCAL_PATTERN}</pattern>
-        </encoder>
-    </appender>
-
-    <appender name="LOCAL-SCHEDULER" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOCAL_LOGS_PATH}/log_scheduler.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOCAL_LOGS_PATH}/store_scheduler/log_scheduler_%d{yyyy-MM-dd, ${logback.timezone:-Asia/Seoul}}_%i.gz</fileNamePattern>
-            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                <maxFileSize>30MB</maxFileSize>
-            </timeBasedFileNamingAndTriggeringPolicy>
-            <maxHistory>7</maxHistory>
-            <totalSizeCap>300MB</totalSizeCap>
-        </rollingPolicy>
-        <encoder>
-            <pattern>${LOCAL_PATTERN}</pattern>
-        </encoder>
-    </appender>
-
-    <appender name="LOCAL-ADMIN" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOCAL_LOGS_PATH}/log_admin.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOCAL_LOGS_PATH}/store_admin/log_admin_%d{yyyy-MM-dd, ${logback.timezone:-Asia/Seoul}}_%i.gz</fileNamePattern>
-            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                <maxFileSize>30MB</maxFileSize>
-            </timeBasedFileNamingAndTriggeringPolicy>
-            <maxHistory>7</maxHistory>
-            <totalSizeCap>300MB</totalSizeCap>
-        </rollingPolicy>
-        <filter class="ch.qos.logback.core.filter.EvaluatorFilter"> <!-- filter by Marker -->
-            <evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator">
-                <marker>ADMIN_LOG</marker>
-            </evaluator>
-            <onMismatch>DENY</onMismatch>
-            <onMatch>ACCEPT</onMatch>
-        </filter>
         <encoder>
             <pattern>${LOCAL_PATTERN}</pattern>
         </encoder>
@@ -135,6 +102,63 @@
     </appender>
 
 
+    <!-- ================= Production Appender (Slack Webhook) ================= -->
+
+    <appender name="SLACK-ERROR-500" class="com.github.maricn.logback.SlackAppender">
+        <filter class="ch.qos.logback.core.filter.EvaluatorFilter"> <!-- filter by Marker -->
+            <evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator">
+                <marker>ERROR_500_LOG</marker>
+            </evaluator>
+            <onMismatch>DENY</onMismatch>
+            <onMatch>ACCEPT</onMatch>
+        </filter>
+        <webhookUri>${SLACK_WEBHOOK_URI_ERROR_500}</webhookUri>
+        <channel>#error-500</channel>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>${SLACK_PATTERN}</pattern>
+        </layout>
+        <username>Alarm-Error500</username>
+        <iconEmoji>:firecracker:</iconEmoji>
+        <colorCoding>true</colorCoding>
+    </appender>
+
+    <appender name="SLACK-OPENAI-429" class="com.github.maricn.logback.SlackAppender">
+        <filter class="ch.qos.logback.core.filter.EvaluatorFilter"> <!-- filter by Marker -->
+            <evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator">
+                <marker>OPENAI_429_LOG</marker>
+            </evaluator>
+            <onMismatch>DENY</onMismatch>
+            <onMatch>ACCEPT</onMatch>
+        </filter>
+        <webhookUri>${SLACK_WEBHOOK_URI_OPENAI_429}</webhookUri>
+        <channel>#openai-429</channel>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>${SLACK_PATTERN}</pattern>
+        </layout>
+        <username>Alarm-OpenAI429</username>
+        <iconEmoji>:robot:</iconEmoji>
+        <colorCoding>true</colorCoding>
+    </appender>
+
+    <appender name="SLACK-WARN-OOM" class="com.github.maricn.logback.SlackAppender">
+        <filter class="ch.qos.logback.core.filter.EvaluatorFilter"> <!-- filter by Marker -->
+            <evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator">
+                <marker>WARN_OOM_LOG</marker>
+            </evaluator>
+            <onMismatch>DENY</onMismatch>
+            <onMatch>ACCEPT</onMatch>
+        </filter>
+        <webhookUri>${SLACK_WEBHOOK_URI_WARN_OOM}</webhookUri>
+        <channel>#warn-oom</channel>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>${SLACK_PATTERN}</pattern>
+        </layout>
+        <username>Alarm-WarnOOM</username>
+        <iconEmoji>:robot:</iconEmoji>
+        <colorCoding>true</colorCoding>
+    </appender>
+
+
     <!-- ============================================================== -->
 
     <!-- Console -->
@@ -149,23 +173,22 @@
         <logger name="${PROJECT_PACKAGE}.response" level="error">
             <appender-ref ref="LOCAL-ERROR" />
         </logger>
-        <logger name="${PROJECT_PACKAGE}.repository.Ga4FilteredBatchRepository" level="info">
-            <appender-ref ref="LOCAL-SCHEDULER" />
-        </logger>
-        <logger name="${PROJECT_PACKAGE}.service" level="info">
-            <appender-ref ref="LOCAL-ADMIN" />
-        </logger>
     </springProfile>
 
-    <!-- Production -->
+    <!-- Production (CloudWatch & Slack) -->
     <springProfile name="prod">
         <logger name="${PROJECT_PACKAGE}.response" level="error">
             <appender-ref ref="CLOUDWATCH-ERROR" />
+            <appender-ref ref="SLACK-ERROR-500" />
+            <appender-ref ref="SLACK-OPENAI-429" />
+        </logger>
+        <logger name="${PROJECT_PACKAGE}.service.BackOfficeScheduler" level="warn">
+            <appender-ref ref="SLACK-WARN-OOM" />
         </logger>
         <logger name="${PROJECT_PACKAGE}.repository.Ga4FilteredBatchRepository" level="info">
             <appender-ref ref="CLOUDWATCH-SCHEDULER" />
         </logger>
-        <logger name="${PROJECT_PACKAGE}.service" level="info">
+        <logger name="${PROJECT_PACKAGE}.service.impl.AuthServiceImpl" level="info">
             <appender-ref ref="CLOUDWATCH-ADMIN" />
         </logger>
     </springProfile>

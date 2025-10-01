@@ -8,6 +8,8 @@ import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
@@ -28,13 +30,16 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(DispatcherServlet 외부)에 위치하므로, 여기서 감지 X.
 
-    private final UserAgentParser userAgentParser;
-
     private static final String HANDLER_ATTRIBUTE = "org.springframework.web.servlet.HandlerMapping.bestMatchingHandler";
     private static final String PROJECT_PACKAGE = "com.shj.onlinememospringproject";
     private static final String EXCEPTION_FILTER_CLASSNAME = "JwtExceptionFilter";
     private static final String CGLIB_STRING = "$$SpringCGLIB$$";
     private static final Pattern CGLIB_PATTERN = Pattern.compile("\\$\\$SpringCGLIB\\$\\$\\d+");  // CGLIB 프록시 패턴
+
+    private static final Marker ERROR_500_LOG_MARKER = MarkerFactory.getMarker("ERROR_500_LOG");
+    private static final Marker OPENAI_429_LOG_MARKER = MarkerFactory.getMarker("OPENAI_429_LOG");
+
+    private final UserAgentParser userAgentParser;
 
 
     // < 500 Exception >
@@ -73,13 +78,13 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
         }
 
         exStb.append(traceStb);
-        return logAndResponse(ResponseCode.INTERNAL_SERVER_ERROR, exStb.toString());
+        return logAndResponse(ResponseCode.INTERNAL_SERVER_ERROR, exStb.toString(), ERROR_500_LOG_MARKER);
     }
 
     // < 401 Exception - JWT >
     @ExceptionHandler(JwtException.class)  // Filter 단계 이후에 JWT 토큰 검증시 (Filter 단계에서는 JwtExceptionFilter가 대신 처리.)
     public ResponseEntity handleJwtException(Exception ex) {
-        return logAndResponse(ResponseCode.TOKEN_ERROR, ex.getMessage());
+        return logAndResponse(ResponseCode.TOKEN_ERROR, ex.getMessage(), null);
     }
 
     // < 401 Exception - UNAUTHORIZED >
@@ -88,7 +93,7 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
             BadCredentialsException.class  // 로그인 실패시
     })
     public ResponseEntity handleUnauthorizedException(Exception ex) {
-        return logAndResponse(ResponseCode.UNAUTHORIZED_ERROR, ex.getMessage());
+        return logAndResponse(ResponseCode.UNAUTHORIZED_ERROR, ex.getMessage(), null);
         // 참고로 AuthenticationException 경우에는 예외처리권한이 JwtAuthenticationEntryPoint로 넘어가기에
         // 크롬콘솔에선 설정한방식대로 출력되지않지만, 이는 postman 프로그램에서 확인이 가능하여 명시하였음.
     }
@@ -96,7 +101,7 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
     // < 403 Exception >
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity handleForbiddenException(Exception ex) {
-        return logAndResponse(ResponseCode.FORBIDDEN_ERROR, ex.getMessage());
+        return logAndResponse(ResponseCode.FORBIDDEN_ERROR, ex.getMessage(), null);
         // 참고로 AccessDeniedException 경우에는 예외처리권한이 JwtAccessDeniedHandler로 넘어가기에
         // 크롬콘솔에선 설정한방식대로 출력되지않지만, 이는 postman 프로그램에서 확인이 가능하여 명시하였음.
     }
@@ -118,28 +123,38 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
 
         // 우선순위: HttpMethod 행위 (405) -> ContentType 요청타입 (415) -> Accept 응답타입 (406)
         if(ex instanceof HttpRequestMethodNotSupportedException) {
-            return logAndResponse(ResponseCode.NOT_ALLOWED_METHOD, exStb.toString());
+            return logAndResponse(ResponseCode.NOT_ALLOWED_METHOD, exStb.toString(), null);
         }
         else if(ex instanceof HttpMediaTypeNotSupportedException) {
-            return logAndResponse(ResponseCode.UNSUPPORTED_TYPE, exStb.toString());
+            return logAndResponse(ResponseCode.UNSUPPORTED_TYPE, exStb.toString(), null);
         }
-        return logAndResponse(ResponseCode.NOT_ACCEPTABLE_TYPE, exStb.toString());  // instanceof HttpMediaTypeNotAcceptableException
+        return logAndResponse(ResponseCode.NOT_ACCEPTABLE_TYPE, exStb.toString(), null);  // instanceof HttpMediaTypeNotAcceptableException
     }
 
 
     // ========== 커스텀 예외 처리 ========== //
 
-    // < 400,404,409,423,429,500 Exception >
+    // < 400,404,409,423,500 Exception >
     @ExceptionHandler({
             Exception400.class,
             Exception404.class,
             Exception409.class,
             Exception423.class,
-            Exception429.class,
             Exception500.class
     })
-    public ResponseEntity handleCustomException(CustomException ex) {
-        return logAndResponse(ex.getErrorResponseCode(), ex.getMessage());
+    public ResponseEntity handleCommonCustomException(CustomException ex) {
+        return logAndResponse(ex.getErrorResponseCode(), ex.getMessage(), null);
+    }
+
+    // < 429 Exception >
+    @ExceptionHandler({
+            Exception429.class
+    })
+    public ResponseEntity handle429CustomException(CustomException ex) {
+        if(ex instanceof Exception429.ExcessRequestOpenAI) {
+            return logAndResponse(ex.getErrorResponseCode(), ex.getMessage(), OPENAI_429_LOG_MARKER);
+        }
+        return logAndResponse(ex.getErrorResponseCode(), ex.getMessage(), null);
     }
 
 
@@ -198,7 +213,7 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
         }
     }
 
-    private static ResponseEntity logAndResponse(ResponseCode responseCode, String message) {
+    private static ResponseEntity logAndResponse(ResponseCode responseCode, String message, Marker marker) {
         int statusItem = responseCode.getHttpStatus();
         String messageItem = responseCode.getMessage();
 
@@ -216,7 +231,9 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
         }
 
         logMessageStb.append(message);
-        log.error(logMessageStb.toString());
+        if(marker != null) log.error(marker, logMessageStb.toString());
+        else log.error(logMessageStb.toString());
+
         return ResponseData.toResponseEntity(responseCode);
     }
 
