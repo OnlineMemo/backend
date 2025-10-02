@@ -88,6 +88,14 @@ tasks.named('test') {
 	useJUnitPlatform()
 }
 
+jar {
+	enabled = false
+}
+
+bootJar {
+	enabled = true
+}
+
 bootJar {
 	outputs.upToDateWhen { false }  // Gradle 캐시 무효화
 
@@ -137,10 +145,14 @@ bootJar {
 		println "1. zip 압축하는 중..."
 		exec {
 			commandLine "sh", "-c", """
+				chmod +x .platform/hooks/**/*.sh &&
+				rm -rf deploy &&
                 mkdir -p deploy &&
-                cp build/libs/onlinememo-backend.jar deploy/onlinememo-backend.jar &&
+                mkdir -p deploy/.platform/hooks/predeploy &&
+                cp build/libs/onlinememo-spring-project-0.0.1-SNAPSHOT.jar deploy/onlinememo-backend.jar &&
                 cp Procfile deploy/Procfile &&
                 cp -r .ebextensions deploy/.ebextensions &&
+                cp .platform/hooks/predeploy/kill_prev_spring.sh deploy/.platform/hooks/predeploy/kill_prev_spring.sh &&
                 cd deploy &&
                 rm -f deploy.zip &&
                 zip -r deploy.zip .
