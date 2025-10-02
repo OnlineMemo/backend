@@ -42,8 +42,9 @@ out/
 **/.DS_Store
 **/._.DS_Store
 
-# Logging file ignore
+# Ignore Custom files
 logs/
+deploy/
 
 # application.properties 파일은 gitignore에 적용시키지 않음.
 !src/main/resources/application.properties

@@ -89,6 +89,8 @@ tasks.named('test') {
 }
 
 bootJar {
+	outputs.upToDateWhen { false }  // Gradle 캐시 무효화
+
 	doFirst {
 		println "!!! bootJar 시작 !!!"
 
@@ -121,11 +123,50 @@ bootJar {
 			throw new GradleException("❌ 'spring.profiles.active=~' 프로필이 prod가 아니므로 빌드 실패")
 		}
 
-		println "3. 빌드 진행 중..."
+//		println "3. jar 네임 동적 설정 중 (build 캐싱 우회)..."
+//		def timestamp = new Date().format("yyyyMMddHHmmssSSS")
+//		archiveBaseName.set("onlinememo-backend-${timestamp}")
+
+		println "4. 빌드 진행 중..."
 	}
 
 	doLast {
 		println "✅ 빌드 성공"
 		println "!!! bootJar 종료 !!!"
+	}
+
+	doLast {
+		println "!!! deploy.zip 시작 !!!"
+
+//		println "1. jar 파일명 이전으로 되돌리는 중..."
+//		def jarFile = file("build/libs").listFiles().find { it.name.startsWith("onlinememo-backend-") && it.name.endsWith(".jar") }
+//		if (jarFile == null) {
+//			println "ERROR : 이름을 되돌릴 'onlinememo-backend-**.jar' 파일이 없음"
+//			println "❌ zip 생성 실패"
+//			throw new GradleException("❌ 'onlinememo-backend-**.jar' 파일이 없으므로 zip 생성 실패")
+//		}
+//		def newJarFile = new File(jarFile.parent, "onlinememo-backend.jar")
+//		if (newJarFile.exists()) {
+//			newJarFile.delete()
+//		}
+//		jarFile.renameTo(newJarFile)
+
+		println "2. zip 압축하는 중..."
+		exec {
+			commandLine "sh", "-c", """
+                mkdir -p deploy &&
+                cp build/libs/onlinememo-backend.jar deploy/onlinememo-backend.jar &&
+                cp Procfile deploy/Procfile &&
+                cp -r .ebextensions deploy/.ebextensions &&
+                cd deploy &&
+                rm -f deploy.zip &&
+                zip -r deploy.zip .
+            """
+		}
+	}
+
+	doLast {
+		println "✅✅ zip 생성 성공"
+		println "!!! deploy.zip 종료 !!!"
 	}
 }
