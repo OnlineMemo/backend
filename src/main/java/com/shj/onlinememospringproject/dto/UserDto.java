@@ -38,7 +38,7 @@ public class UserDto {
             this.email = entity.getEmail();
             this.nickname = entity.getNickname();
             this.createdTime = entity.getCreatedTime();
-            this.createdTimeStr = TimeConverter.timeToString(entity.getCreatedTime());
+            this.createdTimeStr = TimeConverter.timeToStringForResponse(entity.getCreatedTime());
         }
     }
 

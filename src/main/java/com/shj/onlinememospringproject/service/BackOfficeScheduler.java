@@ -3,6 +3,7 @@ package com.shj.onlinememospringproject.service;
 import com.shj.onlinememospringproject.domain.backoffice.Ga4Filtered;
 import com.shj.onlinememospringproject.repository.Ga4FilteredRepository;
 import com.shj.onlinememospringproject.repository.RedisRepository;
+import com.shj.onlinememospringproject.util.TimeConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Marker;
@@ -12,9 +13,6 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.LocalDate;
-import java.time.ZoneId;
-
-import static com.shj.onlinememospringproject.service.impl.Ga4FilteredServiceImpl.GA4FILTERED_FORMATTER;
 
 @Slf4j
 @Component
@@ -32,9 +30,9 @@ public class BackOfficeScheduler {
 
     @Scheduled(cron = "0 0 15 * * ?", zone = "Asia/Seoul")  // 매일 오후 3시에 실행
     public void filterAndSaveGa4() {
-        LocalDate yesterday = LocalDate.now(ZoneId.of("Asia/Seoul")).minusDays(1);
+        LocalDate yesterday = LocalDate.now(TimeConverter.KST_ZONEID).minusDays(1);
         String startDayStr;
-        String endDayStr = yesterday.format(GA4FILTERED_FORMATTER);  // 하루 전의 데이터까지 정제함.
+        String endDayStr = yesterday.format(TimeConverter.DATE_FORMATTER);  // 하루 전의 데이터까지 정제함.
 
         Ga4Filtered recentGa4Filtered = ga4FilteredRepository.findFirstByOrderByEventDatetimeDesc().orElse(null);
         if(recentGa4Filtered == null) {
@@ -42,7 +40,7 @@ public class BackOfficeScheduler {
         }
         else {
             LocalDate recentDay = recentGa4Filtered.getEventDatetime().toLocalDate();
-            startDayStr = recentDay.plusDays(1).format(GA4FILTERED_FORMATTER);
+            startDayStr = recentDay.plusDays(1).format(TimeConverter.DATE_FORMATTER);
         }
 
         if(startDayStr.compareTo(endDayStr) > 0) return;

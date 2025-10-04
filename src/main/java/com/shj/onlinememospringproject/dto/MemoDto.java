@@ -72,7 +72,7 @@ public class MemoDto {
             this.title = entity.getTitle();
             this.content = entity.getContent();
             this.isStar = entity.getIsStar();
-            this.modifiedTime = TimeConverter.timeToString(entity.getModifiedTime());
+            this.modifiedTime = TimeConverter.timeToStringForResponse(entity.getModifiedTime());
             this.memoHasUsersCount = entity.getUserMemoList().size();
             this.currentVersion = entity.getVersion();
         }
@@ -124,7 +124,7 @@ public class MemoDto {
             this.memoId = entity.getId();
             this.title = entity.getTitle();
             this.isStar = entity.getIsStar();
-            this.modifiedTime = TimeConverter.timeToString(entity.getModifiedTime());
+            this.modifiedTime = TimeConverter.timeToStringForResponse(entity.getModifiedTime());
 
             List<UserDto.Response> userResponseDtoList = entity.getUserMemoList().stream()
                     .map(UserMemo::getUser)

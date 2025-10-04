@@ -154,7 +154,6 @@ bootJar {
                 cp -r .ebextensions deploy/.ebextensions &&
                 cp .platform/hooks/predeploy/kill_prev_spring.sh deploy/.platform/hooks/predeploy/kill_prev_spring.sh &&
                 cd deploy &&
-                rm -f deploy.zip &&
                 zip -r deploy.zip .
             """
 		}

@@ -1,5 +1,6 @@
 package com.shj.onlinememospringproject.response;
 
+import com.shj.onlinememospringproject.util.TimeConverter;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
@@ -7,8 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Locale;
 
 @Getter
 @Builder
@@ -29,7 +28,7 @@ public class ResponseData<T> {
                         .status(responseCode.getHttpStatus())
                         .message(responseCode.getMessage())
                         .code(responseCode)
-                        .timestamp(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy. M. d. a h:mm").withLocale(Locale.forLanguageTag("ko"))))
+                        .timestamp(TimeConverter.timeToStringForResponse(LocalDateTime.now()))
                         .build()
                 );
     }
@@ -42,7 +41,7 @@ public class ResponseData<T> {
                         .status(responseCode.getHttpStatus())
                         .message(responseCode.getMessage())
                         .code(responseCode)
-                        .timestamp(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy. M. d. a h:mm").withLocale(Locale.forLanguageTag("ko"))))
+                        .timestamp(TimeConverter.timeToStringForResponse(LocalDateTime.now()))
                         .data(data)
                         .build()
                 );
@@ -57,7 +56,7 @@ public class ResponseData<T> {
                         .status(responseCode.getHttpStatus())
                         .message(responseCode.getMessage())
                         .code(responseCode)
-                        .timestamp(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy. M. d. a h:mm").withLocale(Locale.forLanguageTag("ko"))))
+                        .timestamp(TimeConverter.timeToStringForResponse(LocalDateTime.now()))
                         .data(data)
                         .build()
                 );

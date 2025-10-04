@@ -42,7 +42,7 @@ public class Ga4FilteredDto {
 
         public Response(Ga4Filtered entity) {
             this.eventDatetime = entity.getEventDatetime();
-            this.eventDatetimeStr = TimeConverter.timeToString(entity.getEventDatetime());
+            this.eventDatetimeStr = TimeConverter.timeToStringForResponse(entity.getEventDatetime());
             this.userPseudoId = entity.getUserPseudoId();
             this.loginUserId = entity.getLoginUserId();
             this.pageTitle = entity.getPageTitle();

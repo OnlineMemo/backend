@@ -8,6 +8,7 @@ import com.shj.onlinememospringproject.repository.Ga4FilteredRepository;
 import com.shj.onlinememospringproject.response.exception.Exception400;
 import com.shj.onlinememospringproject.response.exception.Exception500;
 import com.shj.onlinememospringproject.service.Ga4FilteredService;
+import com.shj.onlinememospringproject.util.TimeConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class Ga4FilteredServiceImpl implements Ga4FilteredService {
 
-    public static final DateTimeFormatter GA4FILTERED_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final String ALL_PAGE_ALIAS = "전체 페이지 합계";
     private static final String AUTH_PAGE_ALIAS = "회원용 페이지 합계";
     private static final String PUBLIC_PAGE_ALIAS = "공개 페이지 합계";
@@ -236,8 +235,8 @@ public class Ga4FilteredServiceImpl implements Ga4FilteredService {
         }
 
         try {
-            LocalDateTime.parse(startDatetimeStr, GA4FILTERED_FORMATTER);
-            LocalDateTime.parse(endDatetimeStr, GA4FILTERED_FORMATTER);
+            LocalDateTime.parse(startDatetimeStr, TimeConverter.DATETIME_FORMATTER);
+            LocalDateTime.parse(endDatetimeStr, TimeConverter.DATETIME_FORMATTER);
         } catch (DateTimeParseException ex) {
             throw new Exception400.Ga4FilteredBadRequest("잘못된 날짜 형식으로 API를 요청하였습니다.");
         }
@@ -248,7 +247,7 @@ public class Ga4FilteredServiceImpl implements Ga4FilteredService {
             throw new Exception400.Ga4FilteredBadRequest("변환할 날짜 문자열이 비어있습니다.");
         }
 
-        LocalDateTime datetimeKst = LocalDateTime.parse(datetimeStr, GA4FILTERED_FORMATTER);
+        LocalDateTime datetimeKst = LocalDateTime.parse(datetimeStr, TimeConverter.DATETIME_FORMATTER);
         return datetimeKst;
 
         // 주의 : 검색 시 Spring Data MongoDB가 자동으로 KST -> UTC로 변환해 쿼리를 전송하므로, 추가 변환하지 말것.
