@@ -60,14 +60,14 @@ public class MemoController {
     }
 
     @PostMapping("/{memoId}/lock")
-    @Operation(summary = "메모 편집모드 Lock 검사/생성/연장 [JWT O]", description = "!!! 프론트엔드 : <strong>공동 메모</strong>인 경우에만 호출할 것 !!!<br>(비록 백엔드에서 한 번 더 검증하지만, 불필요한 API 호출은 리소스 낭비로 이어지므로 지양해야함.)")
+    @Operation(summary = "메모 편집권한 Lock 검사/생성/연장 [JWT O]", description = "!!! 프론트엔드 : <strong>공동 메모</strong>인 경우에만 호출할 것 !!!<br>(비록 백엔드에서 한 번 더 검증하지만, 불필요한 API 호출은 리소스 낭비로 이어지므로 지양해야함.)")
     public ResponseEntity<ResponseData> checkEditLock(@PathVariable(value = "memoId") Long memoId) {
         memoService.checkEditLock(memoId);
         return ResponseData.toResponseEntity(ResponseCode.LOCK_ACQUIRED);
     }
 
     @DeleteMapping("/{memoId}/lock")
-    @Operation(summary = "메모 편집모드 Lock 삭제 [JWT O]", description = "!!! 프론트엔드 : <strong>공동 메모</strong>인 경우에만 호출할 것 !!!<br>(비록 백엔드에서 한 번 더 검증하지만, 불필요한 API 호출은 리소스 낭비로 이어지므로 지양해야함.)")
+    @Operation(summary = "메모 편집권한 Lock 삭제 [JWT O]", description = "!!! 프론트엔드 : <strong>공동 메모</strong>인 경우에만 호출할 것 !!!<br>(비록 백엔드에서 한 번 더 검증하지만, 불필요한 API 호출은 리소스 낭비로 이어지므로 지양해야함.)")
     public ResponseEntity<ResponseData> releaseEditLock(@PathVariable(value = "memoId") Long memoId) {
         memoService.releaseEditLock(memoId);
         return ResponseData.toResponseEntity(ResponseCode.DELETE_LOCK);
