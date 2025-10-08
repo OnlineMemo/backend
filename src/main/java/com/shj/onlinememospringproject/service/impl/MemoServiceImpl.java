@@ -239,7 +239,7 @@ public class MemoServiceImpl implements MemoService {
     public MemoDto.GenerateResponse generateTitleByOpenAI(MemoDto.GenerateRequest generateRequestDto) {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
 
-        // 개인별 일일 AI 호출한도 체크 (check OpenAIUsage)
+        // 1. 개인별 일일 AI 호출한도 체크 (check OpenAIUsage)
         String openAIUsageKey = String.format("userId:%d:openai_usage", loginUserId);
         String value = redisRepository.getValue(openAIUsageKey);
         int openAIUsage = (value != null) ? Integer.parseInt(value) : 0;
@@ -247,7 +247,7 @@ public class MemoServiceImpl implements MemoService {
             throw new Exception400.MemoBadRequest(String.format("사용자(userId=%d)는 이미 OpenAI 일일 호출횟수(%d회)를 모두 소진했습니다.", loginUserId, MAX_DAILY_OPENAI_USAGE));
         }
 
-        // AI 호출 전 메모내용 요약 (summarize memoContent)
+        // 2. AI 호출 전 메모내용 요약 (summarize memoContent)
         String content = generateRequestDto.getContent();
         int contentLen = content.length();
         if(contentLen <= MAX_TITLE_LENGTH) {
@@ -261,10 +261,10 @@ public class MemoServiceImpl implements MemoService {
                     Graph.SimilarityMethods.COSINE_SIMILARITY,  // 문장 간 유사도 계산 및 측정법 (COSINE or JACCARD)
                     MAX_SUMMARY_CONTENT_LENGTH  // 요약될 최대 전체글자수 제한
             );
-            content = summarizer.joinText(summarizedSentenceList, null);  // null => 구분자 "\n"
+            content = summarizer.joinText(summarizedSentenceList, null);  // null == 구분자 "\n"
         }
 
-        // AI Prompt 생성 (make AI Prompt)
+        // 3. AI Prompt 생성 (make AI Prompt)
         String prevTitle = generateRequestDto.getPrevTitle();
         if(FALLBACK_LONG_TITLE.equals(prevTitle) || FALLBACK_SHORT_TITLE.equals(prevTitle)) {  // 주의: 순서 반대면 'null.equals(String)'으로 NPE 에러 위험.
             prevTitle = null;
@@ -285,7 +285,7 @@ public class MemoServiceImpl implements MemoService {
                 %s
                 """, titleLenInPrompt, titleLenInPrompt, extraPrompt, content);
 
-        // OpenAI 호출 & 제목 생성 (generate memoTitle)
+        // 4. OpenAI 호출 & 제목 생성 (generate memoTitle)
         String resultTitle = null;
         int retryInner = 3;
         try {
@@ -322,7 +322,7 @@ public class MemoServiceImpl implements MemoService {
             throw new Exception500.ExternalServer(String.format("OpenAIClient API 호출 에러 (%s)", ex.getMessage()));
         }
 
-        // 개인별 일일 AI 호출횟수 증가 (increase OpenAIUsage)
+        // 5. 개인별 일일 AI 호출횟수 증가 (increase OpenAIUsage)
         if(openAIUsage == 0) {  // 당일 첫 호출인 경우
             LocalDateTime now = LocalDateTime.now(TimeConverter.KST_ZONEID);
             LocalDateTime midnight = now.toLocalDate().plusDays(1).atStartOfDay();
