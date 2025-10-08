@@ -22,8 +22,23 @@ public class Exception500 extends CustomException {
     }
 
     public static class ExternalServer extends Exception500 {
-        public ExternalServer(String message) {  // message 값 = 외부 API Client 종류 기재할것.
+        // only message
+        public ExternalServer(String message) {
             super(ResponseCode.EXTERNAL_SERVER_ERROR, message);
+        }
+
+        // exclude httpStatus
+        public ExternalServer(String clientClassName, String clientMethodName, String clientExMessage) {  // 외부 API Client 종류 기재할것.
+            super(ResponseCode.EXTERNAL_SERVER_ERROR,
+                    String.format("%s.%s API 호출 에러 (%s)",
+                            clientClassName, clientMethodName, clientExMessage));
+        }
+
+        // include httpStatus
+        public ExternalServer(String clientClassName, String clientMethodName, String clientExMessage, int httpStatus) {  // 외부 API Client 종류 기재할것.
+            super(ResponseCode.EXTERNAL_SERVER_ERROR,
+                    String.format("%s.%s API 호출 에러 (%d Status - %s)",
+                            clientClassName, clientMethodName, httpStatus, clientExMessage));
         }
     }
 }

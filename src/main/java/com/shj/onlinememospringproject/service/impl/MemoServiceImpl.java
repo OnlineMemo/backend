@@ -41,7 +41,7 @@ public class MemoServiceImpl implements MemoService {
     private static final String FALLBACK_LONG_TITLE = "좋은 제목을 찾지 못했어요";  // 대체할 제목 1 (14자)
     private static final String FALLBACK_SHORT_TITLE = "제목 없음";  // 대체할 제목 2 (5자)
     private static final String FALLBACK_DUPLICATE_LONG_TITLE = "다른 제목을 찾지 못했어요";  // 대체할 중복 제목 1 (14자)
-    private static final String FALLBACK_DUPLICATE_SHORT_TITLE = "다른 제목 없음";  // 대체할 중복 제목 2 (6자)
+    private static final String FALLBACK_DUPLICATE_SHORT_TITLE = "다른 제목 없음";  // 대체할 중복 제목 2 (8자)
     private static Summarizer summarizer = new Summarizer();  // 이 클래스 내에서만 사용되므로, 빈 등록 대신 static 선언.
 
     private final UserService userService;
@@ -286,40 +286,33 @@ public class MemoServiceImpl implements MemoService {
                 """, titleLenInPrompt, titleLenInPrompt, extraPrompt, content);
 
         // 4. OpenAI 호출 & 제목 생성 (generate memoTitle)
-        String resultTitle = null;
+        String generatedTitle = null, resultTitle = null;
         int retryInner = 3;
-        try {
-            String generatedTitle = null;
-            while(retryInner-- > 0) {
-                generatedTitle = openAIClient.getChatAnswer(prompt);
-                if(generatedTitle != null) {
-                    generatedTitle = generatedTitle.strip();
-                    boolean isDuplicateTitle = generatedTitle.equals(prevTitle);
-                    if(generatedTitle.length() <= MAX_TITLE_LENGTH && (!generatedTitle.isBlank() && !isDuplicateTitle)) {
-                        resultTitle = generatedTitle;
-                        break;
-                    }
-                    else if(retryInner == 0 && isDuplicateTitle) {  // 마지막 시도까지도 중복인 경우
-                        resultTitle = FALLBACK_DUPLICATE_LONG_TITLE;  // 14자
-                        if(resultTitle.length() > MAX_TITLE_LENGTH) {  // 안전 장치
-                            resultTitle = FALLBACK_DUPLICATE_SHORT_TITLE;  // 6자
-                        }
+        while(retryInner-- > 0) {
+            generatedTitle = openAIClient.getChatAnswer(prompt);  // 429 및 500 예외 응답 포함됨
+            if(generatedTitle != null) {
+                generatedTitle = generatedTitle.strip();
+                boolean isDuplicateTitle = generatedTitle.equals(prevTitle);
+                if(generatedTitle.length() <= MAX_TITLE_LENGTH && (!generatedTitle.isBlank() && !isDuplicateTitle)) {
+                    resultTitle = generatedTitle;
+                    break;
+                }
+                else if(retryInner == 0 && isDuplicateTitle) {  // 마지막 시도까지도 중복인 경우
+                    resultTitle = FALLBACK_DUPLICATE_LONG_TITLE;  // 14자
+                    if(resultTitle.length() > MAX_TITLE_LENGTH) {  // 안전 장치
+                        resultTitle = FALLBACK_DUPLICATE_SHORT_TITLE;  // 8자
                     }
                 }
             }
-            if(resultTitle == null || resultTitle.isBlank()) {
-                resultTitle = FALLBACK_LONG_TITLE;  // 14자
-                if(resultTitle.length() > MAX_TITLE_LENGTH) {  // 안전 장치
-                    resultTitle = FALLBACK_SHORT_TITLE;  // 5자
-                }
+        }
+        if(resultTitle == null || resultTitle.isBlank()) {
+            resultTitle = FALLBACK_LONG_TITLE;  // 14자
+            if(resultTitle.length() > MAX_TITLE_LENGTH) {  // 안전 장치
+                resultTitle = FALLBACK_SHORT_TITLE;  // 5자
             }
-            else if(resultTitle.length() > MAX_TITLE_LENGTH) {
-                resultTitle = resultTitle.substring(0, MAX_TITLE_LENGTH).strip();
-            }
-        } catch (Exception429.ExcessRequestOpenAI ex429) {  // 429 예외 응답
-            throw ex429;  // 자식 메소드가 throw한 예외를 그대로 재전파.
-        } catch (Exception ex) {  // 500 예외 응답
-            throw new Exception500.ExternalServer(String.format("OpenAIClient API 호출 에러 (%s)", ex.getMessage()));
+        }
+        else if(resultTitle.length() > MAX_TITLE_LENGTH) {
+            resultTitle = resultTitle.substring(0, MAX_TITLE_LENGTH).strip();
         }
 
         // 5. 개인별 일일 AI 호출횟수 증가 (increase OpenAIUsage)
