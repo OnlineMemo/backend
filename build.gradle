@@ -63,7 +63,7 @@ dependencies {
 
 	// TextRank Summarize
 	implementation 'kr.bydelta:koalanlp-hnn:2.1.4:assembly'
-	implementation 'com.github.shj1106:recap-plus:v2.0.4'
+	implementation 'com.github.shj1106:recap-plus:v2.1.1'
 
 	// JWT
 	implementation group: 'io.jsonwebtoken', name: 'jjwt-api', version: '0.11.2'

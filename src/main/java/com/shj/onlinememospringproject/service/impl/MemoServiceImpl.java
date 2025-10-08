@@ -38,8 +38,11 @@ public class MemoServiceImpl implements MemoService {
     private static final int MAX_TITLE_LENGTH = 15;  // 메모 제목의 최대 길이 = 15자 이하
     private static final int MAX_SUMMARY_CONTENT_LENGTH = 6000;  // OpenAI 호출용 메모 최대 요약길이 = 6000자 이하
     private static final int MAX_DAILY_OPENAI_USAGE = 10;  // OpenAI 일일 최대 호출횟수 = 10회
-    private static final String FALLBACK_LONG_TITLE = "좋은 제목을 찾지 못했어요";  // 대체 제목 1 (14자)
-    private static final String FALLBACK_SHORT_TITLE = "제목 없음";  // 대체 제목 2 (5자)
+    private static final String FALLBACK_LONG_TITLE = "좋은 제목을 찾지 못했어요";  // 대체할 제목 1 (14자)
+    private static final String FALLBACK_SHORT_TITLE = "제목 없음";  // 대체할 제목 2 (5자)
+    private static final String FALLBACK_DUPLICATE_LONG_TITLE = "다른 제목을 찾지 못했어요";  // 대체할 중복 제목 1 (14자)
+    private static final String FALLBACK_DUPLICATE_SHORT_TITLE = "다른 제목 없음";  // 대체할 중복 제목 2 (6자)
+    private static Summarizer summarizer = new Summarizer();  // 이 클래스 내에서만 사용되므로, 빈 등록 대신 static 선언.
 
     private final UserService userService;
     private final UserMemoService userMemoService;
@@ -253,20 +256,12 @@ public class MemoServiceImpl implements MemoService {
                     .build();
         }
         if(contentLen > MAX_SUMMARY_CONTENT_LENGTH) {
-            Summarizer summarizer = new Summarizer();
             List<String> summarizedSentenceList = summarizer.summarizeByTextLen(
                     content,  // 요약할 원본 텍스트
                     Graph.SimilarityMethods.COSINE_SIMILARITY,  // 문장 간 유사도 계산 및 측정법 (COSINE or JACCARD)
-                    MAX_SUMMARY_CONTENT_LENGTH  // 요약될 최대 전체글자수 제한 (null이면 자동 계산식 적용)
+                    MAX_SUMMARY_CONTENT_LENGTH  // 요약될 최대 전체글자수 제한
             );
-
-            StringBuilder summarizedStb = new StringBuilder();  // 또는 'String.join("\n", summarizedSentenceList);'
-            int summarizedLen = summarizedSentenceList.size();
-            for(int i=0; i<summarizedLen-1; i++) {
-                summarizedStb.append(summarizedSentenceList.get(i)).append("\n");
-            }
-            if(summarizedLen > 0) summarizedStb.append(summarizedSentenceList.get(summarizedLen-1));
-            content = summarizedStb.toString();
+            content = summarizer.joinText(summarizedSentenceList, null);  // null => 구분자 "\n"
         }
 
         // AI Prompt 생성 (make AI Prompt)
@@ -291,26 +286,35 @@ public class MemoServiceImpl implements MemoService {
                 """, titleLenInPrompt, titleLenInPrompt, extraPrompt, content);
 
         // OpenAI 호출 & 제목 생성 (generate memoTitle)
-        String generatedTitle = null;
+        String resultTitle = null;
         int retryInner = 3;
         try {
+            String generatedTitle = null;
             while(retryInner-- > 0) {
                 generatedTitle = openAIClient.getChatAnswer(prompt);
                 if(generatedTitle != null) {
                     generatedTitle = generatedTitle.strip();
-                    if(generatedTitle.length() <= MAX_TITLE_LENGTH && (!generatedTitle.isBlank() && !generatedTitle.equals(prevTitle))) {
+                    boolean isDuplicateTitle = generatedTitle.equals(prevTitle);
+                    if(generatedTitle.length() <= MAX_TITLE_LENGTH && (!generatedTitle.isBlank() && !isDuplicateTitle)) {
+                        resultTitle = generatedTitle;
                         break;
+                    }
+                    else if(retryInner == 0 && isDuplicateTitle) {  // 마지막 시도까지도 중복인 경우
+                        resultTitle = FALLBACK_DUPLICATE_LONG_TITLE;  // 14자
+                        if(resultTitle.length() > MAX_TITLE_LENGTH) {  // 안전 장치
+                            resultTitle = FALLBACK_DUPLICATE_SHORT_TITLE;  // 6자
+                        }
                     }
                 }
             }
-            if(generatedTitle == null || generatedTitle.isBlank()) {
-                generatedTitle = FALLBACK_LONG_TITLE;  // 14자
-                if(generatedTitle.length() > MAX_TITLE_LENGTH) {  // 안전 장치
-                    generatedTitle = FALLBACK_SHORT_TITLE;  // 5자
+            if(resultTitle == null || resultTitle.isBlank()) {
+                resultTitle = FALLBACK_LONG_TITLE;  // 14자
+                if(resultTitle.length() > MAX_TITLE_LENGTH) {  // 안전 장치
+                    resultTitle = FALLBACK_SHORT_TITLE;  // 5자
                 }
             }
-            else if(generatedTitle.length() > MAX_TITLE_LENGTH) {
-                generatedTitle = generatedTitle.substring(0, MAX_TITLE_LENGTH).strip();
+            else if(resultTitle.length() > MAX_TITLE_LENGTH) {
+                resultTitle = resultTitle.substring(0, MAX_TITLE_LENGTH).strip();
             }
         } catch (Exception429.ExcessRequestOpenAI ex429) {  // 429 예외 응답
             throw ex429;  // 자식 메소드가 throw한 예외를 그대로 재전파.
@@ -332,7 +336,7 @@ public class MemoServiceImpl implements MemoService {
         }
 
         return MemoDto.GenerateResponse.builder()
-                .title(generatedTitle)
+                .title(resultTitle)
                 .dailyAIUsage(openAIUsage)
                 .isMaxDailyAIUsage(openAIUsage >= MAX_DAILY_OPENAI_USAGE)
                 .build();
