@@ -70,7 +70,7 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
                 if(Arrays.stream(FILTER_CLASSNAMES).anyMatch(traceClassName::contains)) continue;  // 모든 Trace는 필터로 귀결되므로 제외.
                 if(traceClassName.contains(CGLIB_STRING)) continue;  // CGLIB 프록시는 출력이 중복되므로 제외.
                 appendTraceInfo(traceStb, trace, traceClassName);
-                if(appendCnt >= 20) break;  // trace 로그는 최대 20개까지만 기록.
+                if(++appendCnt >= 20) break;  // trace 로그는 최대 20개까지만 기록.
             }
         }
 
