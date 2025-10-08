@@ -23,6 +23,7 @@ import org.springframework.web.method.HandlerMethod;
 
 import javax.naming.AuthenticationException;
 import java.nio.file.AccessDeniedException;
+import java.util.Arrays;
 import java.util.regex.Pattern;
 
 @Slf4j
@@ -32,9 +33,9 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
 
     private static final String HANDLER_ATTRIBUTE = "org.springframework.web.servlet.HandlerMapping.bestMatchingHandler";
     private static final String PROJECT_PACKAGE = "com.shj.onlinememospringproject";
-    private static final String EXCEPTION_FILTER_CLASSNAME = "JwtExceptionFilter";
     private static final String CGLIB_STRING = "$$SpringCGLIB$$";
     private static final Pattern CGLIB_PATTERN = Pattern.compile("\\$\\$SpringCGLIB\\$\\$\\d+");  // CGLIB 프록시 패턴
+    private static final String[] FILTER_CLASSNAMES = {"JwtExceptionFilter", "JwtFilter"};
 
     private static final Marker ERROR_500_LOG_MARKER = MarkerFactory.getMarker("ERROR_500_LOG");
     private static final Marker OPENAI_429_LOG_MARKER = MarkerFactory.getMarker("OPENAI_429_LOG");
@@ -65,7 +66,7 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
             traceClassName = trace.getClassName();
 
             if(traceClassName.startsWith(PROJECT_PACKAGE)) {
-                if(traceClassName.contains(EXCEPTION_FILTER_CLASSNAME)) continue;  // 모든 Trace는 필터로 귀결되므로 제외.
+                if(Arrays.stream(FILTER_CLASSNAMES).anyMatch(traceClassName::contains)) continue;  // 모든 Trace는 필터로 귀결되므로 제외.
                 if(traceClassName.contains(CGLIB_STRING)) continue;  // CGLIB 프록시는 출력이 중복되므로 제외.
                 appendTraceInfo(traceStb, trace, traceClassName);
             }
