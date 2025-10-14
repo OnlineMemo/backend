@@ -1,10 +1,14 @@
 name: Production CI/CD
 
-# < CI/CD 실행 전, submodule 환경변수 최신화 >
+## < 실행 전, submodule 환경변수 최신화 >
 # git submodule update --remote
 # git add .
 # git commit -m "[#이슈번호] Setting: Git Submodule 최신화"
 # git push
+
+## < master -> deploy CI/CD 트리거 >
+# git checkout deploy
+# git merge master
 
 on:
   push:
