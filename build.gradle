@@ -102,7 +102,7 @@ bootJar {
 	doFirst {
 		println "!!! bootJar 시작 !!!"
 
-		println "1. properties 파일 존재여부 확인 중..."
+		println "- properties 파일 존재여부 확인 중..."
 		def defaultFile = file("src/main/resources/application.properties")
 		def prodFile = file("src/main/resources/application-prod.properties")
 		if (!defaultFile.exists()) {
@@ -116,7 +116,7 @@ bootJar {
 			throw new GradleException("❌ 'application-prod.properties' 파일이 없으므로 빌드 실패")
 		}
 
-//		println "2. prod 프로필 적용여부 확인 중..."
+//		println "- prod 프로필 적용여부 확인 중..."
 //		def lines = defaultFile.readLines()
 //		def activeLine = lines.find {
 //			it.trim().startsWith("spring.profiles.active=")
@@ -130,8 +130,8 @@ bootJar {
 //			println "ERROR : spring.profiles.active=~ 프로필이 prod가 아님"
 //			throw new GradleException("❌ 'spring.profiles.active=~' 프로필이 prod가 아니므로 빌드 실패")
 //		}
-//
-//		println "3. 빌드 진행 중..."
+
+		println "- 빌드 진행 중..."
 	}
 
 	doLast {
@@ -142,7 +142,7 @@ bootJar {
 	doLast {
 		println "!!! deploy.zip 시작 !!!"
 
-		println "1. zip 압축하는 중..."
+		println "- zip 압축하는 중..."
 		exec {
 			commandLine "sh", "-c", """
 				chmod +x .platform/hooks/**/*.sh &&
