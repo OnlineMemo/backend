@@ -75,7 +75,7 @@ public class SecurityConfig {
 
                             // < All (User, Admin) >
                             .requestMatchers("/", "/error", "/favicon.ico", "/webjars/**", "/health").permitAll()
-                            .requestMatchers(serverEnv.equals("prod") ? new String[]{} : SWAGGER_TEST_PATHS).permitAll()  // 프로덕션 환경의 경우, Swagger 및 Test 401 응답 처리함.
+                            .requestMatchers(serverEnv.equals("prod") ? new String[]{"/test"} : SWAGGER_TEST_PATHS).permitAll()  // 프로덕션 환경의 경우, Swagger 및 Test 401 응답 처리함.
                             .requestMatchers("/login", "/signup", "/password", "/reissue").permitAll()
 
                             // < Admin >

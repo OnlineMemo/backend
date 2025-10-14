@@ -31,10 +31,10 @@ public class TestController {
 
     // ========== Test 메소드 ========== //
 
-//    @GetMapping("/test")
-//    @Operation(summary = "Test API [JWT X]")
-//    public ResponseEntity<ResponseData<String>> getTestResult() {
-//        String testResult = "Test ResponseStr";
-//        return ResponseData.toResponseEntity(ResponseCode.TEST_SUCCESS, testResult);
-//    }
+    @GetMapping("/test")
+    @Operation(summary = "Test API [JWT X]")
+    public ResponseEntity<ResponseData<String>> getTestResult() {
+        String testResult = "Test ResponseStr";
+        return ResponseData.toResponseEntity(ResponseCode.TEST_SUCCESS, testResult);
+    }
 }
