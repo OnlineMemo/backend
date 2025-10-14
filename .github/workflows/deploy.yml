@@ -89,7 +89,7 @@ jobs:
                     {
                       "title": "Commit",
                       "value": "<https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ github.event.head_commit.message || '커밋 메시지 없음' }}>",
-                      "short": false
+                      "short": true
                     }
                   ]      
                 }
@@ -123,7 +123,7 @@ jobs:
                     {
                       "title": "Commit",
                       "value": "<https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ github.event.head_commit.message || '커밋 메시지 없음' }}>",
-                      "short": false
+                      "short": true
                     }
                   ]      
                 }
