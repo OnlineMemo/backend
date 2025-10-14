@@ -87,7 +87,7 @@ jobs:
         with:
           payload: |
             {
-              "channel": ${{ env.SLACK_CHANNEL_ID_CICD }},
+              "channel": "${{ env.SLACK_CHANNEL_ID_CICD }}",
               "attachments": [
                 {
                   "color": "#36a64f",
@@ -121,7 +121,7 @@ jobs:
         with:
           payload: |
             {
-              "channel": ${{ env.SLACK_CHANNEL_ID_CICD }},
+              "channel": "${{ env.SLACK_CHANNEL_ID_CICD }}",
               "attachments": [
                 {
                   "color": "#ff0000",
