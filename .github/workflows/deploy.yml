@@ -9,6 +9,7 @@ name: Production CI/CD
 ## < master -> deploy CI/CD 트리거 >
 # git checkout deploy
 # git merge master
+# git push
 
 on:
   push:
@@ -37,7 +38,7 @@ jobs:
         uses: aarcangeli/load-dotenv@v1
         with:
           path: 'backend-submodule'
-          filenames: 'deploy-workflow.env'
+          filenames: 'deploy.env'
 
       ### Build ZIP ###
       - name: Grant execute permission for gradlew
