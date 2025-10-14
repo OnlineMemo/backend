@@ -1,15 +1,23 @@
 name: Production CI/CD
 
-## < 실행 전, submodule 환경변수 최신화 >
-# git submodule update --remote
-# git add .
-# git commit -m "[#이슈번호] Setting: Git Submodule 최신화"
-# git push
+## < CI/CD 실행 준비 >
+# 1. submodule 환경변수 최신화 :
+#    git submodule update --remote
+#    git add .
+#    git commit -m "[#이슈번호] Setting: Git Submodule 최신화"
+#    git push
+# 2. master -> deploy 워크플로 트리거 :
+#    git checkout deploy
+#    git merge master
+#    git push
 
-## < master -> deploy CI/CD 트리거 >
-# git checkout deploy
-# git merge master
-# git push
+## < private/public 환경변수 분리 >
+# 1. githubActions secrets (민감 정보) :
+#    SUBMODULE_GITHUB_TOKEN, AWS_ACCESS_KEY_ID,
+#    AWS_SECRET_ACCESS_KEY, SLACK_WEBHOOK_URL_CICD
+# 2. dotenv env (공개 가능) :
+#    AWS_EB_APPLICATION_NAME, AWS_EB_ENVIRONMENT_NAME,
+#    AWS_EB_REGION, SLACK_CHANNEL_ID_CICD
 
 on:
   push:
@@ -25,7 +33,7 @@ jobs:
       - name: Checkout Submodule
         uses: actions/checkout@v2
         with:
-          token: ${{ secrets.SUBMODULE_GITHUB_TOKEN }}  # githubActions secrets
+          token: ${{ secrets.SUBMODULE_GITHUB_TOKEN }}  # githubActions secrets (private)
           submodules: true
       - name: Set up JDK 17
         uses: actions/setup-java@v3
@@ -62,12 +70,12 @@ jobs:
       - name: Beanstalk Deploy
         uses: einaregilsson/beanstalk-deploy@v20
         with:
-          aws_access_key: ${{ env.AWS_ACCESS_KEY_ID }}
-          aws_secret_key: ${{ env.AWS_SECRET_ACCESS_KEY }}
-          application_name: onlinememo-app
-          environment_name: Onlinememo-backend-env
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: ${{ env.AWS_EB_APPLICATION_NAME }}  # dotenv env (public)
+          environment_name: ${{ env.AWS_EB_ENVIRONMENT_NAME }}
           version_label: "githubActions_${{ steps.current-ksttime.outputs.formattedTime }}_commit-${{ steps.short-commitnumber.outputs.commitnumber }}"
-          region: ap-northeast-2
+          region: ${{ env.AWS_EB_REGION }}
           deployment_package: deploy/deploy.zip
           wait_for_deployment: false
 
@@ -79,7 +87,7 @@ jobs:
         with:
           payload: |
             {
-              "channel": "C06FGQEQ1CP",
+              "channel": ${{ env.SLACK_CHANNEL_ID_CICD }},
               "attachments": [
                 {
                   "color": "#36a64f",
@@ -102,7 +110,7 @@ jobs:
               ]
             }
         env:
-          SLACK_WEBHOOK_URL: ${{ env.SLACK_WEBHOOK_URL_CICD }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_CICD }}
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
       ### Slack Alarm for fail deploy ###
@@ -113,7 +121,7 @@ jobs:
         with:
           payload: |
             {
-              "channel": "C06FGQEQ1CP",
+              "channel": ${{ env.SLACK_CHANNEL_ID_CICD }},
               "attachments": [
                 {
                   "color": "#ff0000",
@@ -136,5 +144,5 @@ jobs:
               ]
             }
         env:
-          SLACK_WEBHOOK_URL: ${{ env.SLACK_WEBHOOK_URL_CICD }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_CICD }}
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
