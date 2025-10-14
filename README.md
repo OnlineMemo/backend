@@ -19,6 +19,7 @@ DB 재설계 · 쿼리 튜닝 · API 다중호출 개선 등 여러 최적화를
 - <strong>Refactor (25.06.19)</strong>&nbsp;:&nbsp;&nbsp;<a href="https://github.com/OnlineMemo/backend/pull/5">[PR] 편집충돌 동시성 제어 (Redis Lock) </a>
 - <strong>Refactor (25.09.01)</strong>&nbsp;:&nbsp;&nbsp;<a href="https://github.com/OnlineMemo/backend/pull/9">[PR] Admin 백오피스 지표 (Traffic Analysis)</a>
 - <strong>Refactor (25.09.26)</strong>&nbsp;:&nbsp;&nbsp;<a href="https://github.com/OnlineMemo/backend/pull/11">[PR] 메모 제목 AI 자동화 (OpenAI)</a>
+- <strong>Refactor (25.10.14)</strong>&nbsp;:&nbsp;&nbsp;<a href="https://github.com/OnlineMemo/backend/pull/13">[PR] AWS EB 배포 구축 (CI/CD Pipeline)</a>
 
 <!--
 ### Refactor
