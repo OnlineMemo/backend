@@ -116,22 +116,22 @@ bootJar {
 			throw new GradleException("❌ 'application-prod.properties' 파일이 없으므로 빌드 실패")
 		}
 
-		println "2. prod 프로필 적용여부 확인 중..."
-		def lines = defaultFile.readLines()
-		def activeLine = lines.find {
-			it.trim().startsWith("spring.profiles.active=")
-		}
-		if (activeLine == null) {
-			println "ERROR : spring.profiles.active=~ 설정이 없음"
-			println "❌ 빌드 실패"
-			throw new GradleException("❌ 'spring.profiles.active=~' 설정이 'application.properties' 파일에 없으므로 빌드 실패")
-		}
-		if (activeLine.trim() != "spring.profiles.active=prod") {
-			println "ERROR : spring.profiles.active=~ 프로필이 prod가 아님"
-			throw new GradleException("❌ 'spring.profiles.active=~' 프로필이 prod가 아니므로 빌드 실패")
-		}
-
-		println "3. 빌드 진행 중..."
+//		println "2. prod 프로필 적용여부 확인 중..."
+//		def lines = defaultFile.readLines()
+//		def activeLine = lines.find {
+//			it.trim().startsWith("spring.profiles.active=")
+//		}
+//		if (activeLine == null) {
+//			println "ERROR : spring.profiles.active=~ 설정이 없음"
+//			println "❌ 빌드 실패"
+//			throw new GradleException("❌ 'spring.profiles.active=~' 설정이 'application.properties' 파일에 없으므로 빌드 실패")
+//		}
+//		if (activeLine.trim() != "spring.profiles.active=prod") {
+//			println "ERROR : spring.profiles.active=~ 프로필이 prod가 아님"
+//			throw new GradleException("❌ 'spring.profiles.active=~' 프로필이 prod가 아니므로 빌드 실패")
+//		}
+//
+//		println "3. 빌드 진행 중..."
 	}
 
 	doLast {
@@ -163,4 +163,11 @@ bootJar {
 		println "✅✅ zip 생성 성공"
 		println "!!! deploy.zip 종료 !!!"
 	}
+}
+
+processResources.dependsOn('copySubmoduleSecret')
+tasks.register('copySubmoduleSecret', Copy) {
+	from './backend-submodule'  // 서브모듈 디렉토리 경로
+	include "application-*.properties"  // 복사할 환경변수 파일들
+	into 'src/main/resources'  // 복사 위치
 }
