@@ -1,0 +1,66 @@
+name: Production CI/CD
+
+# < CI/CD 이전에 먼저 호출 - submodule 최신화 >
+# git submodule update --remote
+# git add .
+# git commit -m "[#이슈번호] Setting: Git Submodule 최신화"
+# git push
+
+on:
+  push:
+    branches: [ deploy ]
+  workflow_dispatch:  # Github UI 수동 실행도 가능
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+
+      ### Set Up ###
+      - name: Submodule Checkout
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.SUBMODULE_GITHUB_TOKEN }}  # githubActions secrets
+          submodules: true
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: 'adopt'
+
+      ### Workflow Env ###
+      - name: Load .env file
+        uses: aarcangeli/load-dotenv@v1
+        with:
+          path: 'backend-submodule'
+          filenames: 'deploy-workflow.env'
+
+      ### Build ZIP ###
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Build bootJar & deploy.zip
+        run: ./gradlew bootJar
+
+      ### Time & Commit Number ###
+      - name: Get Current Time
+        uses: 1466587594/get-current-time@v2
+        id: current-ksttime
+        with:
+          format: YYYYMMDD-HHmmss
+          utcOffset: "+09:00"  # KST time = UTC time + 9hour
+      - name: Get Short CommitNumber
+        id: short-commitnumber
+        run: echo "commitnumber=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+
+      ### AWS Elastic Beanstalk ###
+      - name: Beanstalk Deploy
+        uses: einaregilsson/beanstalk-deploy@v20
+        with:
+          aws_access_key: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          application_name: onlinememo-app
+          environment_name: Onlinememo-backend-env
+          version_label: "githubActions_${{ steps.current-ksttime.outputs.formattedTime }}_commit-${{ steps.short-commitnumber.outputs.commitnumber }}"
+          region: ap-northeast-2
+          deployment_package: deploy/deploy.zip
+          wait_for_deployment: false
