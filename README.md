@@ -1,4 +1,32 @@
-# OnlineMemo - Backend Refactor (24.08.17)
+# Backend Docs 📚
+
+### Project
+- 프로젝트 설명 & 아키텍처&nbsp;:&nbsp;&nbsp;<a href="https://github.com/OnlineMemo">README.md</a>
+- 전체 레포지토리&nbsp;:&nbsp;&nbsp;<a href="https://github.com/orgs/OnlineMemo/repositories?q=sort%3Aname-asc">FullStack Repo</a>
+
+### Refactor
+- <strong>24.08.17</strong>&nbsp;:&nbsp;&nbsp;[현재] 3400줄 리팩토링 (Query Tuning)
+- <strong>25.06.19</strong>&nbsp;:&nbsp;&nbsp;<a href="https://github.com/OnlineMemo/backend/pull/5">[PR] 편집충돌 동시성 제어 (Redis Lock) </a>
+- <strong>25.09.01</strong>&nbsp;:&nbsp;&nbsp;<a href="https://github.com/OnlineMemo/backend/pull/9">[PR] GA4 · Admin 백오피스 구축 (ETL Pipeline)</a>
+- <strong>25.09.26</strong>&nbsp;:&nbsp;&nbsp;<a href="https://github.com/OnlineMemo/backend/pull/11">[PR] 메모 제목 AI 자동화 (OpenAI)</a>
+- <strong>25.10.14</strong>&nbsp;:&nbsp;&nbsp;<a href="https://github.com/OnlineMemo/backend/pull/13">[PR] AWS EB 배포 구축 (CI/CD Pipeline)</a>
+
+<!--
+### Refactor
+- <a href="https://github.com/OnlineMemo/backend/pull/2">Github PR</a>
+- <a href="https://github.com/OnlineMemo/frontend-web">Frontend Refactor</a>
+- <a href="https://github.com/OnlineMemo/backend/tree/223c16c130d15a2cd024f5a1c531ad63239a13b4">Before Code</a>&nbsp;&nbsp;/&nbsp;&nbsp;<a href="https://github.com/OnlineMemo/backend/tree/refactor/onlinememo-v2">After Code</a>
+-->
+
+<br>
+
+---
+
+<br>
+
+
+
+# Refactor (24.08.17)
 
 #### "대규모 리팩토링 - DB 재설계 · Query 튜닝 · API 다중호출 개선"
 유저로부터 메모페이지 속도 지연 피드백을 받음.<br>
@@ -11,22 +39,6 @@ DB 재설계 · 쿼리 튜닝 · API 다중호출 개선 등 여러 최적화를
 ◦&nbsp;&nbsp;쿼리 발생 횟수 :&nbsp;&nbsp;100회 이상 &#8594; 1~2회<br>
 ◦&nbsp;&nbsp;페이지 렌더링 속도 :&nbsp;&nbsp;11.27초 &#8594; 0.19초&nbsp;&nbsp;**(60배 ↑, 98% ↑)**
 <br>
-
-### Project
-- 프로젝트 설명 & 아키텍처&nbsp;:&nbsp;&nbsp;<a href="https://github.com/OnlineMemo">README.md</a>
-- 전체 레포지토리&nbsp;:&nbsp;&nbsp;<a href="https://github.com/orgs/OnlineMemo/repositories?q=sort%3Aname-asc">FullStack Repo</a>
-- <strong>Refactor (24.08.17)</strong>&nbsp;:&nbsp;&nbsp;[현재] 3400줄 리팩토링 (Query Tuning)
-- <strong>Refactor (25.06.19)</strong>&nbsp;:&nbsp;&nbsp;<a href="https://github.com/OnlineMemo/backend/pull/5">[PR] 편집충돌 동시성 제어 (Redis Lock) </a>
-- <strong>Refactor (25.09.01)</strong>&nbsp;:&nbsp;&nbsp;<a href="https://github.com/OnlineMemo/backend/pull/9">[PR] GA4 · Admin 백오피스 구축 (ETL Pipeline)</a>
-- <strong>Refactor (25.09.26)</strong>&nbsp;:&nbsp;&nbsp;<a href="https://github.com/OnlineMemo/backend/pull/11">[PR] 메모 제목 AI 자동화 (OpenAI)</a>
-- <strong>Refactor (25.10.14)</strong>&nbsp;:&nbsp;&nbsp;<a href="https://github.com/OnlineMemo/backend/pull/13">[PR] AWS EB 배포 구축 (CI/CD Pipeline)</a>
-
-<!--
-### Refactor
-- <a href="https://github.com/OnlineMemo/backend/pull/2">Github PR</a>
-- <a href="https://github.com/OnlineMemo/frontend-web">Frontend Refactor</a>
-- <a href="https://github.com/OnlineMemo/backend/tree/223c16c130d15a2cd024f5a1c531ad63239a13b4">Before Code</a>&nbsp;&nbsp;/&nbsp;&nbsp;<a href="https://github.com/OnlineMemo/backend/tree/refactor/onlinememo-v2">After Code</a>
--->
 
 <details open>
   <summary><h3>&nbsp;Contents</h3></summary>
