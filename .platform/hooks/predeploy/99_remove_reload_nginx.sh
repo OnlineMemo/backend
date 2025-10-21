@@ -8,7 +8,7 @@ REMOVE_LINES=("client_max_body_size" "gzip")
 IS_ERROR=0
 
 for line in "${REMOVE_LINES[@]}"; do
-    if ! sudo sed -i "/$line/d" /etc/nginx/nginx.conf; then
+    if ! sudo sed -i "/$line/d" /var/proxy/staging/nginx/nginx.conf; then
         IS_ERROR=1
         break
     fi
