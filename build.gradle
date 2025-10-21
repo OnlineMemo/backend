@@ -146,8 +146,8 @@ bootJar {
 		exec {
 			commandLine "sh", "-c", """
 				chmod +x .platform/hooks/**/*.sh &&
-				
 				rm -rf deploy &&
+				
                 mkdir -p deploy &&
                 mkdir -p deploy/.platform/nginx/conf.d/elasticbeanstalk &&
                 mkdir -p deploy/.platform/hooks/predeploy &&
