@@ -52,7 +52,7 @@ public class MessageItem {
     public static final String BAD_REQUEST_GA4FILTERED = "ERROR - 잘못된 GA4지표 요청 에러";
 
     // < Etc >
-    public static final String READ_MEMORY = "SUCCESS - JVM Heap 메모리 조회 성공";
+    public static final String READ_MEMORY = "SUCCESS - 메모리 조회 성공";
     public static final String HEALTHY_SUCCESS = "SUCCESS - Health check 성공";
     public static final String TEST_SUCCESS = "SUCCESS - Test 성공";
     public static final String PREVENT_GET_ERROR = "Status 204 - 리소스 및 리다이렉트 GET호출 에러 방지";

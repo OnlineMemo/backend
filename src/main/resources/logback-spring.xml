@@ -154,7 +154,7 @@
             <pattern>${SLACK_PATTERN}</pattern>
         </layout>
         <username>Alarm-WarnOOM</username>
-        <iconEmoji>:robot:</iconEmoji>
+        <iconEmoji>:floppy_disk:</iconEmoji>
         <colorCoding>true</colorCoding>
     </appender>
 

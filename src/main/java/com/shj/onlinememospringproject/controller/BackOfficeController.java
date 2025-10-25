@@ -12,9 +12,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static com.shj.onlinememospringproject.service.BackOfficeScheduler.MB_DIVISOR;
 
@@ -84,7 +88,7 @@ public class BackOfficeController {
     }
 
     @GetMapping("/memory/heap")
-    @Operation(summary = "힙메모리 사용량 조회 [JWT O]")
+    @Operation(summary = "Heap 메모리 사용량 조회 [JWT O]")
     public ResponseEntity<ResponseData<Map<String, Object>>> getHeapMemoryUsage() {
         Map<String, Object> heapMemoryMap = new LinkedHashMap<>();
         Runtime runtime = Runtime.getRuntime();
@@ -102,5 +106,56 @@ public class BackOfficeController {
         heapMemoryMap.put("usedHeapPercent", usedPercent);  // Double 자료형 (이외 String)
 
         return ResponseData.toResponseEntity(ResponseCode.READ_MEMORY, heapMemoryMap);
+    }
+
+    @GetMapping("/memory/ram")
+    @Operation(summary = "RAM 메모리 사용량 조회 [JWT O]")
+    public ResponseEntity<ResponseData<Map<String, Object>>> getRamMemoryUsage() {
+        Map<String, Object> ramMemoryMap = new LinkedHashMap<>();
+
+        Long limitMaxKB = null;  // 인스턴스의 최대 RAM 메모리 (한계치)
+        Long remainKB = null;
+        Long usedKB = null;
+        Double usedPercent = null;
+
+        try {
+            Path path = Paths.get("/proc/meminfo");
+            if(!Files.exists(path)) {
+                ramMemoryMap.put("errorMessage", "/proc/meminfo 경로가 존재하지 않습니다.");
+                return ResponseData.toResponseEntity(ResponseCode.READ_MEMORY, ramMemoryMap);
+            }
+
+            try (Stream<String> lines = Files.lines(path)) {
+                for(String line : (Iterable<String>) lines::iterator) {
+                    if(line.startsWith("MemTotal:")) {
+                        limitMaxKB = Long.parseLong(line.split("\\s+")[1]);
+                    }
+                    else if(line.startsWith("MemAvailable:")) {
+                        remainKB = Long.parseLong(line.split("\\s+")[1]);
+                    }
+                    if (limitMaxKB != null && remainKB != null) {
+                        usedKB = limitMaxKB - remainKB;
+                        usedPercent = Math.round(((double) usedKB*100/limitMaxKB) * 100) / 100.0;
+                        break;
+                    }
+                }
+            }
+
+            if(usedPercent == null) {
+                ramMemoryMap.put("errorMessage", "MemTotal 또는 MemAvailable 필드가 존재하지 않습니다.");
+                return ResponseData.toResponseEntity(ResponseCode.READ_MEMORY, ramMemoryMap);
+            }
+        } catch (Exception ex) {
+            ramMemoryMap.put("errorMessage", ex.getMessage());
+            return ResponseData.toResponseEntity(ResponseCode.READ_MEMORY, ramMemoryMap);
+        }
+
+        final double GB_DIVISOR = MB_DIVISOR;  // 변수명 명시를 위해 재할당.
+        ramMemoryMap.put("maxRAM", String.format("100%% (%.2fMB · %.2fGB)", (double) limitMaxKB/1024, (double) limitMaxKB/GB_DIVISOR));  // 최대
+        ramMemoryMap.put("usedRAM", String.format("%.2f%% (%.2fMB · %.2fGB)", usedPercent, (double) usedKB/1024, (double) usedKB/GB_DIVISOR));  // 사용
+        ramMemoryMap.put("remainRAM", String.format("%.2f%% (%.2fMB · %.2fGB)", (double) remainKB*100/limitMaxKB, (double) remainKB/1024, (double) remainKB/GB_DIVISOR));  // 잔여
+        ramMemoryMap.put("usedRAMPercent", usedPercent);  // Double 자료형 (이외 String)
+
+        return ResponseData.toResponseEntity(ResponseCode.READ_MEMORY, ramMemoryMap);
     }
 }
