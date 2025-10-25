@@ -16,6 +16,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -57,37 +59,65 @@ public class BackOfficeScheduler {
 
     @Scheduled(fixedRate = 1000 * 60 * 5)  // 5분 간격으로 실행
     public void checkAllMemoryUsage() {
-        checkHeapMemoryUsage();
-        checkRamMemoryUsage();
+        // check Heap Memory
+        Map<String, Object> memoryMap = getHeapMemoryUsage();
+        double usedPercent = (double) memoryMap.get("usedHeapPercent");
+        if(usedPercent >= 70) {
+            String value = redisRepository.getValue(WARN_OOM_LOG_KEY);
+            if(value != null) return;
+
+            int warnPercent = (usedPercent >= 90) ? 90
+                    : (usedPercent >= 80) ? 80 : 70;
+
+            log.warn(WARN_OOM_LOG_MARKER,
+                    String.format("Heap 메모리 %d%% 위험\n-  최대: %s\n-  사용: %s\n-  잔여: %s",  // Slack Template
+                            warnPercent, (String) memoryMap.get("maxHeap"), (String) memoryMap.get("usedHeap"), (String) memoryMap.get("remainHeap")));
+
+            Long ttlMillisecond = Duration.ofHours(1).toMillis();
+            redisRepository.setValue(WARN_OOM_LOG_KEY, "true", ttlMillisecond);  // 실상 value 값은 무의미한 형식적인 것임.
+        }
+
+        // check RAM Memory
+        memoryMap = getRamMemoryUsage();
+        if(memoryMap.get("errorMessage") != null) return;
+        usedPercent = (double) memoryMap.get("usedRAMPercent");
+        if(usedPercent >= 90) {
+            String value = redisRepository.getValue(WARN_RAM_LOG_KEY);
+            if(value != null) return;
+
+            int warnPercent = (usedPercent >= 95) ? 95 : 90;
+
+            log.warn(WARN_OOM_LOG_MARKER,  // marker는 OOM과 함께 사용 (Slack 채널 동일)
+                    String.format("RAM 메모리 %d%% 위험\n-  최대: %s\n-  사용: %s\n-  잔여: %s",  // Slack Template
+                            warnPercent, (String) memoryMap.get("maxRAM"), (String) memoryMap.get("usedRAM"), (String) memoryMap.get("remainRAM")));
+
+            Long ttlMillisecond = Duration.ofHours(1).toMillis();
+            redisRepository.setValue(WARN_RAM_LOG_KEY, "true", ttlMillisecond);  // 실상 value 값은 무의미한 형식적인 것임.
+        }
     }
 
-    public void checkHeapMemoryUsage() {
+    public Map<String, Object> getHeapMemoryUsage() {
+        Map<String, Object> heapMemoryMap = new LinkedHashMap<>();
         Runtime runtime = Runtime.getRuntime();
 
         double limitMaxMB = runtime.maxMemory() / MB_DIVISOR;  // 설정된 JVM 한도의 최대 힙메모리 (한계치)
         double currentMaxMB = runtime.totalMemory() / MB_DIVISOR;  // 현재 OS에서 할당받은 최대 힙메모리 (점점 늘어남)
         double usedMB = currentMaxMB - (runtime.freeMemory() / MB_DIVISOR);
+        double remainMB = limitMaxMB - usedMB;
         double usedPercent = usedMB * 100 / limitMaxMB;
         usedPercent = Math.round(usedPercent * 100) / 100.0;
 
-        if(usedPercent >= 70) {
-            String value = redisRepository.getValue(WARN_OOM_LOG_KEY);
-            if(value != null) return;
+        heapMemoryMap.put("maxHeap", String.format("100%% (%.2fMB · %.2fGB)", limitMaxMB, limitMaxMB/1024));  // 최대
+        heapMemoryMap.put("usedHeap", String.format("%.2f%% (%.2fMB · %.2fGB)", usedPercent, usedMB, usedMB/1024));  // 사용
+        heapMemoryMap.put("remainHeap", String.format("%.2f%% (%.2fMB · %.2fGB)", remainMB*100/limitMaxMB, remainMB, remainMB/1024));  // 잔여
+        heapMemoryMap.put("usedHeapPercent", usedPercent);  // Double 자료형 (이외 String)
 
-            double remainMB = limitMaxMB - usedMB;
-            int warnPercent = (usedPercent >= 90) ? 90
-                    : (usedPercent >= 80) ? 80 : 70;
-
-            log.warn(WARN_OOM_LOG_MARKER,
-                    String.format("Heap 메모리 %d%% 위험\n-  최대: 100%% (%.2fMB · %.2fGB)\n-  사용: %.2f%% (%.2fMB · %.2fGB)\n-  잔여: %.2f%% (%.2fMB · %.2fGB)",  // Slack Template
-                            warnPercent, limitMaxMB, limitMaxMB/1024, usedPercent, usedMB, usedMB/1024, remainMB*100/limitMaxMB, remainMB, remainMB/1024));
-
-            Long ttlMillisecond = Duration.ofHours(1).toMillis();
-            redisRepository.setValue(WARN_OOM_LOG_KEY, "true", ttlMillisecond);  // 실상 value 값은 무의미한 형식적인 것임.
-        }
+        return heapMemoryMap;
     }
 
-    public void checkRamMemoryUsage() {
+    public Map<String, Object> getRamMemoryUsage() {
+        Map<String, Object> ramMemoryMap = new LinkedHashMap<>();
+
         Long limitMaxKB = null;  // 인스턴스의 최대 RAM 메모리 (한계치)
         Long remainKB = null;
         Long usedKB = null;
@@ -95,7 +125,10 @@ public class BackOfficeScheduler {
 
         try {
             Path path = Paths.get("/proc/meminfo");
-            if(!Files.exists(path)) return;
+            if(!Files.exists(path)) {
+                ramMemoryMap.put("errorMessage", "/proc/meminfo 경로가 존재하지 않습니다.");
+                return ramMemoryMap;
+            }
 
             try (Stream<String> lines = Files.lines(path)) {
                 for(String line : (Iterable<String>) lines::iterator) {
@@ -113,24 +146,21 @@ public class BackOfficeScheduler {
                 }
             }
 
-            if(usedPercent == null) return;
+            if(usedPercent == null) {
+                ramMemoryMap.put("errorMessage", "MemTotal 또는 MemAvailable 필드가 존재하지 않습니다.");
+                return ramMemoryMap;
+            }
         } catch (Exception ex) {
-            return;
+            ramMemoryMap.put("errorMessage", ex.getMessage());
+            return ramMemoryMap;
         }
 
-        if(usedPercent >= 90) {
-            String value = redisRepository.getValue(WARN_RAM_LOG_KEY);
-            if(value != null) return;
+        final double GB_DIVISOR = MB_DIVISOR;  // 변수명 명시를 위해 재할당.
+        ramMemoryMap.put("maxRAM", String.format("100%% (%.2fMB · %.2fGB)", (double) limitMaxKB/1024, (double) limitMaxKB/GB_DIVISOR));  // 최대
+        ramMemoryMap.put("usedRAM", String.format("%.2f%% (%.2fMB · %.2fGB)", usedPercent, (double) usedKB/1024, (double) usedKB/GB_DIVISOR));  // 사용
+        ramMemoryMap.put("remainRAM", String.format("%.2f%% (%.2fMB · %.2fGB)", (double) remainKB*100/limitMaxKB, (double) remainKB/1024, (double) remainKB/GB_DIVISOR));  // 잔여
+        ramMemoryMap.put("usedRAMPercent", usedPercent);  // Double 자료형 (이외 String)
 
-            int warnPercent = (usedPercent >= 95) ? 95 : 90;
-
-            final double GB_DIVISOR = MB_DIVISOR;  // 변수명 명시를 위해 재할당.
-            log.warn(WARN_OOM_LOG_MARKER,  // marker는 OOM과 함께 사용 (Slack 채널 동일)
-                    String.format("RAM 메모리 %d%% 위험\n-  최대: 100%% (%.2fMB · %.2fGB)\n-  사용: %.2f%% (%.2fMB · %.2fGB)\n-  잔여: %.2f%% (%.2fMB · %.2fGB)",  // Slack Template
-                            warnPercent, (double) limitMaxKB/1024, (double) limitMaxKB/GB_DIVISOR, usedPercent, (double) usedKB/1024, (double) usedKB/GB_DIVISOR, (double) remainKB*100/limitMaxKB, (double) remainKB/1024, (double) remainKB/GB_DIVISOR));
-
-            Long ttlMillisecond = Duration.ofHours(1).toMillis();
-            redisRepository.setValue(WARN_RAM_LOG_KEY, "true", ttlMillisecond);  // 실상 value 값은 무의미한 형식적인 것임.
-        }
+        return ramMemoryMap;
     }
 }
