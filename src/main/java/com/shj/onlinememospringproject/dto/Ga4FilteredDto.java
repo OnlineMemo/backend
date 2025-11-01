@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class Ga4FilteredDto {
 
@@ -56,6 +57,16 @@ public class Ga4FilteredDto {
             this.geoRegion = entity.getGeoRegion();
             this.geoCity = entity.getGeoCity();
         }
+    }
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AnalyzeResponse {  // for Dashboard
+
+        List<Ga4FilteredDto.CalcResponse> calcResponseDtoList;  // GA4 계산용 데이터
+        List<Ga4FilteredDto.StatisticResponse> statisticResponseDtoList;  // GA4 페이지별 이용자 통계
     }
 
     @Getter

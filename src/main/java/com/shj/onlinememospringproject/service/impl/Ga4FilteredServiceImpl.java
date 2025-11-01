@@ -72,11 +72,7 @@ public class Ga4FilteredServiceImpl implements Ga4FilteredService {
     @Transactional(readOnly = true)
     @Override
     public List<Ga4FilteredDto.Response> findGa4FilteredAll(String startDatetimeStr, String endDatetimeStr) {  // KST 기준 파라미터
-        checkValidDatetime(startDatetimeStr, endDatetimeStr);
-
-        LocalDateTime startDatetime = convertStrToDatetime(startDatetimeStr);
-        LocalDateTime endDatetime = convertStrToDatetime(endDatetimeStr);
-        List<Ga4Filtered> ga4FilteredList = ga4FilteredRepository.findByEventDatetimeBetweenOrderByEventDatetimeAsc(startDatetime, endDatetime);
+        List<Ga4Filtered> ga4FilteredList = findGa4FilteredByDatetime(startDatetimeStr, endDatetimeStr);
 
         List<Ga4FilteredDto.Response> responseDtoList = ga4FilteredList.stream()
                 .map(Ga4FilteredDto.Response::new)
@@ -87,11 +83,7 @@ public class Ga4FilteredServiceImpl implements Ga4FilteredService {
     @Transactional(readOnly = true)
     @Override
     public List<Ga4FilteredDto.CalcResponse> findGa4FilteredCalc(String startDatetimeStr, String endDatetimeStr) {  // KST 기준 파라미터
-        checkValidDatetime(startDatetimeStr, endDatetimeStr);
-
-        LocalDateTime startDatetime = convertStrToDatetime(startDatetimeStr);
-        LocalDateTime endDatetime = convertStrToDatetime(endDatetimeStr);
-        List<Ga4Filtered> ga4FilteredList = ga4FilteredRepository.findByEventDatetimeBetweenOrderByEventDatetimeAsc(startDatetime, endDatetime);
+        List<Ga4Filtered> ga4FilteredList = findGa4FilteredByDatetime(startDatetimeStr, endDatetimeStr);
 
         List<Ga4FilteredDto.CalcResponse> calcResponseDtoList = ga4FilteredList.stream()
                 .map(Ga4FilteredDto.CalcResponse::new)
@@ -101,8 +93,8 @@ public class Ga4FilteredServiceImpl implements Ga4FilteredService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<Ga4FilteredDto.StatisticResponse> calculateStatistic(String startDatetimeStr, String endDatetimeStr) {
-        List<Ga4FilteredDto.CalcResponse> calcResponseDtoList = findGa4FilteredCalc(startDatetimeStr, endDatetimeStr);  // checkValidDatetime() 검사 포함됨
+    public List<Ga4FilteredDto.StatisticResponse> calculateStatistic(String startDatetimeStr, String endDatetimeStr, List<Ga4FilteredDto.CalcResponse> calcResponseDtoList) {  // KST 기준 파라미터 (calcResponseDtoList = null 허용)
+        if(calcResponseDtoList == null) calcResponseDtoList = findGa4FilteredCalc(startDatetimeStr, endDatetimeStr);  // 퍼사드 메소드에서 호출 시, 성능 최적화를 위함.
 
         // 로그인한 사용자들의 pseudoId (전역 범위 : 실사용자 수 집계 시, 활성 사용자 중복 제거용)
         Set<String> pseudoIdWithLoginSet = calcResponseDtoList.stream()
@@ -165,7 +157,7 @@ public class Ga4FilteredServiceImpl implements Ga4FilteredService {
         return statisticResponseDtoList;
     }
 
-    public Ga4FilteredDto.StatisticResponse calculateValues(String pagePath, List<Ga4FilteredDto.CalcResponse> eventDataList, Set<String> pseudoIdWithLoginSet) {
+    private Ga4FilteredDto.StatisticResponse calculateValues(String pagePath, List<Ga4FilteredDto.CalcResponse> eventDataList, Set<String> pseudoIdWithLoginSet) {
         if(eventDataList == null || eventDataList.isEmpty()) {
             return Ga4FilteredDto.StatisticResponse.builder()
                     .pagePath(pagePath)
@@ -220,8 +212,32 @@ public class Ga4FilteredServiceImpl implements Ga4FilteredService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
+    @Override
+    public Ga4FilteredDto.AnalyzeResponse analyzeFacade(String startDatetimeStr, String endDatetimeStr) {  // KST 기준 파라미터 (분석 퍼사드 메소드)
+        List<Ga4FilteredDto.CalcResponse> calcResponseDtoList = findGa4FilteredCalc(startDatetimeStr, endDatetimeStr);
+        List<Ga4FilteredDto.StatisticResponse> statisticResponseDtoList = calculateStatistic(null, null, calcResponseDtoList);
+
+        return Ga4FilteredDto.AnalyzeResponse.builder()
+                .calcResponseDtoList(calcResponseDtoList)
+                .statisticResponseDtoList(statisticResponseDtoList)
+                .build();
+    }
+
 
     // ========== 유틸성 메소드 ========== //
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<Ga4Filtered> findGa4FilteredByDatetime(String startDatetimeStr, String endDatetimeStr) {  // KST 기준 파라미터
+        checkValidDatetime(startDatetimeStr, endDatetimeStr);  // 날짜 유효성 검사 포함됨.
+
+        LocalDateTime startDatetime = convertStrToDatetime(startDatetimeStr);
+        LocalDateTime endDatetime = convertStrToDatetime(endDatetimeStr);
+        List<Ga4Filtered> ga4FilteredList = ga4FilteredRepository.findByEventDatetimeBetweenOrderByEventDatetimeAsc(startDatetime, endDatetime);
+
+        return ga4FilteredList;
+    }
 
     private static void checkValidDatetime(String startDatetimeStr, String endDatetimeStr) {
         if(startDatetimeStr.compareTo(endDatetimeStr) > 0) {
