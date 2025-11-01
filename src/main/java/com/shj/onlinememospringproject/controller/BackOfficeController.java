@@ -71,7 +71,7 @@ public class BackOfficeController {
     public ResponseEntity<ResponseData<List<Ga4FilteredDto.StatisticResponse>>> calculateStatistic(
             @RequestParam(value = "startDatetime", required = true) String startDatetime,
             @RequestParam(value = "endDatetime", required = true) String endDatetime) {
-        List<Ga4FilteredDto.StatisticResponse> statisticResponseDtoList = ga4FilteredService.calculateStatistic(startDatetime, endDatetime, null);
+        List<Ga4FilteredDto.StatisticResponse> statisticResponseDtoList = ga4FilteredService.calculateStatistic(startDatetime, endDatetime);
         return ResponseData.toResponseEntity(ResponseCode.READ_GA4FILTERED, statisticResponseDtoList);
     }
 

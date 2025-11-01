@@ -93,9 +93,16 @@ public class Ga4FilteredServiceImpl implements Ga4FilteredService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<Ga4FilteredDto.StatisticResponse> calculateStatistic(String startDatetimeStr, String endDatetimeStr, List<Ga4FilteredDto.CalcResponse> calcResponseDtoList) {  // KST 기준 파라미터 (calcResponseDtoList = null 허용)
-        if(calcResponseDtoList == null) calcResponseDtoList = findGa4FilteredCalc(startDatetimeStr, endDatetimeStr);  // 퍼사드 메소드에서 호출 시, 성능 최적화를 위함.
+    public List<Ga4FilteredDto.StatisticResponse> calculateStatistic(String startDatetimeStr, String endDatetimeStr) {  // KST 기준 파라미터
+        List<Ga4FilteredDto.CalcResponse> calcResponseDtoList = findGa4FilteredCalc(startDatetimeStr, endDatetimeStr);
 
+        List<Ga4FilteredDto.StatisticResponse> statisticResponseDtoList = calculateStatistic(calcResponseDtoList);  // Overloading 메소드 호출.
+        return statisticResponseDtoList;
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<Ga4FilteredDto.StatisticResponse> calculateStatistic(List<Ga4FilteredDto.CalcResponse> calcResponseDtoList) {  // Overloading 메소드 (for 단일 책임 원칙)
         // 로그인한 사용자들의 pseudoId (전역 범위 : 실사용자 수 집계 시, 활성 사용자 중복 제거용)
         Set<String> pseudoIdWithLoginSet = calcResponseDtoList.stream()
                 .filter(calcResponseDto -> calcResponseDto.getLoginUserId() != null && calcResponseDto.getLoginUserId() > 0)
@@ -214,9 +221,9 @@ public class Ga4FilteredServiceImpl implements Ga4FilteredService {
 
     @Transactional(readOnly = true)
     @Override
-    public Ga4FilteredDto.AnalyzeResponse analyzeFacade(String startDatetimeStr, String endDatetimeStr) {  // KST 기준 파라미터 (분석 퍼사드 메소드)
+    public Ga4FilteredDto.AnalyzeResponse analyzeFacade(String startDatetimeStr, String endDatetimeStr) {  // 분석 퍼사드 메소드. KST 기준 파라미터
         List<Ga4FilteredDto.CalcResponse> calcResponseDtoList = findGa4FilteredCalc(startDatetimeStr, endDatetimeStr);
-        List<Ga4FilteredDto.StatisticResponse> statisticResponseDtoList = calculateStatistic(null, null, calcResponseDtoList);
+        List<Ga4FilteredDto.StatisticResponse> statisticResponseDtoList = calculateStatistic(calcResponseDtoList);
 
         return Ga4FilteredDto.AnalyzeResponse.builder()
                 .calcResponseDtoList(calcResponseDtoList)

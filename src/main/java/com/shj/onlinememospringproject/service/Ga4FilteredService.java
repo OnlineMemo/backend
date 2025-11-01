@@ -9,7 +9,8 @@ public interface Ga4FilteredService {
     void filterAndSaveGa4(String startDatetimeStr, String endDatetimeStr);
     List<Ga4FilteredDto.Response> findGa4FilteredAll(String startDatetimeStr, String endDatetimeStr);
     List<Ga4FilteredDto.CalcResponse> findGa4FilteredCalc(String startDatetimeStr, String endDatetimeStr);
-    List<Ga4FilteredDto.StatisticResponse> calculateStatistic(String startDatetimeStr, String endDatetimeStr, List<Ga4FilteredDto.CalcResponse> calcResponseDtoList);  // calcResponseDtoList = null 허용
+    List<Ga4FilteredDto.StatisticResponse> calculateStatistic(String startDatetimeStr, String endDatetimeStr);
+    List<Ga4FilteredDto.StatisticResponse> calculateStatistic(List<Ga4FilteredDto.CalcResponse> calcResponseDtoList);  // Overloading 메소드 (for 단일 책임 원칙)
     Ga4FilteredDto.AnalyzeResponse analyzeFacade(String startDatetimeStr, String endDatetimeStr);
 
     // ========== 유틸성 메소드 ========== //
