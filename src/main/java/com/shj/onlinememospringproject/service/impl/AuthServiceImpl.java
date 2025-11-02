@@ -158,7 +158,6 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     @Override
     public AuthDto.TokenResponse reissue(AuthDto.ReissueRequest reissueRequestDto) {  // Refresh Token으로 Access Token 재발급 메소드
-
         // RequestDto로 전달받은 Token값들
         String accessToken = reissueRequestDto.getAccessToken();
         String refreshToken = reissueRequestDto.getRefreshToken();
@@ -168,9 +167,14 @@ public class AuthServiceImpl implements AuthService {
         if(tokenStatus == null) {
             try {
                 Object jwtExpObj = tokenProvider.decodeByBase64(refreshToken, "exp");  // 유효성을 이미 검증한 토큰이므로, Base64로 디코딩해도 무방하며 더 효율적임.
-                long jwtExp = ((Number) jwtExpObj).longValue();
-                String timeStr = TimeConverter.longToStringForLog(jwtExp);
-                throw new JwtException(String.format("전달된 Refresh Token은 만료되었습니다. (JWT.exp = '%s')", timeStr));
+                long jwtExp = ((Number) jwtExpObj).longValue();  // unixTimestamp (초 단위, UTC)
+                String jwtExpTimeStr = TimeConverter.longToStringForLog(jwtExp);  // KST
+
+                long currentSeconds = System.currentTimeMillis() / 1000L;  // seconds (초 단위, UTC)
+                long diffSeconds = currentSeconds - jwtExp;  // seconds (초 단위, UTC - UTC)
+                String diffTimeStr = TimeConverter.secondsToStringForDuration(diffSeconds);
+
+                throw new JwtException(String.format("전달된 Refresh Token은 만료되었습니다. (diff = '%s', JWT.exp = '%s')", diffTimeStr, jwtExpTimeStr));
             } catch (IOException ioEx) {
                 throw new JwtException("전달된 Refresh Token은 유효하지 않습니다. (Base64 디코딩 중 IOException)");  // 실상 발생 가능성은 전무하나, 안전장치로 기재.
             }
