@@ -130,7 +130,7 @@ public class MemoDto {
                     .map(UserMemo::getUser)
                     .map(UserDto.Response::new)
                     .sorted(Comparator.comparing(UserDto.Response::getNickname)  // 정렬 우선순위 1: 이름 오름차순
-                            .thenComparing(UserDto.Response::getUserId))  // 정렬 우선순위 2: id 내림차순
+                            .thenComparing(UserDto.Response::getUserId))  // 정렬 우선순위 2: id 오름차순
                     .collect(Collectors.toList());
             this.userResponseDtoList = userResponseDtoList;
             this.memoHasUsersCount = userResponseDtoList.size();
