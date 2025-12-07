@@ -42,10 +42,10 @@ public class UserDto {
         }
     }
 
-    @Builder
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
+    @Builder
     public static class CountResponse {
 
         private long signupUserCount;  // 총 가입자 수

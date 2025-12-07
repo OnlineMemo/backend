@@ -1,4 +1,4 @@
-package com.shj.onlinememospringproject.response.responseitem;
+package com.shj.onlinememospringproject.response.item;
 
 public class MessageItem {
 

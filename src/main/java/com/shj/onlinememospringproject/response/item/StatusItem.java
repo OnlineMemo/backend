@@ -1,4 +1,4 @@
-package com.shj.onlinememospringproject.response.responseitem;
+package com.shj.onlinememospringproject.response.item;
 
 public class StatusItem {
     public static final int OK = 200;

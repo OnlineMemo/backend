@@ -59,10 +59,10 @@ public class Ga4FilteredDto {
         }
     }
 
-    @Builder
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
+    @Builder
     public static class AnalyzeResponse {  // for Dashboard
 
         List<Ga4FilteredDto.CalcResponse> calcResponseDtoList;  // GA4 계산용 데이터
@@ -112,10 +112,10 @@ public class Ga4FilteredDto {
         private String geo_city;
     }
 
-    @Builder
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
+    @Builder
     public static class StatisticResponse {
 
         private String pagePath;  // 페이지 경로

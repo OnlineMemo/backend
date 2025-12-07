@@ -1,7 +1,7 @@
 package com.shj.onlinememospringproject.response;
 
-import com.shj.onlinememospringproject.response.responseitem.MessageItem;
-import com.shj.onlinememospringproject.response.responseitem.StatusItem;
+import com.shj.onlinememospringproject.response.item.MessageItem;
+import com.shj.onlinememospringproject.response.item.StatusItem;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -9,7 +9,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum ResponseCode {
 
-    // Swagger API 응답값 미리보기 용도
+    // Swagger API 응답 미리보기용
     string(StatusItem.OK, "Swagger API"),
 
     // ===================== //

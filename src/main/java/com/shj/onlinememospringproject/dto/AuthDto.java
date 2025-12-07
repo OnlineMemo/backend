@@ -46,10 +46,10 @@ public class AuthDto {
 
     // ======== < Response DTO > ======== //
 
-    @Builder
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
+    @Builder
     public static class TokenResponse {
 
         private String grantType;

@@ -25,10 +25,10 @@ public class MemoDto {
         private List<Long> userIdList;  // 함께 공동메모를 생성할 사용자들 userId 리스트. null 허용. (null일 경우, 개인메모)
     }
 
-    @Builder
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
+    @Builder
     public static class UpdateRequest {
 
         private String title;
@@ -78,10 +78,10 @@ public class MemoDto {
         }
     }
 
-    @Builder
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
+    @Builder
     public static class CreateResponse {
 
         private Long memoId;
@@ -91,10 +91,10 @@ public class MemoDto {
         }
     }
 
-    @Builder
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
+    @Builder
     public static class GenerateResponse {
 
         private String title;
@@ -102,10 +102,10 @@ public class MemoDto {
         private Boolean isMaxDailyAIUsage;  // 일일 AI 사용량 한도에 도달했는가? (boolean 원시타입은 앞의 "is"가 제거된 필드명으로 응답되므로 주의할것.)
     }
 
-    @Builder
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
+    @Builder
     public static class MemoPageResponse {
 
         // Memo
