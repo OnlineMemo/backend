@@ -8,6 +8,7 @@ import com.shj.onlinememospringproject.repository.Ga4FilteredRepository;
 import com.shj.onlinememospringproject.response.exception.Exception400;
 import com.shj.onlinememospringproject.service.Ga4FilteredService;
 import com.shj.onlinememospringproject.util.TimeConverter;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -32,9 +33,22 @@ public class Ga4FilteredServiceImpl implements Ga4FilteredService {
     private final Ga4FilteredRepository ga4FilteredRepository;
     private final Ga4FilteredBatchRepository ga4FilteredBatchRepository;
     private final Ga4Client ga4Client;
+    private final Set<Long> loginUserIdSet = new HashSet<>();
 
     @Value("${feignclient.ga4.auth-token}")
     private String authToken;
+    @Value("${blacklist.ddos.login-user-id}")
+    private String loginUserIdsStr;
+
+    @PostConstruct  // @RequiredArgsConstructor 효과를 유지하기 위해, 생성자 대신 @PostConstruct로 프로퍼티 초기화.
+    private void initLoginUserIdSet() {
+        if(this.loginUserIdsStr != null && !this.loginUserIdsStr.isBlank()) {
+            String[] loginUserIdArr = this.loginUserIdsStr.split(",");
+            for(String loginUserIdStr : loginUserIdArr) {
+                this.loginUserIdSet.add(Long.parseLong(loginUserIdStr.strip()));
+            }
+        }
+    }
 
 
     @Transactional
@@ -71,10 +85,11 @@ public class Ga4FilteredServiceImpl implements Ga4FilteredService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<Ga4FilteredDto.Response> findGa4FilteredAll(String startDatetimeStr, String endDatetimeStr) {  // KST 기준 파라미터
+    public List<Ga4FilteredDto.Response> findGa4FilteredAll(String startDatetimeStr, String endDatetimeStr, boolean excludeDdos) {  // KST 기준 파라미터
         List<Ga4Filtered> ga4FilteredList = findGa4FilteredByDatetime(startDatetimeStr, endDatetimeStr);
 
         List<Ga4FilteredDto.Response> responseDtoList = ga4FilteredList.stream()
+                .filter(ga4Filtered -> !excludeDdos || !loginUserIdSet.contains(ga4Filtered.getLoginUserId()))
                 .map(Ga4FilteredDto.Response::new)
                 .collect(Collectors.toList());
         return responseDtoList;
@@ -82,10 +97,11 @@ public class Ga4FilteredServiceImpl implements Ga4FilteredService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<Ga4FilteredDto.CalcResponse> findGa4FilteredCalc(String startDatetimeStr, String endDatetimeStr) {  // KST 기준 파라미터
+    public List<Ga4FilteredDto.CalcResponse> findGa4FilteredCalc(String startDatetimeStr, String endDatetimeStr, boolean excludeDdos) {  // KST 기준 파라미터
         List<Ga4Filtered> ga4FilteredList = findGa4FilteredByDatetime(startDatetimeStr, endDatetimeStr);
 
         List<Ga4FilteredDto.CalcResponse> calcResponseDtoList = ga4FilteredList.stream()
+                .filter(ga4Filtered -> !excludeDdos || !loginUserIdSet.contains(ga4Filtered.getLoginUserId()))
                 .map(Ga4FilteredDto.CalcResponse::new)
                 .collect(Collectors.toList());
         return calcResponseDtoList;
@@ -93,8 +109,8 @@ public class Ga4FilteredServiceImpl implements Ga4FilteredService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<Ga4FilteredDto.StatisticResponse> calculateStatistic(String startDatetimeStr, String endDatetimeStr) {  // KST 기준 파라미터
-        List<Ga4FilteredDto.CalcResponse> calcResponseDtoList = findGa4FilteredCalc(startDatetimeStr, endDatetimeStr);
+    public List<Ga4FilteredDto.StatisticResponse> calculateStatistic(String startDatetimeStr, String endDatetimeStr, boolean excludeDdos) {  // KST 기준 파라미터
+        List<Ga4FilteredDto.CalcResponse> calcResponseDtoList = findGa4FilteredCalc(startDatetimeStr, endDatetimeStr, excludeDdos);
 
         List<Ga4FilteredDto.StatisticResponse> statisticResponseDtoList = calculateStatistic(calcResponseDtoList);  // Overloading 메소드 호출.
         return statisticResponseDtoList;
@@ -221,8 +237,8 @@ public class Ga4FilteredServiceImpl implements Ga4FilteredService {
 
     @Transactional(readOnly = true)
     @Override
-    public Ga4FilteredDto.AnalyzeResponse analyzeFacade(String startDatetimeStr, String endDatetimeStr) {  // 분석 퍼사드 메소드. KST 기준 파라미터
-        List<Ga4FilteredDto.CalcResponse> calcResponseDtoList = findGa4FilteredCalc(startDatetimeStr, endDatetimeStr);
+    public Ga4FilteredDto.AnalyzeResponse analyzeFacade(String startDatetimeStr, String endDatetimeStr, boolean excludeDdos) {  // 분석 퍼사드 메소드. KST 기준 파라미터
+        List<Ga4FilteredDto.CalcResponse> calcResponseDtoList = findGa4FilteredCalc(startDatetimeStr, endDatetimeStr, excludeDdos);
         List<Ga4FilteredDto.StatisticResponse> statisticResponseDtoList = calculateStatistic(calcResponseDtoList);
 
         return Ga4FilteredDto.AnalyzeResponse.builder()

@@ -31,15 +31,17 @@ public class BackOfficeController {
     @Operation(summary = "GA4 전체 데이터 조회 [JWT O]",
             description = """
                     <strong>< RequestParam ></strong>
-                    - <strong>startDatetime, endDatetime</strong> : "2025-08-29 23:59:59" 형태의 날짜시각  \n
+                    - <strong>startDatetime, endDatetime</strong> : "2025-08-29 23:59:59" 형태의 날짜시각 (required = true)
+                    - <strong>excludeDdos</strong> : true 또는 false 형태의 DDoS 트래픽 제외여부 (required = false)  \n
                     <strong>< URI ></strong>
-                    - <strong>예시 URI</strong> : /back-office/ga4/all-data?startDatetime=2025-08-01%2015:30:00&endDatetime=2025-08-29%2023:59:59
+                    - <strong>예시 URI</strong> : /back-office/ga4/all-data?startDatetime=2025-08-01%2015:30:00&endDatetime=2025-08-29%2023:59:59&excludeDdos=true
                     - <strong>참고 사항</strong> : 중간의 '%20'은 공백을 의미
                     """)
     public ResponseEntity<ResponseData<List<Ga4FilteredDto.Response>>> findGa4FilteredAll(
             @RequestParam(value = "startDatetime", required = true) String startDatetime,
-            @RequestParam(value = "endDatetime", required = true) String endDatetime) {
-        List<Ga4FilteredDto.Response> responseDtoList = ga4FilteredService.findGa4FilteredAll(startDatetime, endDatetime);
+            @RequestParam(value = "endDatetime", required = true) String endDatetime,
+        @RequestParam(value = "excludeDdos", required = false, defaultValue = "true") boolean excludeDdos) {
+        List<Ga4FilteredDto.Response> responseDtoList = ga4FilteredService.findGa4FilteredAll(startDatetime, endDatetime, excludeDdos);
         return ResponseData.toResponseEntity(ResponseCode.READ_GA4FILTERED, responseDtoList);
     }
 
@@ -47,15 +49,17 @@ public class BackOfficeController {
     @Operation(summary = "GA4 계산용 데이터 조회 [JWT O]",
             description = """
                     <strong>< RequestParam ></strong>
-                    - <strong>startDatetime, endDatetime</strong> : "2025-08-29 23:59:59" 형태의 날짜시각  \n
+                    - <strong>startDatetime, endDatetime</strong> : "2025-08-29 23:59:59" 형태의 날짜시각 (required = true)
+                    - <strong>excludeDdos</strong> : true 또는 false 형태의 DDoS 트래픽 제외여부 (required = false)  \n
                     <strong>< URI ></strong>
-                    - <strong>예시 URI</strong> : /back-office/ga4/calc-data?startDatetime=2025-08-01%2015:30:00&endDatetime=2025-08-29%2023:59:59
+                    - <strong>예시 URI</strong> : /back-office/ga4/calc-data?startDatetime=2025-08-01%2015:30:00&endDatetime=2025-08-29%2023:59:59&excludeDdos=true
                     - <strong>참고 사항</strong> : 중간의 '%20'은 공백을 의미
                     """)
     public ResponseEntity<ResponseData<List<Ga4FilteredDto.CalcResponse>>> findGa4FilteredCalc(
             @RequestParam(value = "startDatetime", required = true) String startDatetime,
-            @RequestParam(value = "endDatetime", required = true) String endDatetime) {
-        List<Ga4FilteredDto.CalcResponse> calcResponseDtoList = ga4FilteredService.findGa4FilteredCalc(startDatetime, endDatetime);
+            @RequestParam(value = "endDatetime", required = true) String endDatetime,
+            @RequestParam(value = "excludeDdos", required = false, defaultValue = "true") boolean excludeDdos) {
+        List<Ga4FilteredDto.CalcResponse> calcResponseDtoList = ga4FilteredService.findGa4FilteredCalc(startDatetime, endDatetime, excludeDdos);
         return ResponseData.toResponseEntity(ResponseCode.READ_GA4FILTERED, calcResponseDtoList);
     }
 
@@ -63,15 +67,17 @@ public class BackOfficeController {
     @Operation(summary = "GA4 페이지별 이용자 통계 조회 [JWT O]",
             description = """
                     <strong>< RequestParam ></strong>
-                    - <strong>startDatetime, endDatetime</strong> : "2025-08-29 23:59:59" 형태의 날짜시각  \n
+                    - <strong>startDatetime, endDatetime</strong> : "2025-08-29 23:59:59" 형태의 날짜시각 (required = true)
+                    - <strong>excludeDdos</strong> : true 또는 false 형태의 DDoS 트래픽 제외여부 (required = false)  \n
                     <strong>< URI ></strong>
-                    - <strong>예시 URI</strong> : /back-office/ga4/statistics?startDatetime=2025-08-01%2015:30:00&endDatetime=2025-08-29%2023:59:59
+                    - <strong>예시 URI</strong> : /back-office/ga4/statistics?startDatetime=2025-08-01%2015:30:00&endDatetime=2025-08-29%2023:59:59&excludeDdos=true
                     - <strong>참고 사항</strong> : 중간의 '%20'은 공백을 의미
                     """)
     public ResponseEntity<ResponseData<List<Ga4FilteredDto.StatisticResponse>>> calculateStatistic(
             @RequestParam(value = "startDatetime", required = true) String startDatetime,
-            @RequestParam(value = "endDatetime", required = true) String endDatetime) {
-        List<Ga4FilteredDto.StatisticResponse> statisticResponseDtoList = ga4FilteredService.calculateStatistic(startDatetime, endDatetime);
+            @RequestParam(value = "endDatetime", required = true) String endDatetime,
+            @RequestParam(value = "excludeDdos", required = false, defaultValue = "true") boolean excludeDdos) {
+        List<Ga4FilteredDto.StatisticResponse> statisticResponseDtoList = ga4FilteredService.calculateStatistic(startDatetime, endDatetime, excludeDdos);
         return ResponseData.toResponseEntity(ResponseCode.READ_GA4FILTERED, statisticResponseDtoList);
     }
 
@@ -79,15 +85,17 @@ public class BackOfficeController {
     @Operation(summary = "GA4 대시보드용 데이터 및 통계 조회 [JWT O]",
             description = """
                     <strong>< RequestParam ></strong>
-                    - <strong>startDatetime, endDatetime</strong> : "2025-08-29 23:59:59" 형태의 날짜시각  \n
+                    - <strong>startDatetime, endDatetime</strong> : "2025-08-29 23:59:59" 형태의 날짜시각 (required = true)
+                    - <strong>excludeDdos</strong> : true 또는 false 형태의 DDoS 트래픽 제외여부 (required = false)  \n
                     <strong>< URI ></strong>
-                    - <strong>예시 URI</strong> : /back-office/ga4/dashboard?startDatetime=2025-08-01%2015:30:00&endDatetime=2025-08-29%2023:59:59
+                    - <strong>예시 URI</strong> : /back-office/ga4/dashboard?startDatetime=2025-08-01%2015:30:00&endDatetime=2025-08-29%2023:59:59&excludeDdos=true
                     - <strong>참고 사항</strong> : 중간의 '%20'은 공백을 의미
                     """)
     public ResponseEntity<ResponseData<Ga4FilteredDto.AnalyzeResponse>> analyzeFacade(
             @RequestParam(value = "startDatetime", required = true) String startDatetime,
-            @RequestParam(value = "endDatetime", required = true) String endDatetime) {
-        Ga4FilteredDto.AnalyzeResponse analyzeResponseDto = ga4FilteredService.analyzeFacade(startDatetime, endDatetime);
+            @RequestParam(value = "endDatetime", required = true) String endDatetime,
+            @RequestParam(value = "excludeDdos", required = false, defaultValue = "true") boolean excludeDdos) {
+        Ga4FilteredDto.AnalyzeResponse analyzeResponseDto = ga4FilteredService.analyzeFacade(startDatetime, endDatetime, excludeDdos);
         return ResponseData.toResponseEntity(ResponseCode.READ_GA4FILTERED, analyzeResponseDto);
     }
 
