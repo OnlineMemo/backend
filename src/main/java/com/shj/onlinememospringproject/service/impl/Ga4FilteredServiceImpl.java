@@ -87,9 +87,21 @@ public class Ga4FilteredServiceImpl implements Ga4FilteredService {
     @Override
     public List<Ga4FilteredDto.Response> findGa4FilteredAll(String startDatetimeStr, String endDatetimeStr, boolean excludeDdos) {  // KST 기준 파라미터
         List<Ga4Filtered> ga4FilteredList = findGa4FilteredByDatetime(startDatetimeStr, endDatetimeStr);
+        if(!excludeDdos || loginUserIdSet.isEmpty()) {
+            List<Ga4FilteredDto.Response> responseDtoList = ga4FilteredList.stream()
+                    .map(Ga4FilteredDto.Response::new)
+                    .collect(Collectors.toList());
+            return responseDtoList;
+        }
+
+        Set<String> userPseudoIdSet = ga4FilteredList.stream()
+                .filter(ga4Filtered -> loginUserIdSet.contains(ga4Filtered.getLoginUserId()))
+                .map(Ga4Filtered::getUserPseudoId)
+                .collect(Collectors.toSet());
 
         List<Ga4FilteredDto.Response> responseDtoList = ga4FilteredList.stream()
-                .filter(ga4Filtered -> !excludeDdos || !loginUserIdSet.contains(ga4Filtered.getLoginUserId()))
+                .filter(ga4Filtered -> !loginUserIdSet.contains(ga4Filtered.getLoginUserId())  // loginUserId 기반의 DDoS 트래픽 제외
+                        && !userPseudoIdSet.contains(ga4Filtered.getUserPseudoId()))  // userPseudoId 기반의 DDoS 트래픽 제외
                 .map(Ga4FilteredDto.Response::new)
                 .collect(Collectors.toList());
         return responseDtoList;
@@ -99,9 +111,21 @@ public class Ga4FilteredServiceImpl implements Ga4FilteredService {
     @Override
     public List<Ga4FilteredDto.CalcResponse> findGa4FilteredCalc(String startDatetimeStr, String endDatetimeStr, boolean excludeDdos) {  // KST 기준 파라미터
         List<Ga4Filtered> ga4FilteredList = findGa4FilteredByDatetime(startDatetimeStr, endDatetimeStr);
+        if(!excludeDdos || loginUserIdSet.isEmpty()) {
+            List<Ga4FilteredDto.CalcResponse> calcResponseDtoList = ga4FilteredList.stream()
+                    .map(Ga4FilteredDto.CalcResponse::new)
+                    .collect(Collectors.toList());
+            return calcResponseDtoList;
+        }
+
+        Set<String> userPseudoIdSet = ga4FilteredList.stream()
+                .filter(ga4Filtered -> loginUserIdSet.contains(ga4Filtered.getLoginUserId()))
+                .map(Ga4Filtered::getUserPseudoId)
+                .collect(Collectors.toSet());
 
         List<Ga4FilteredDto.CalcResponse> calcResponseDtoList = ga4FilteredList.stream()
-                .filter(ga4Filtered -> !excludeDdos || !loginUserIdSet.contains(ga4Filtered.getLoginUserId()))
+                .filter(ga4Filtered -> !loginUserIdSet.contains(ga4Filtered.getLoginUserId())  // loginUserId 기반의 DDoS 트래픽 제외
+                        && !userPseudoIdSet.contains(ga4Filtered.getUserPseudoId()))  // userPseudoId 기반의 DDoS 트래픽 제외
                 .map(Ga4FilteredDto.CalcResponse::new)
                 .collect(Collectors.toList());
         return calcResponseDtoList;
@@ -112,7 +136,7 @@ public class Ga4FilteredServiceImpl implements Ga4FilteredService {
     public List<Ga4FilteredDto.StatisticResponse> calculateStatistic(String startDatetimeStr, String endDatetimeStr, boolean excludeDdos) {  // KST 기준 파라미터
         List<Ga4FilteredDto.CalcResponse> calcResponseDtoList = findGa4FilteredCalc(startDatetimeStr, endDatetimeStr, excludeDdos);
 
-        List<Ga4FilteredDto.StatisticResponse> statisticResponseDtoList = calculateStatistic(calcResponseDtoList);  // Overloading 메소드 호출.
+        List<Ga4FilteredDto.StatisticResponse> statisticResponseDtoList = calculateStatistic(calcResponseDtoList);  // Overloading 메소드 호출
         return statisticResponseDtoList;
     }
 
