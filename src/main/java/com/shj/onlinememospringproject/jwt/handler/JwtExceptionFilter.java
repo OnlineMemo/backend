@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shj.onlinememospringproject.response.ResponseCode;
 import com.shj.onlinememospringproject.response.ResponseData;
+import com.shj.onlinememospringproject.response.item.MessageItem;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -34,7 +35,7 @@ public class JwtExceptionFilter extends OncePerRequestFilter {
             response.setCharacterEncoding("UTF-8");
 
             ResponseEntity responseEntity = ResponseData.toResponseEntity(ResponseCode.TOKEN_ERROR);
-            if(ex.getMessage().equals("토큰 만료 - ExpiredJwtException")) {
+            if(ex.getMessage().equals(MessageItem.TOKEN_EXPIRED)) {
                 responseEntity = ResponseData.toResponseEntity(ResponseCode.TOKEN_EXPIRED);
             }
 

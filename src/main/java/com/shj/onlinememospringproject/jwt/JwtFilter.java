@@ -1,5 +1,6 @@
 package com.shj.onlinememospringproject.jwt;
 
+import com.shj.onlinememospringproject.response.item.MessageItem;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -29,7 +30,7 @@ public class JwtFilter extends OncePerRequestFilter {  // HTTP 요청을 중간�
         String jwt = resolveToken(request);  // 토큰값 문자열 리턴
 
         if(StringUtils.hasText(jwt) && tokenProvider.isExpiredToken(jwt) == true) {  // 해당 Access Token이 만료되었다면
-            throw new JwtException("토큰 만료 - ExpiredJwtException");  // JwtFilter에서 발생한 예외 처리는 ExceptionHandler가 아닌, 앞단의 JwtExceptionFilter에게 던져짐.
+            throw new JwtException(MessageItem.TOKEN_EXPIRED);  // JwtFilter에서 발생한 예외 처리는 ExceptionHandler가 아닌, 앞단의 JwtExceptionFilter에게 던져짐.
         }
 
         if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {  // 토큰의 서명이 일치하고 유효한가 (JWT 유효성 검사)
