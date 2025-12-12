@@ -33,11 +33,11 @@ public class JwtFilter extends OncePerRequestFilter {  // HTTP 요청을 가로�
         // ==> HTTP 요청 -> JwtExceptionFilter.doFilter(JwtFilter) 호출 -> JwtFilter 예외발생 -> JwtExceptionFilter.catch{JwtFilter} 대신처리
         if(jwt != null) {  // 헤더에 비어있지 않은 JWT가 존재하는 경우
             Boolean jwtStatus = tokenProvider.checkTokenStatus(jwt);
-            if(jwtStatus == false) {  // 유효하지 않은 토큰인 경우
-                throw new JwtException(MessageItem.TOKEN_ERROR);  // InValid 에러
-            }
-            else if(jwtStatus == null) {  // 만료된 토큰인 경우
+            if(jwtStatus == null) {  // 만료된 토큰인 경우
                 throw new JwtException(MessageItem.TOKEN_EXPIRED);  // Expired 에러
+            }
+            else if(jwtStatus == false) {  // 유효하지 않은 토큰인 경우
+                throw new JwtException(MessageItem.TOKEN_ERROR);  // InValid 에러
             }
             else {
                 Authentication authentication = tokenProvider.getAuthentication(jwt);  // 사용자를 인증. (+ 토큰 내 auth 권한필드 검사)

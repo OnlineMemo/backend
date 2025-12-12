@@ -162,12 +162,9 @@ public class AuthServiceImpl implements AuthService {
         String accessToken = reissueRequestDto.getAccessToken();
         String refreshToken = reissueRequestDto.getRefreshToken();
 
-        // Refresh Token 유효성 및 만료 검사
+        // Refresh Token 만료 및 유효성 검사
         Boolean tokenStatus = tokenProvider.checkTokenStatus(refreshToken);
-        if(tokenStatus == false) {  // 유효하지 않은 토큰인 경우
-            throw new JwtException("전달된 Refresh Token은 유효하지 않습니다.");
-        }
-        else if(tokenStatus == null) {  // 만료된 토큰인 경우
+        if(tokenStatus == null) {  // 만료된 토큰인 경우
             try {
                 Object jwtExpObj = tokenProvider.decodeByBase64(refreshToken, "exp");  // 유효성을 이미 검증한 토큰이므로, Base64로 디코딩해도 무방하며 더 효율적임.
                 long jwtExp = ((Number) jwtExpObj).longValue();  // unixTimestamp (초 단위, UTC)
@@ -181,6 +178,9 @@ public class AuthServiceImpl implements AuthService {
             } catch (IOException ioEx) {
                 throw new JwtException("전달된 Refresh Token은 유효하지 않습니다. (Base64 디코딩 중 IOException)");  // 실상 발생 가능성은 전무하나, 안전장치로 기재.
             }
+        }
+        else if(tokenStatus == false) {  // 유효하지 않은 토큰인 경우
+            throw new JwtException("전달된 Refresh Token은 유효하지 않습니다.");
         }
 
         // Access Token에서 userId 가져오기
