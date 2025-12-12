@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.util.Arrays;
 
 @RequiredArgsConstructor
-public class JwtFilter extends OncePerRequestFilter {  // HTTP 요청을 중간에서 가로채어 JWT를 처리하고, 사용자를 인증함으로써 SecurityContextHolder에 해당 인증 정보를 설정하는 역할.
+public class JwtFilter extends OncePerRequestFilter {  // HTTP 요청을 가로채 JWT를 검사하고, 사용자를 인증해 SecurityContextHolder에 인증 정보를 설정하는 필터
 
     public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String BEARER_PREFIX = "Bearer ";
@@ -27,16 +27,25 @@ public class JwtFilter extends OncePerRequestFilter {  // HTTP 요청을 중간�
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String jwt = resolveToken(request);  // 토큰값 문자열 리턴
+        String jwt = resolveToken(request);  // 헤더 내 토큰값 문자열
 
-        if(StringUtils.hasText(jwt) && tokenProvider.isExpiredToken(jwt) == true) {  // 해당 Access Token이 만료되었다면
-            throw new JwtException(MessageItem.TOKEN_EXPIRED);  // JwtFilter에서 발생한 예외 처리는 ExceptionHandler가 아닌, 앞단의 JwtExceptionFilter에게 던져짐.
+        // - if : JwtFilter에서 발생한 예외는 ExceptionHandler가 아닌, 앞단의 JwtExceptionFilter로 던져짐.
+        // ==> HTTP 요청 -> JwtExceptionFilter.doFilter(JwtFilter) 호출 -> JwtFilter 예외발생 -> JwtExceptionFilter.catch{JwtFilter} 대신처리
+        if(StringUtils.hasText(jwt)) {  // 헤더에 비어있지 않은 JWT가 존재하는 경우
+            Boolean jwtStatus = tokenProvider.checkTokenStatus(jwt);
+            if(jwtStatus == false) {  // 유효하지 않은 토큰인 경우
+                throw new JwtException(MessageItem.TOKEN_ERROR);  // InValid 에러
+            }
+            else if(jwtStatus == null) {  // 만료된 토큰인 경우
+                throw new JwtException(MessageItem.TOKEN_EXPIRED);  // Expired 에러
+            }
+            else {
+                Authentication authentication = tokenProvider.getAuthentication(jwt);  // 사용자를 인증. (+ 토큰 내 auth 권한필드 검사)
+                SecurityContextHolder.getContext().setAuthentication(authentication);  // SecurityContextHolder에 인증 정보를 설정.
+            }
         }
-
-        if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {  // 토큰의 서명이 일치하고 유효한가 (JWT 유효성 검사)
-            Authentication authentication = tokenProvider.getAuthentication(jwt);  // 사용자를 인증.
-            SecurityContextHolder.getContext().setAuthentication(authentication);  // SecurityContextHolder에 인증 정보를 설정.
-        }
+        // - else : 토큰이 없어 JwtFilter를 통과한 후, SecurityConfig에 정의한 URI 권한에 따라 JwtAuthenticationEntryPoint로 던져짐.
+        // ==> HTTP 요청 -> JwtExceptionFilter.doFilter(JwtFilter) 호출 -> JwtFilter.doFilter() 통과 -> JwtAuthenticationEntryPoint 401 응답
 
         filterChain.doFilter(request, response);
     }

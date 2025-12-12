@@ -151,14 +151,16 @@ public class TokenProvider {
         }
     }
 
-    public boolean isExpiredToken(String accessToken) {  // 반환결과가 true면 토큰이 만료됨을 의미.
-        try {
-            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(accessToken).getBody();
-            return false;
-        } catch (ExpiredJwtException e) {
-            return true;
-        }
-    }
+//    public boolean isExpiredToken(String accessToken) {  // 반환결과가 true면 토큰이 만료됨을 의미.
+//        try {
+//            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(accessToken).getBody();
+//            return false;
+//        } catch (ExpiredJwtException e) {
+//            return true;
+//        } catch (JwtException | IllegalArgumentException e) {
+//            return false;
+//        }
+//    }
 
     // 주의 : Base64 디코딩으로 빠르지만 Jwts.parserBuilder 방식과 달리 서명 검증이 없으므로, 유효성이 이미 검증된 토큰에만 사용할것.
     public Object decodeByBase64(String token, String claimName) throws IOException {

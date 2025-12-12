@@ -34,10 +34,10 @@ public class JwtExceptionFilter extends OncePerRequestFilter {
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             response.setCharacterEncoding("UTF-8");
 
-            ResponseEntity responseEntity = ResponseData.toResponseEntity(ResponseCode.TOKEN_ERROR);
-            if(ex.getMessage().equals(MessageItem.TOKEN_EXPIRED)) {
-                responseEntity = ResponseData.toResponseEntity(ResponseCode.TOKEN_EXPIRED);
-            }
+            boolean isJwtExpired = (ex.getMessage().equals(MessageItem.TOKEN_EXPIRED));
+            ResponseEntity responseEntity = ResponseData.toResponseEntity(
+                    isJwtExpired ? ResponseCode.TOKEN_EXPIRED : ResponseCode.TOKEN_ERROR
+            );
 
             // 전체 ResponseEntity 객체를 JSON 문자열로 변환.
             String jsonString = objectMapper.writeValueAsString(responseEntity);
