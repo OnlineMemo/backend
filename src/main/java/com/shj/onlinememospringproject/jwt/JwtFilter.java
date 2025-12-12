@@ -27,11 +27,11 @@ public class JwtFilter extends OncePerRequestFilter {  // HTTP 요청을 가로�
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String jwt = resolveToken(request);  // 헤더 내 토큰값 문자열
+        String jwt = resolveToken(request);  // 헤더 내 토큰값 문자열 (or null)
 
-        // - if : JwtFilter에서 발생한 예외는 ExceptionHandler가 아닌, 앞단의 JwtExceptionFilter로 던져짐.
+        // * if : JwtFilter에서 발생한 예외는 ExceptionHandler가 아닌, 앞단의 JwtExceptionFilter로 던져짐.
         // ==> HTTP 요청 -> JwtExceptionFilter.doFilter(JwtFilter) 호출 -> JwtFilter 예외발생 -> JwtExceptionFilter.catch{JwtFilter} 대신처리
-        if(StringUtils.hasText(jwt)) {  // 헤더에 비어있지 않은 JWT가 존재하는 경우
+        if(jwt != null) {  // 헤더에 비어있지 않은 JWT가 존재하는 경우
             Boolean jwtStatus = tokenProvider.checkTokenStatus(jwt);
             if(jwtStatus == false) {  // 유효하지 않은 토큰인 경우
                 throw new JwtException(MessageItem.TOKEN_ERROR);  // InValid 에러
@@ -44,7 +44,7 @@ public class JwtFilter extends OncePerRequestFilter {  // HTTP 요청을 가로�
                 SecurityContextHolder.getContext().setAuthentication(authentication);  // SecurityContextHolder에 인증 정보를 설정.
             }
         }
-        // - else : 토큰이 없어 JwtFilter를 통과한 후, SecurityConfig에 정의한 URI 권한에 따라 JwtAuthenticationEntryPoint로 던져짐.
+        // * else : 토큰이 없어 JwtFilter를 통과한 후, SecurityConfig에 정의한 URI 권한에 따라 JwtAuthenticationEntryPoint로 던져짐.
         // ==> HTTP 요청 -> JwtExceptionFilter.doFilter(JwtFilter) 호출 -> JwtFilter.doFilter() 통과 -> JwtAuthenticationEntryPoint 401 응답
 
         filterChain.doFilter(request, response);
@@ -52,9 +52,17 @@ public class JwtFilter extends OncePerRequestFilter {  // HTTP 요청을 가로�
 
     // 토큰값 문자열 리턴 메소드
     private String resolveToken(HttpServletRequest request) {
-        String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
-        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(BEARER_PREFIX)) {
+        String bearerToken = getHeaderField(request, AUTHORIZATION_HEADER);
+        if(bearerToken != null && bearerToken.startsWith(BEARER_PREFIX)) {
             return bearerToken.substring(7);  // 앞부분인 "Bearer "을 제외하여 7인덱스부터 끝까지인 실제 토큰 문자열을 반환.
+        }
+        return null;
+    }
+
+    private String getHeaderField(HttpServletRequest request, String fieldName) {
+        String headerField = request.getHeader(fieldName);
+        if(StringUtils.hasText(headerField)) {
+            return headerField;
         }
         return null;
     }
