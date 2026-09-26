@@ -10,7 +10,10 @@ import java.io.Serializable;
 
 @Getter
 @NoArgsConstructor
-@Table(name = "friendship")  // 사실상 이 테이블도, User과 User의 mapping 다대다 테이블이다.
+@Table(
+        name = "friendship",  // 사실상 이 테이블도, User과 User의 mapping 다대다 테이블이다.
+        uniqueConstraints = @UniqueConstraint(name = "uk_friendship_user_id_sender_user_id", columnNames = {"user_id", "sender_user_id"})
+)
 @Entity
 public class Friendship implements Serializable {
 
