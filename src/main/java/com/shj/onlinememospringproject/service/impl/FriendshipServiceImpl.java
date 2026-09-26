@@ -13,6 +13,8 @@ import com.shj.onlinememospringproject.service.FriendshipService;
 import com.shj.onlinememospringproject.service.UserService;
 import com.shj.onlinememospringproject.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -71,7 +73,14 @@ public class FriendshipServiceImpl implements FriendshipService {
                 .user(user)
                 .senderUser(loginUser)
                 .build();
-        friendshipRepository.save(friendship);
+
+        // < 동시 요청 -> uniqueConstraints 제약 위반 -> DataIntegrityViolationException(500) 발생 >
+        // ==> 동시성에도 안전한 응답(400)을 위해 try-catch 처리.
+        try {
+            friendshipRepository.save(friendship);
+        } catch (DataIntegrityViolationException ex) {
+            throw new Exception400.FriendshipBadRequest("이미 친구요청을 보냈거나 친구인 상태입니다.");
+        }
     }
 
     @Transactional
@@ -92,7 +101,14 @@ public class FriendshipServiceImpl implements FriendshipService {
                     .senderUser(friendship.getUser())
                     .build();
             reverseFriendship.updateFriendshipState(FriendshipState.FRIEND);
-            friendshipRepository.save(reverseFriendship);
+
+            // < 동시 요청 -> uniqueConstraints 제약 위반 -> DataIntegrityViolationException(500) 발생 >
+            // ==> 동시성에도 안전한 응답(404)을 위해 try-catch 처리.
+            try {
+                friendshipRepository.save(reverseFriendship);
+            } catch (DataIntegrityViolationException ex) {
+                throw new Exception404.NoSuchFriendship(String.format("userId = %d, senderUserId = %d, friendshipState = %s", loginUserId, updateUserId, FriendshipState.SEND.name()));
+            }
         }
         else if(updateRequestDto.getIsAccept() == 0) {  // 친구요청 거절일 경우
             friendshipRepository.delete(friendship);  // 친구요청 관계 자체를 삭제시킴. 이는 요청만 온 상태에서 삭제이므로, 반대의 경우는 삭제하지 않아도 됨.
