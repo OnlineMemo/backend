@@ -81,7 +81,7 @@ public class FriendshipServiceImpl implements FriendshipService {
         Long updateUserId = friendId;  // 친구상태를 업데이트할 사용자
 
         // 어차피 자식 테이블인 Friendship보다 부모 테이블인 User를 먼저 삭제하는건 불가능하기에, 굳이 따로 User 엔티티들을 조회해보는 과정없이 바로 Friend 엔티티를 조회해도 무관함.
-        Friendship friendship = findFriendshipWithId(loginUserId, updateUserId, null);
+        Friendship friendship = findFriendshipWithId(loginUserId, updateUserId, FriendshipState.SEND);  // 수락 및 거절은 친구요청(SEND) 상태에서만 가능
 
         if(updateRequestDto.getIsAccept() == 1) {  // 친구요청 수락일 경우
             friendship.updateFriendshipState(FriendshipState.FRIEND);
