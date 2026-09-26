@@ -208,9 +208,12 @@ public class MemoServiceImpl implements MemoService {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
         userMemoService.checkUserInMemo(loginUserId, memoId);  // 메모를 삭제/탈퇴할 권한이 있는지 체킹.
 
-        // 강제 Eager 조회 (N+1 문제 해결)
-        Memo memo = memoRepository.findByIdToUserMemoListWithEager(memoId).orElseThrow(
-                () -> new Exception404.NoSuchUser(String.format("memoId = %d", memoId)));
+        // 강제 Eager 조회 (N+1 문제 해결) + 비관적 락
+        Memo memo = memoRepository.findByIdToUserMemoListWithEagerAndPessimisticLock(memoId).orElseThrow(
+                () -> new Exception404.NoSuchMemo(String.format("memoId = %d", memoId)));
+        if(memo.getUserMemoList().stream().noneMatch(userMemo -> userMemo.getUser().getId().equals(loginUserId))) {
+            throw new Exception404.NoSuchUserMemo(String.format("userId = %d, memoId = %d", loginUserId, memoId));
+        }
         int memoHasUsersCount = memo.getUserMemoList().size();  // Memo.userMemoList (리스트의 size 측정으로, N+1 쿼리 발생)
 
         // 공동메모 그룹 탈퇴 처리. (자식 테이블인 UserMemo에서 먼저 삭제.)
