@@ -58,7 +58,7 @@ public class FriendshipServiceImpl implements FriendshipService {
         User loginUser = userService.findLoginUser();  // 현재 로그인 사용자 조회
         User user = userService.findUserByEmail(sendRequestDto.getEmail());  // 내가 친구요청을 보낼 사용자 조회
 
-        if(loginUser.getId() == user.getId()) {  // 자신이 자신에게 친구요청한 경우라면,
+        if(loginUser.getId().equals(user.getId())) {  // 자신이 자신에게 친구요청한 경우라면,
             throw new Exception400.FriendshipBadRequest("자기 자신에게 친구요청 할 수 없습니다.");
         }
 

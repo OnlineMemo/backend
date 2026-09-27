@@ -37,7 +37,7 @@ public class UserMemoServiceImpl implements UserMemoService {
 
         // 강제 Eager 조회 (N+1 문제 해결)
         Memo memo = memoRepository.findByIdToUserWithEager(memoId).orElseThrow(
-                () -> new Exception404.NoSuchUser(String.format("memoId = %d", memoId)));
+                () -> new Exception404.NoSuchMemo(String.format("memoId = %d", memoId)));
 
         // 공동메모에 이미 참여중인 사용자들
         Set<Long> existUserIdSet = memo.getUserMemoList().stream()  // Memo.userMemoList (N+1 쿼리 발생)
