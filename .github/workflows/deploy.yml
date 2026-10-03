@@ -65,6 +65,11 @@ jobs:
       - name: Get Short CommitNumber
         id: short-commitnumber
         run: echo "commitnumber=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+      - name: Get Oneline CommitMessage
+        id: oneline-commitmessage
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: echo "commitmessage=$(echo "$COMMIT_MESSAGE" | sed '/^$/d' | paste -sd ' ' - | sed 's/\\/\\\\/g; s/"/\\"/g')" >> $GITHUB_OUTPUT
 
       ### AWS Elastic Beanstalk ###
       - name: Beanstalk Deploy
@@ -102,7 +107,7 @@ jobs:
                     },
                     {
                       "title": "Commit",
-                      "value": "<https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ github.event.head_commit.message || '커밋 메시지 없음' }}>",
+                      "value": "<https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ steps.oneline-commitmessage.outputs.commitmessage || '커밋 메시지 없음' }}>",
                       "short": true
                     }
                   ]      
@@ -136,7 +141,7 @@ jobs:
                     },
                     {
                       "title": "Commit",
-                      "value": "<https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ github.event.head_commit.message || '커밋 메시지 없음' }}>",
+                      "value": "<https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ steps.oneline-commitmessage.outputs.commitmessage || '커밋 메시지 없음' }}>",
                       "short": true
                     }
                   ]      
