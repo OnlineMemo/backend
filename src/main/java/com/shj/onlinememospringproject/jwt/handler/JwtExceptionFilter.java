@@ -30,13 +30,16 @@ public class JwtExceptionFilter extends OncePerRequestFilter {
         } catch (JwtException ex) {
             if(response.isCommitted()) return;  // 클라이언트가 이미 연결을 종료한 경우
 
-            response.setStatus(401);
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             response.setCharacterEncoding("UTF-8");
 
+            boolean isBlockedUser = (ex.getMessage().equals(MessageItem.BLOCKED_USER_ERROR));
             boolean isJwtExpired = (ex.getMessage().equals(MessageItem.TOKEN_EXPIRED));
+
+            response.setStatus(isBlockedUser ? 403 : 401);
             ResponseEntity responseEntity = ResponseData.toResponseEntity(
-                    isJwtExpired ? ResponseCode.TOKEN_EXPIRED : ResponseCode.TOKEN_ERROR
+                    isBlockedUser ? ResponseCode.BLOCKED_USER_ERROR :
+                            isJwtExpired ? ResponseCode.TOKEN_EXPIRED : ResponseCode.TOKEN_ERROR
             );
 
             // 전체 ResponseEntity 객체를 JSON 문자열로 변환.

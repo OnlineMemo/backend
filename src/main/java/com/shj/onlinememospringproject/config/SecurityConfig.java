@@ -5,6 +5,7 @@ import com.blueconic.browscap.ParseException;
 import com.blueconic.browscap.UserAgentParser;
 import com.blueconic.browscap.UserAgentService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shj.onlinememospringproject.jwt.BlockedUserProvider;
 import com.shj.onlinememospringproject.jwt.JwtFilter;
 import com.shj.onlinememospringproject.jwt.TokenProvider;
 import com.shj.onlinememospringproject.jwt.handler.JwtAccessDeniedHandler;
@@ -39,6 +40,7 @@ public class SecurityConfig {
     private static final String[] SWAGGER_TEST_PATHS = {"/v3/api-docs/**", "/swagger-ui/**", "/swagger/**", "/test"};
 
     private final TokenProvider tokenProvider;
+    private final BlockedUserProvider blockedUserProvider;
     private final ObjectMapper objectMapper;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
@@ -90,7 +92,7 @@ public class SecurityConfig {
                             .accessDeniedHandler(jwtAccessDeniedHandler);
                 })
 
-                .addFilterBefore(new JwtFilter(tokenProvider), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new JwtFilter(tokenProvider, blockedUserProvider), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new JwtExceptionFilter(objectMapper), JwtFilter.class);
 
         return http.build();
