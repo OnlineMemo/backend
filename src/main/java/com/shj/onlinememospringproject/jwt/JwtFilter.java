@@ -23,6 +23,7 @@ public class JwtFilter extends OncePerRequestFilter {  // HTTP 요청을 가로�
     private static final String[] EXCLUDE_PATHS = {"/health", "/test", "/reissue", "/login", "/signup", "/password"};
 
     private final TokenProvider tokenProvider;
+    private final BlockedUserProvider blockedUserProvider;
 
 
     @Override
@@ -41,6 +42,11 @@ public class JwtFilter extends OncePerRequestFilter {  // HTTP 요청을 가로�
             }
             else {
                 Authentication authentication = tokenProvider.getAuthentication(jwt);  // 사용자를 인증. (+ 토큰 내 auth 권한필드 검사)
+                Long userId = Long.valueOf(authentication.getName());
+                boolean isBlockedUser = blockedUserProvider.checkBlockedUser(userId);
+                if(isBlockedUser) {  // 차단된 계정인 경우
+                    throw new JwtException(MessageItem.BLOCKED_USER_ERROR);  // Blocked 에러
+                }
                 SecurityContextHolder.getContext().setAuthentication(authentication);  // SecurityContextHolder에 인증 정보를 설정.
             }
         }

@@ -104,6 +104,7 @@ public enum ResponseCode {
     EXCESS_REQUEST_OPENAI(StatusItem.TO_MANY_REQUESTS, MessageItem.EXCESS_REQUEST_OPENAI),
     UNAUTHORIZED_ERROR(StatusItem.UNAUTHORIZED, MessageItem.UNAUTHORIZED),
     FORBIDDEN_ERROR(StatusItem.FORBIDDEN, MessageItem.FORBIDDEN),
+    BLOCKED_USER_ERROR(StatusItem.FORBIDDEN, MessageItem.BLOCKED_USER_ERROR),
 
     // ===================== //
     ;

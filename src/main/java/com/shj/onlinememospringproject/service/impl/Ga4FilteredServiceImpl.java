@@ -3,12 +3,12 @@ package com.shj.onlinememospringproject.service.impl;
 import com.shj.onlinememospringproject.client.Ga4Client;
 import com.shj.onlinememospringproject.domain.backoffice.Ga4Filtered;
 import com.shj.onlinememospringproject.dto.Ga4FilteredDto;
+import com.shj.onlinememospringproject.jwt.BlockedUserProvider;
 import com.shj.onlinememospringproject.repository.Ga4FilteredBatchRepository;
 import com.shj.onlinememospringproject.repository.Ga4FilteredRepository;
 import com.shj.onlinememospringproject.response.exception.Exception400;
 import com.shj.onlinememospringproject.service.Ga4FilteredService;
 import com.shj.onlinememospringproject.util.TimeConverter;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -33,22 +33,10 @@ public class Ga4FilteredServiceImpl implements Ga4FilteredService {
     private final Ga4FilteredRepository ga4FilteredRepository;
     private final Ga4FilteredBatchRepository ga4FilteredBatchRepository;
     private final Ga4Client ga4Client;
-    private final Set<Long> loginUserIdSet = new HashSet<>();
+    private final BlockedUserProvider blockedUserProvider;
 
     @Value("${feignclient.ga4.auth-token}")
     private String authToken;
-    @Value("${blacklist.ddos.login-user-id}")
-    private String loginUserIdsStr;
-
-    @PostConstruct  // @RequiredArgsConstructor 효과를 유지하기 위해, 생성자 대신 @PostConstruct로 프로퍼티 초기화.
-    private void initLoginUserIdSet() {
-        if(this.loginUserIdsStr != null && !this.loginUserIdsStr.isBlank()) {
-            String[] loginUserIdArr = this.loginUserIdsStr.split(",");
-            for(String loginUserIdStr : loginUserIdArr) {
-                this.loginUserIdSet.add(Long.parseLong(loginUserIdStr.strip()));
-            }
-        }
-    }
 
 
     @Transactional
@@ -87,7 +75,7 @@ public class Ga4FilteredServiceImpl implements Ga4FilteredService {
     @Override
     public List<Ga4FilteredDto.Response> findGa4FilteredAll(String startDatetimeStr, String endDatetimeStr, boolean excludeDdos) {  // KST 기준 파라미터
         List<Ga4Filtered> ga4FilteredList = findGa4FilteredByDatetime(startDatetimeStr, endDatetimeStr);
-        if(!excludeDdos || loginUserIdSet.isEmpty()) {
+        if(!excludeDdos || blockedUserProvider.isEmpty()) {
             List<Ga4FilteredDto.Response> responseDtoList = ga4FilteredList.stream()
                     .map(Ga4FilteredDto.Response::new)
                     .collect(Collectors.toList());
@@ -95,12 +83,12 @@ public class Ga4FilteredServiceImpl implements Ga4FilteredService {
         }
 
         Set<String> userPseudoIdSet = ga4FilteredList.stream()
-                .filter(ga4Filtered -> loginUserIdSet.contains(ga4Filtered.getLoginUserId()))
+                .filter(ga4Filtered -> blockedUserProvider.checkBlockedUser(ga4Filtered.getLoginUserId()))
                 .map(Ga4Filtered::getUserPseudoId)
                 .collect(Collectors.toSet());
 
         List<Ga4FilteredDto.Response> responseDtoList = ga4FilteredList.stream()
-                .filter(ga4Filtered -> !loginUserIdSet.contains(ga4Filtered.getLoginUserId())  // loginUserId 기반의 DDoS 트래픽 제외
+                .filter(ga4Filtered -> !blockedUserProvider.checkBlockedUser(ga4Filtered.getLoginUserId())  // loginUserId 기반의 DDoS 트래픽 제외
                         && !userPseudoIdSet.contains(ga4Filtered.getUserPseudoId()))  // userPseudoId 기반의 DDoS 트래픽 제외
                 .map(Ga4FilteredDto.Response::new)
                 .collect(Collectors.toList());
@@ -111,7 +99,7 @@ public class Ga4FilteredServiceImpl implements Ga4FilteredService {
     @Override
     public List<Ga4FilteredDto.CalcResponse> findGa4FilteredCalc(String startDatetimeStr, String endDatetimeStr, boolean excludeDdos) {  // KST 기준 파라미터
         List<Ga4Filtered> ga4FilteredList = findGa4FilteredByDatetime(startDatetimeStr, endDatetimeStr);
-        if(!excludeDdos || loginUserIdSet.isEmpty()) {
+        if(!excludeDdos || blockedUserProvider.isEmpty()) {
             List<Ga4FilteredDto.CalcResponse> calcResponseDtoList = ga4FilteredList.stream()
                     .map(Ga4FilteredDto.CalcResponse::new)
                     .collect(Collectors.toList());
@@ -119,12 +107,12 @@ public class Ga4FilteredServiceImpl implements Ga4FilteredService {
         }
 
         Set<String> userPseudoIdSet = ga4FilteredList.stream()
-                .filter(ga4Filtered -> loginUserIdSet.contains(ga4Filtered.getLoginUserId()))
+                .filter(ga4Filtered -> blockedUserProvider.checkBlockedUser(ga4Filtered.getLoginUserId()))
                 .map(Ga4Filtered::getUserPseudoId)
                 .collect(Collectors.toSet());
 
         List<Ga4FilteredDto.CalcResponse> calcResponseDtoList = ga4FilteredList.stream()
-                .filter(ga4Filtered -> !loginUserIdSet.contains(ga4Filtered.getLoginUserId())  // loginUserId 기반의 DDoS 트래픽 제외
+                .filter(ga4Filtered -> !blockedUserProvider.checkBlockedUser(ga4Filtered.getLoginUserId())  // loginUserId 기반의 DDoS 트래픽 제외
                         && !userPseudoIdSet.contains(ga4Filtered.getUserPseudoId()))  // userPseudoId 기반의 DDoS 트래픽 제외
                 .map(Ga4FilteredDto.CalcResponse::new)
                 .collect(Collectors.toList());

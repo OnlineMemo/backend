@@ -6,12 +6,14 @@ import com.shj.onlinememospringproject.domain.User;
 import com.shj.onlinememospringproject.domain.enums.Authority;
 import com.shj.onlinememospringproject.domain.mapping.UserMemo;
 import com.shj.onlinememospringproject.dto.AuthDto;
+import com.shj.onlinememospringproject.jwt.BlockedUserProvider;
 import com.shj.onlinememospringproject.jwt.TokenProvider;
 import com.shj.onlinememospringproject.repository.FriendshipBatchRepository;
 import com.shj.onlinememospringproject.repository.MemoBatchRepository;
 import com.shj.onlinememospringproject.repository.UserMemoBatchRepository;
 import com.shj.onlinememospringproject.repository.UserRepository;
 import com.shj.onlinememospringproject.response.exception.Exception400;
+import com.shj.onlinememospringproject.response.exception.Exception403;
 import com.shj.onlinememospringproject.response.exception.Exception404;
 import com.shj.onlinememospringproject.service.AuthService;
 import com.shj.onlinememospringproject.service.UserService;
@@ -48,6 +50,7 @@ public class AuthServiceImpl implements AuthService {
     private final FriendshipBatchRepository friendshipBatchRepository;
     private final UserMemoBatchRepository userMemoBatchRepository;
     private final TokenProvider tokenProvider;
+    private final BlockedUserProvider blockedUserProvider;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManagerBuilder managerBuilder;
 
@@ -89,7 +92,14 @@ public class AuthServiceImpl implements AuthService {
             throw new BadCredentialsException(String.format("email = %s", loginRequestDto.getEmail()), ex);
         }
 
-        User user = userService.findUser(Long.valueOf(authentication.getName()));
+        // 차단된 계정 여부 검사
+        Long userId = Long.valueOf(authentication.getName());
+        boolean isBlockedUser = blockedUserProvider.checkBlockedUser(userId);
+        if(isBlockedUser) {
+            throw new Exception403.BlockedUser(String.format("userId = %d", userId));
+        }
+
+        User user = userService.findUser(userId);
         String refreshToken = user.getRefreshToken();
         AuthDto.TokenResponse tokenResponseDto;
 
@@ -186,6 +196,12 @@ public class AuthServiceImpl implements AuthService {
         // Access Token에서 userId 가져오기
         Authentication authentication = tokenProvider.getAuthentication(accessToken);
         Long userId = Long.valueOf(authentication.getName());
+
+        // 차단된 계정 여부 검사
+        boolean isBlockedUser = blockedUserProvider.checkBlockedUser(userId);
+        if(isBlockedUser) {
+            throw new Exception403.BlockedUser(String.format("userId = %d", userId));
+        }
 
         // DB의 사용자 Refresh Token 값과, 전달받은 Refresh Token의 불일치 여부 검사
         String dbRefreshToken = userRepository.findRefreshTokenById(userId);
