@@ -40,6 +40,7 @@ public class MessageItem {
     public static final String UPDATE_PASSWORD = "SUCCESS - 비밀번호 수정 성공";
     public static final String UNAUTHORIZED = "ERROR - Unauthorized 에러";
     public static final String FORBIDDEN = "ERROR - Forbidden 에러";
+    public static final String BLOCKED_USER_ERROR = "ERROR - Blocked 계정 에러";  // Status 403
 
     // < Token >
     public static final String REISSUE_SUCCESS = "SUCCESS - JWT Access 토큰 재발급 성공";

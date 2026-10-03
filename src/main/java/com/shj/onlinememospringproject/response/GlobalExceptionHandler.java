@@ -137,9 +137,10 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
 
     // ========== 커스텀 예외 처리 ========== //
 
-    // < 400,404,409,423,500 Exception >
+    // < 400,403,404,409,423,500 Exception >
     @ExceptionHandler({
             Exception400.class,
+            Exception403.class,
             Exception404.class,
             Exception409.class,
             Exception423.class,
