@@ -2,6 +2,7 @@ package com.shj.onlinememospringproject.domain;
 
 import com.shj.onlinememospringproject.domain.common.BaseCreatedEntity;
 import com.shj.onlinememospringproject.domain.enums.Authority;
+import com.shj.onlinememospringproject.domain.enums.UserState;
 import com.shj.onlinememospringproject.domain.mapping.UserMemo;
 import jakarta.persistence.*;
 import lombok.Builder;
@@ -35,6 +36,10 @@ public class User extends BaseCreatedEntity implements Serializable {
     @Enumerated(EnumType.STRING)
     private Authority authority;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "user_state", columnDefinition = "VARCHAR(255) default 'ACTIVE'")
+    private UserState userState;
+
     @Column(name = "refresh_token")
     private String refreshToken;
 
@@ -55,6 +60,7 @@ public class User extends BaseCreatedEntity implements Serializable {
         this.password = password;
         this.nickname = nickname;
         this.authority = Authority.ROLE_USER;
+        this.userState = UserState.ACTIVE;
     }
 
 
