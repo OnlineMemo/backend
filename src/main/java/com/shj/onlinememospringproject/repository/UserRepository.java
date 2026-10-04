@@ -1,12 +1,14 @@
 package com.shj.onlinememospringproject.repository;
 
 import com.shj.onlinememospringproject.domain.User;
+import com.shj.onlinememospringproject.domain.enums.UserState;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface UserRepository extends JpaRepository<User, Long> {
     // 내부의 Lazy 필드를 Eager로 조회하여 N+1 문제 해결 ('@EntityGraph' : 간단한 로직, 'Fetch Join' : 복잡한 로직 or JPA 쿼리메소드와의 네이밍 충돌 방지용)
@@ -43,6 +45,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // userId로 검색하여 nickname만 가져오는 메소드
     @Query("SELECT u.nickname FROM User u WHERE u.id = :userId")
     String findNicknameById(@Param("userId") Long userId);
+
+    // userState로 검색하여 userId 목록만 가져오는 메소드
+    @Query("SELECT u.id FROM User u WHERE u.userState = :userState")
+    Set<Long> findIdSetByUserState(@Param("userState") UserState userState);
 
     // 총 가입자 수
     @Query("SELECT MAX(u.id) FROM User u")
