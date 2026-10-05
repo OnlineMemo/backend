@@ -1,4 +1,4 @@
-package com.shj.onlinememospringproject.jwt;
+package com.shj.onlinememospringproject.ratelimit;
 
 import com.shj.onlinememospringproject.domain.enums.UserState;
 import com.shj.onlinememospringproject.repository.UserRepository;

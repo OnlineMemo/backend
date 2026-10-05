@@ -1,5 +1,6 @@
 package com.shj.onlinememospringproject.jwt;
 
+import com.shj.onlinememospringproject.ratelimit.BlockedUserProvider;
 import com.shj.onlinememospringproject.response.item.MessageItem;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;

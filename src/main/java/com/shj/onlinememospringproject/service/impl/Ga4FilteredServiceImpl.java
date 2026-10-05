@@ -3,7 +3,7 @@ package com.shj.onlinememospringproject.service.impl;
 import com.shj.onlinememospringproject.client.Ga4Client;
 import com.shj.onlinememospringproject.domain.backoffice.Ga4Filtered;
 import com.shj.onlinememospringproject.dto.Ga4FilteredDto;
-import com.shj.onlinememospringproject.jwt.BlockedUserProvider;
+import com.shj.onlinememospringproject.ratelimit.BlockedUserProvider;
 import com.shj.onlinememospringproject.repository.Ga4FilteredBatchRepository;
 import com.shj.onlinememospringproject.repository.Ga4FilteredRepository;
 import com.shj.onlinememospringproject.response.exception.Exception400;
