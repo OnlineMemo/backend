@@ -35,7 +35,7 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
     private static final String PROJECT_PACKAGE = "com.shj.onlinememospringproject";
     private static final String CGLIB_STRING = "$$SpringCGLIB$$";
     private static final Pattern CGLIB_PATTERN = Pattern.compile("\\$\\$SpringCGLIB\\$\\$\\d+");  // CGLIB 프록시 패턴
-    private static final String[] FILTER_CLASSNAMES = {"JwtExceptionFilter", "JwtFilter"};
+    private static final String[] FILTER_CLASSNAMES = {"JwtExceptionFilter", "JwtFilter", "RateLimitFilter"};
 
     private static final Marker ERROR_500_LOG_MARKER = MarkerFactory.getMarker("ERROR_500_LOG");
     private static final Marker OPENAI_429_LOG_MARKER = MarkerFactory.getMarker("OPENAI_429_LOG");

@@ -163,7 +163,7 @@
 
     <!-- Console -->
     <springProfile name="local,prod">
-        <root level="error"> <!-- <logger name="${PROJECT_PACKAGE}.response" level="error">same</logger> -->
+        <root level="error"> <!-- <logger name="${PROJECT_PACKAGE}.response|ratelimit" level="error">same</logger> -->
             <appender-ref ref="CONSOLE" />
         </root>
     </springProfile>
@@ -171,6 +171,9 @@
     <!-- Local -->
     <springProfile name="local">
         <logger name="${PROJECT_PACKAGE}.response" level="error">
+            <appender-ref ref="LOCAL-ERROR" />
+        </logger>
+        <logger name="${PROJECT_PACKAGE}.ratelimit" level="error">
             <appender-ref ref="LOCAL-ERROR" />
         </logger>
     </springProfile>
@@ -181,6 +184,10 @@
             <appender-ref ref="CLOUDWATCH-ERROR" />
             <appender-ref ref="SLACK-ERROR-500" />
             <appender-ref ref="SLACK-OPENAI-429" />
+        </logger>
+        <logger name="${PROJECT_PACKAGE}.ratelimit" level="error">
+            <appender-ref ref="CLOUDWATCH-ERROR" />
+            <appender-ref ref="SLACK-ERROR-500" />
         </logger>
         <logger name="${PROJECT_PACKAGE}.service.BackOfficeScheduler" level="warn">
             <appender-ref ref="SLACK-WARN-OOM" />

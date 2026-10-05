@@ -11,6 +11,8 @@ import com.shj.onlinememospringproject.jwt.handler.JwtAccessDeniedHandler;
 import com.shj.onlinememospringproject.jwt.handler.JwtAuthenticationEntryPoint;
 import com.shj.onlinememospringproject.jwt.handler.JwtExceptionFilter;
 import com.shj.onlinememospringproject.ratelimit.BlockedUserProvider;
+import com.shj.onlinememospringproject.ratelimit.RateLimitFilter;
+import com.shj.onlinememospringproject.ratelimit.RateLimitProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -41,6 +43,7 @@ public class SecurityConfig {
 
     private final TokenProvider tokenProvider;
     private final BlockedUserProvider blockedUserProvider;
+    private final RateLimitProvider rateLimitProvider;
     private final ObjectMapper objectMapper;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
@@ -92,7 +95,9 @@ public class SecurityConfig {
                             .accessDeniedHandler(jwtAccessDeniedHandler);
                 })
 
-                .addFilterBefore(new JwtFilter(tokenProvider, blockedUserProvider), UsernamePasswordAuthenticationFilter.class)
+                // 실행 순서 : JwtExceptionFilter -> JwtFilter -> RateLimitFilter -> UsernamePasswordAuthenticationFilter
+                .addFilterBefore(new RateLimitFilter(rateLimitProvider, objectMapper), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new JwtFilter(tokenProvider, blockedUserProvider), RateLimitFilter.class)
                 .addFilterBefore(new JwtExceptionFilter(objectMapper), JwtFilter.class);
 
         return http.build();
