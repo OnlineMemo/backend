@@ -113,6 +113,7 @@ public class SecurityConfig {
         config.setAllowedOriginPatterns(corsList);
         config.setAllowedHeaders(Arrays.asList("*"));
         config.setAllowedMethods(Arrays.asList("*"));
+        config.setExposedHeaders(Arrays.asList("Retry-After"));  // 프론트엔드에서 429 RateLimit 응답의 Retry-After 헤더를 읽기 위함.
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
