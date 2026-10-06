@@ -28,7 +28,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class RateLimitFilter extends OncePerRequestFilter {  // 인증된 계정의 요청 횟수를 검사하고, 초과 시 429 응답하는 필터
 
-    private static final long ERROR_500_LOG_INTERVAL = 1000 * 60 * 10;  // 10분
+    private static final long ERROR_500_LOG_INTERVAL = 1000 * 60 * 60;  // 60분 = 1시간
     private static final Marker ERROR_500_LOG_MARKER = MarkerFactory.getMarker("ERROR_500_LOG");
 
     private final RateLimitProvider rateLimitProvider;
@@ -58,7 +58,7 @@ public class RateLimitFilter extends OncePerRequestFilter {  // 인증된 계정
             return rateLimitProvider.tryConsume(userId);
         } catch (Exception ex) {  // 저장소 장애 시 검사 생략 (fail-open)
             long now = System.currentTimeMillis();
-            if(now - lastErrorLogTime >= ERROR_500_LOG_INTERVAL) {  // 알림 폭주 방지를 위해 10분에 1번만 로깅
+            if(now - lastErrorLogTime >= ERROR_500_LOG_INTERVAL) {  // 알림 폭주 방지를 위해 1시간에 1번만 로깅
                 lastErrorLogTime = now;
                 log.error(ERROR_500_LOG_MARKER,
                         String.format("%d %s\n==> error_message / RateLimit 저장소 장애로 사용자(userId=%d)의 요청제한 검사 생략 : %s\n==> error_request / RateLimitFilter.tryConsume (URI: %s[%s])",  // Slack Template
