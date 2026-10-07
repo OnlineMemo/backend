@@ -7,6 +7,7 @@ public interface UserService {
     UserDto.Response findUserProfile();
     void updateUserProfile(UserDto.UpdateRequest updateRequestDto);
     UserDto.CountResponse countUsers();
+    void releaseUserBlock(Long userId);
 
     // ========== 유틸성 메소드 ========== //
     User findUser(Long userId);

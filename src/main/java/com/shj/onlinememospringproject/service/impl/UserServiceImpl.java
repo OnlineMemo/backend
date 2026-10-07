@@ -1,7 +1,10 @@
 package com.shj.onlinememospringproject.service.impl;
 
 import com.shj.onlinememospringproject.domain.User;
+import com.shj.onlinememospringproject.domain.enums.UserState;
 import com.shj.onlinememospringproject.dto.UserDto;
+import com.shj.onlinememospringproject.ratelimit.BlockedUserProvider;
+import com.shj.onlinememospringproject.ratelimit.RateLimitProvider;
 import com.shj.onlinememospringproject.repository.UserRepository;
 import com.shj.onlinememospringproject.response.exception.Exception404;
 import com.shj.onlinememospringproject.service.UserService;
@@ -15,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final RateLimitProvider rateLimitProvider;
+    private final BlockedUserProvider blockedUserProvider;
 
 
     @Transactional(readOnly = true)
@@ -42,6 +47,15 @@ public class UserServiceImpl implements UserService {
                 .remainUserCount(remainUserCount)
                 .withdrawnUserCount(signupUserCount - remainUserCount)
                 .build();
+    }
+
+    @Transactional
+    @Override
+    public void releaseUserBlock(Long userId) {  // 유저 영구정지 해제
+        User user = findUser(userId);
+        user.updateUserState(UserState.ACTIVE);
+        rateLimitProvider.deleteBlockCount(userId);  // 차단 횟수가 남아있으면 다음 24시간 차단 시 즉시 재정지됨
+        blockedUserProvider.syncBlockedUserIdSet();  // 1분 주기를 기다리지 않고 즉시 반영
     }
 
 
