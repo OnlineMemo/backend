@@ -43,9 +43,9 @@ public class RateLimitFilter extends OncePerRequestFilter {  // 인증된 계정
 
         if(authentication != null) {  // 로그인 요청만 검사 (비로그인은 Cloudflare/WAF IP 제한으로 처리)
             Long userId = Long.valueOf(authentication.getName());
-            ConsumptionProbe probe = tryConsume(request, userId);
-            if(probe != null && !probe.isConsumed()) {  // 요청 횟수를 초과한 경우
-                writeErrorResponse(response, probe);
+            long retryAfterTime = checkRateLimit(request, userId);
+            if(retryAfterTime > 0) {  // 요청이 제한된 경우
+                writeErrorResponse(response, retryAfterTime);
                 return;
             }
         }
@@ -53,23 +53,37 @@ public class RateLimitFilter extends OncePerRequestFilter {  // 인증된 계정
         filterChain.doFilter(request, response);
     }
 
-    private ConsumptionProbe tryConsume(HttpServletRequest request, Long userId) {
+    private long checkRateLimit(HttpServletRequest request, Long userId) {  // 요청 제한 시 남은 대기시간(밀리초) 반환, 통과 시 0 반환
         try {
-            return rateLimitProvider.tryConsumeRequest(userId);
+            long remainBlockTime = rateLimitProvider.getRemainBlockTime(userId);
+            if(remainBlockTime > 0) return remainBlockTime;  // 24시간 차단 중인 경우
+
+            ConsumptionProbe requestProbe = rateLimitProvider.tryConsumeRequest(userId);
+            if(!requestProbe.isConsumed()) {  // 요청 횟수를 초과한 경우
+                return (long) Math.ceil(requestProbe.getNanosToWaitForRefill() / 1e6);  // 나노초 -> 밀리초 (올림)
+            }
+
+            if(requestProbe.getRemainingTokens() == 0) {  // 요청 버킷을 소진한 경우
+                ConsumptionProbe exhaustionProbe = rateLimitProvider.tryConsumeExhaustion(userId);
+                if(exhaustionProbe.isConsumed() && exhaustionProbe.getRemainingTokens() == 0) {  // 1시간 내 3번째 소진인 경우
+                    rateLimitProvider.blockUser(userId);
+                }
+            }
+            return 0;
         } catch (Exception ex) {  // 저장소 장애 시 검사 생략 (fail-open)
             long now = System.currentTimeMillis();
             if(now - lastErrorLogTime >= ERROR_500_LOG_INTERVAL) {  // 알림 폭주 방지를 위해 1시간에 1번만 로깅
                 lastErrorLogTime = now;
                 log.error(ERROR_500_LOG_MARKER,
-                        String.format("%d %s\n==> error_message / RateLimit 저장소 장애로 사용자(userId=%d)의 요청제한 검사 생략 : %s\n==> error_request / RateLimitFilter.tryConsume (URI: %s[%s])",  // Slack Template
+                        String.format("%d %s\n==> error_message / RateLimit 저장소 장애로 사용자(userId=%d)의 요청제한 검사 생략 : %s\n==> error_request / RateLimitFilter.checkRateLimit (URI: %s[%s])",  // Slack Template
                                 StatusItem.INTERNAL_SERVER_ERROR, MessageItem.INTERNAL_SERVER_ERROR, userId, ex.getMessage(), request.getRequestURI(), request.getMethod()));
             }
-            return null;
+            return 0;
         }
     }
 
-    private void writeErrorResponse(HttpServletResponse response, ConsumptionProbe probe) throws IOException {
-        long retryAfterSeconds = (long) Math.ceil(probe.getNanosToWaitForRefill() / 1e9);  // 나노초 -> 초 (올림)
+    private void writeErrorResponse(HttpServletResponse response, long retryAfterTime) throws IOException {
+        long retryAfterSeconds = (long) Math.ceil(retryAfterTime / 1e3);  // 밀리초 -> 초 (올림)
 
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
