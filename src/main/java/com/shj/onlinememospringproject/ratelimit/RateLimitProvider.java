@@ -63,6 +63,7 @@ public class RateLimitProvider {
         Long blockCount = redisRepository.updateCount(rateLimitBlockCountKey, 1);  // 차단 횟수 누적 (Redis 저장, TTL 없음)
         if(blockCount >= BLOCK_MAX_COUNT) {  // 24시간 차단 3회 누적 시 영구정지
             blockedUserProvider.banUser(userId);
+            redisRepository.unlock(rateLimitBlockCountKey);  // 영구정지 이후에는 불필요하므로 24시간 차단 횟수 삭제
         }
     }
 
