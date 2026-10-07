@@ -74,4 +74,9 @@ public class RateLimitProvider {
         if(unblockTime == null) return 0;
         return Math.max(Long.parseLong(unblockTime) - System.currentTimeMillis(), 0);
     }
+
+    public void deleteBlockCount(Long userId) {  // 24시간 차단 횟수 삭제
+        String rateLimitBlockCountKey = String.format("userId:%d:ratelimit_block_count", userId);
+        redisRepository.unlock(rateLimitBlockCountKey);
+    }
 }
