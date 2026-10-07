@@ -55,7 +55,7 @@ public class RateLimitFilter extends OncePerRequestFilter {  // 인증된 계정
 
     private ConsumptionProbe tryConsume(HttpServletRequest request, Long userId) {
         try {
-            return rateLimitProvider.tryConsume(userId);
+            return rateLimitProvider.tryConsumeRequest(userId);
         } catch (Exception ex) {  // 저장소 장애 시 검사 생략 (fail-open)
             long now = System.currentTimeMillis();
             if(now - lastErrorLogTime >= ERROR_500_LOG_INTERVAL) {  // 알림 폭주 방지를 위해 1시간에 1번만 로깅
