@@ -20,6 +20,13 @@ public class UserDto {
         private String nickname;
     }
 
+    @Getter
+    @NoArgsConstructor
+    public static class UpdateBlockRequest {
+
+        private Integer isBlock;  // 해제:0 or 정지:1
+    }
+
 
     // ======== < Response DTO > ======== //
 

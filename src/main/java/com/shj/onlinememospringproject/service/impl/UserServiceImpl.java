@@ -6,6 +6,7 @@ import com.shj.onlinememospringproject.dto.UserDto;
 import com.shj.onlinememospringproject.ratelimit.BlockedUserProvider;
 import com.shj.onlinememospringproject.ratelimit.RateLimitProvider;
 import com.shj.onlinememospringproject.repository.UserRepository;
+import com.shj.onlinememospringproject.response.exception.Exception400;
 import com.shj.onlinememospringproject.response.exception.Exception404;
 import com.shj.onlinememospringproject.service.UserService;
 import com.shj.onlinememospringproject.util.SecurityUtil;
@@ -51,10 +52,19 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     @Override
-    public void releaseUserBlock(Long userId) {  // 유저 영구정지 해제
+    public void updateUserBlock(Long userId, UserDto.UpdateBlockRequest updateBlockRequestDto) {
         User user = findUser(userId);
-        user.updateUserState(UserState.ACTIVE);
-        rateLimitProvider.deleteBlockCount(userId);  // 차단 횟수가 남아있으면 다음 24시간 차단 시 즉시 재정지됨
+
+        if(updateBlockRequestDto.getIsBlock() == 1) {  // 유저 영구정지일 경우
+            user.updateUserState(UserState.BLOCKED);
+        }
+        else if(updateBlockRequestDto.getIsBlock() == 0) {  // 유저 영구정지 해제일 경우
+            user.updateUserState(UserState.ACTIVE);
+            rateLimitProvider.deleteBlockCount(userId);  // 만약 차단 횟수가 남아있으면 다음 24시간 차단 시 즉시 재정지되기 때문.
+        }
+        else {  // 잘못된 영구정지 수정 요청일 경우
+            throw new Exception400.UserBadRequest("잘못된 필드값으로 API를 요청하였습니다.");
+        }
         blockedUserProvider.syncBlockedUserIdSet();  // 1분 주기를 기다리지 않고 즉시 반영
     }
 

@@ -106,10 +106,10 @@ public class BackOfficeController {
         return ResponseData.toResponseEntity(ResponseCode.READ_USER, countResponseDto);
     }
 
-    @DeleteMapping("/users/{userId}/block")
-    @Operation(summary = "회원 영구정지 비활성화 [JWT O]")
-    public ResponseEntity<ResponseData> releaseUserBlock(@PathVariable(value = "userId") Long userId) {
-        userService.releaseUserBlock(userId);
+    @PutMapping("/users/{userId}/block")
+    @Operation(summary = "회원 영구정지/해제 [JWT O]", description = "- isBlock 필드 : 0(해제) or 1(정지)")
+    public ResponseEntity<ResponseData> updateUserBlock(@PathVariable(value = "userId") Long userId, @RequestBody UserDto.UpdateBlockRequest updateBlockRequestDto) {
+        userService.updateUserBlock(userId, updateBlockRequestDto);
         return ResponseData.toResponseEntity(ResponseCode.UPDATE_USER);
     }
 
