@@ -8,6 +8,7 @@ import com.shj.onlinememospringproject.domain.mapping.UserMemo;
 import com.shj.onlinememospringproject.dto.AuthDto;
 import com.shj.onlinememospringproject.jwt.TokenProvider;
 import com.shj.onlinememospringproject.ratelimit.BlockedUserProvider;
+import com.shj.onlinememospringproject.ratelimit.RateLimitProvider;
 import com.shj.onlinememospringproject.repository.FriendshipBatchRepository;
 import com.shj.onlinememospringproject.repository.MemoBatchRepository;
 import com.shj.onlinememospringproject.repository.UserMemoBatchRepository;
@@ -15,6 +16,7 @@ import com.shj.onlinememospringproject.repository.UserRepository;
 import com.shj.onlinememospringproject.response.exception.Exception400;
 import com.shj.onlinememospringproject.response.exception.Exception403;
 import com.shj.onlinememospringproject.response.exception.Exception404;
+import com.shj.onlinememospringproject.response.exception.Exception429;
 import com.shj.onlinememospringproject.service.AuthService;
 import com.shj.onlinememospringproject.service.UserService;
 import com.shj.onlinememospringproject.util.SecurityUtil;
@@ -51,6 +53,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserMemoBatchRepository userMemoBatchRepository;
     private final TokenProvider tokenProvider;
     private final BlockedUserProvider blockedUserProvider;
+    private final RateLimitProvider rateLimitProvider;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManagerBuilder managerBuilder;
 
@@ -98,6 +101,7 @@ public class AuthServiceImpl implements AuthService {
         if(isBlockedUser) {
             throw new Exception403.BlockedUser(String.format("userId = %d", userId));
         }
+        checkRateLimitBlock(userId);  // 24시간 차단 여부 검사
 
         User user = userService.findUser(userId);
         String refreshToken = user.getRefreshToken();
@@ -202,6 +206,7 @@ public class AuthServiceImpl implements AuthService {
         if(isBlockedUser) {
             throw new Exception403.BlockedUser(String.format("userId = %d", userId));
         }
+        checkRateLimitBlock(userId);  // 24시간 차단 여부 검사
 
         // DB의 사용자 Refresh Token 값과, 전달받은 Refresh Token의 불일치 여부 검사
         String dbRefreshToken = userRepository.findRefreshTokenById(userId);
@@ -222,5 +227,17 @@ public class AuthServiceImpl implements AuthService {
 
     private static UsernamePasswordAuthenticationToken toAuthentication(String email, String password) {  // 반환된 객체로 아이디와 비밀번호가 일치하는지 검증하는 로직에 활용이 가능함.
         return new UsernamePasswordAuthenticationToken(email, password);
+    }
+
+    private void checkRateLimitBlock(Long userId) {
+        long remainBlockTime;
+        try {
+            remainBlockTime = rateLimitProvider.getRemainBlockTime(userId);
+        } catch (Exception ex) {  // 저장소 장애 시 검사 생략 (fail-open)
+            return;
+        }
+        if(remainBlockTime > 0) {
+            throw new Exception429.ExcessRequestUser(String.format("userId = %d", userId), remainBlockTime);
+        }
     }
 }

@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
@@ -157,6 +158,13 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
     public ResponseEntity handle429CustomException(CustomException ex) {
         if(ex instanceof Exception429.ExcessRequestOpenAI) {
             return logAndResponse(ex.getErrorResponseCode(), ex.getMessage(), OPENAI_429_LOG_MARKER);
+        }
+        else if(ex instanceof Exception429.ExcessRequestUser excessRequestUserEx) {  // 24시간 차단된 계정의 로그인 및 재발급
+            long retryAfterSeconds = (long) Math.ceil(excessRequestUserEx.getRetryAfterTime() / 1e3);  // 밀리초 -> 초 (올림)
+            ResponseEntity responseEntity = logAndResponse(ex.getErrorResponseCode(), ex.getMessage(), null);
+            return ResponseEntity.status(responseEntity.getStatusCode())
+                    .header(HttpHeaders.RETRY_AFTER, String.valueOf(retryAfterSeconds))
+                    .body(responseEntity.getBody());
         }
         return logAndResponse(ex.getErrorResponseCode(), ex.getMessage(), null);
     }
