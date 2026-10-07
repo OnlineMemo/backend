@@ -80,4 +80,8 @@ public class User extends BaseCreatedEntity implements Serializable {
     public void updateNickName(String nickname) {
         this.nickname = nickname;
     }
+
+    public void updateUserState(UserState userState) {
+        this.userState = userState;
+    }
 }

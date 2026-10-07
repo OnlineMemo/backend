@@ -6,6 +6,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.Set;
@@ -32,5 +33,11 @@ public class BlockedUserProvider {
 
     public boolean checkBlockedUser(Long userId) {
         return blockedUserIdSet.contains(userId);
+    }
+
+    @Transactional
+    public void banUser(Long userId) {  // 영구정지
+        userRepository.findById(userId).ifPresent(user -> user.updateUserState(UserState.BLOCKED));
+        syncBlockedUserIdSet();  // 1분 주기를 기다리지 않고 즉시 반영
     }
 }
