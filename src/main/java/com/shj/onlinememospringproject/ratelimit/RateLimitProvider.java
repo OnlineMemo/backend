@@ -93,6 +93,12 @@ public class RateLimitProvider {
         return Math.max(Long.parseLong(unblockTime) - System.currentTimeMillis(), 0);
     }
 
+    public void deleteBlock(Long userId) {  // 24시간 차단 삭제
+        String rateLimitBlockKey = String.format("userId:%d:ratelimit_block", userId);
+        if(rateLimitStorage.equals("redis")) redisRepository.unlock(rateLimitBlockKey);
+        else caffeineRepository.deleteValue(rateLimitBlockKey);
+    }
+
     public void deleteBlockCount(Long userId) {  // 24시간 차단 횟수 삭제
         String rateLimitBlockCountKey = String.format("userId:%d:ratelimit_block_count", userId);
         redisRepository.unlock(rateLimitBlockCountKey);

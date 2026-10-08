@@ -64,6 +64,7 @@ public class UserServiceImpl implements UserService {
         else {  // 잘못된 영구정지 수정 요청일 경우
             throw new Exception400.UserBadRequest("잘못된 필드값으로 API를 요청하였습니다.");
         }
+        rateLimitProvider.deleteBlock(userId);  // 영구정지 및 해제 시 24시간 차단 초기화
         rateLimitProvider.deleteBlockCount(userId);  // 영구정지 및 해제 시 24시간 차단 횟수 초기화
         blockedUserProvider.syncBlockedUserIdSet();  // 1분 주기를 기다리지 않고 즉시 반영
     }

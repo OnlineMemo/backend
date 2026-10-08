@@ -29,6 +29,10 @@ public class CaffeineRepository {  // Caffeine 서버 메모리
         caffeineCache.put(key, new CaffeineValue(value, expiredTime));
     }
 
+    public void deleteValue(String key) {  // key 삭제
+        caffeineCache.invalidate(key);
+    }
+
 
     private record CaffeineValue(String value, Long expiredTime) { }  // value와 만료 시각을 함께 저장
 }
