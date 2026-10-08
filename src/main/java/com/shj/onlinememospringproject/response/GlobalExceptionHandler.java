@@ -40,6 +40,7 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
 
     private static final Marker ERROR_500_LOG_MARKER = MarkerFactory.getMarker("ERROR_500_LOG");
     private static final Marker OPENAI_429_LOG_MARKER = MarkerFactory.getMarker("OPENAI_429_LOG");
+    private static final Marker RATELIMIT_LOG_MARKER = MarkerFactory.getMarker("RATELIMIT_LOG");
 
     private final UserAgentParser userAgentParser;
 
@@ -148,6 +149,9 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
             Exception500.class
     })
     public ResponseEntity handleCommonCustomException(CustomException ex) {
+        if(ex instanceof Exception403.BlockedUser) {  // 영구정지된 계정의 로그인 및 JWT 재발급
+            return logAndResponse(ex.getErrorResponseCode(), ex.getMessage(), RATELIMIT_LOG_MARKER);
+        }
         return logAndResponse(ex.getErrorResponseCode(), ex.getMessage(), null);
     }
 
@@ -161,7 +165,7 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
         }
         else if(ex instanceof Exception429.ExcessRequestUser excessRequestUserEx) {  // 24시간 차단된 계정의 로그인 및 재발급
             long retryAfterSeconds = (long) Math.ceil(excessRequestUserEx.getRetryAfterTime() / 1e3);  // 밀리초 -> 초 (올림)
-            ResponseEntity responseEntity = logAndResponse(ex.getErrorResponseCode(), ex.getMessage(), null);
+            ResponseEntity responseEntity = logAndResponse(ex.getErrorResponseCode(), ex.getMessage(), RATELIMIT_LOG_MARKER);
             return ResponseEntity.status(responseEntity.getStatusCode())
                     .header(HttpHeaders.RETRY_AFTER, String.valueOf(retryAfterSeconds))
                     .body(responseEntity.getBody());
