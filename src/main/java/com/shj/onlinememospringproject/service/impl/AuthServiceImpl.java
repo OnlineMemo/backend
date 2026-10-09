@@ -168,9 +168,9 @@ public class AuthServiceImpl implements AuthService {
         // 최종적으로, 부모 테이블인 User를 삭제.
         userRepository.delete(user);
 
-        // Redis에 남은 24시간 차단 횟수 삭제.
+        // 남은 RateLimit 기록 전체 삭제.
         try {
-            rateLimitProvider.deleteBlockCount(loginUserId);
+            rateLimitProvider.deleteRateLimit(loginUserId);
         } catch (Exception ex) {
             // 저장소 장애 시 삭제 생략 (회원 탈퇴는 그대로 진행)
         }

@@ -78,7 +78,7 @@ public class RateLimitProvider {
 
         if(blockCount >= BLOCK_MAX_COUNT) {  // 24시간 차단 3회 누적 시 영구정지
             blockedUserProvider.banUser(userId);
-            redisRepository.unlock(rateLimitBlockCountKey);  // 영구정지 이후에는 불필요하므로 24시간 차단 횟수 삭제
+            deleteRateLimit(userId);  // 영구정지 이후에는 불필요하므로 RateLimit 기록 전체 삭제
             log.warn(RATELIMIT_LOG_MARKER,
                     String.format("사용자(userId=%d)는 영구정지되었습니다.", userId));
         }
@@ -93,14 +93,17 @@ public class RateLimitProvider {
         return Math.max(Long.parseLong(unblockTime) - System.currentTimeMillis(), 0);
     }
 
-    public void deleteBlock(Long userId) {  // 24시간 차단 삭제
+    public void deleteRateLimit(Long userId) {  // RateLimit 기록 전체 삭제
+        String rateLimitRequestKey = String.format("userId:%d:ratelimit_request", userId);
+        String rateLimitExhaustionKey = String.format("userId:%d:ratelimit_exhaustion", userId);
+        proxyManager.removeProxy(rateLimitRequestKey);
+        proxyManager.removeProxy(rateLimitExhaustionKey);
+
         String rateLimitBlockKey = String.format("userId:%d:ratelimit_block", userId);
         if(rateLimitStorage.equals("redis")) redisRepository.unlock(rateLimitBlockKey);
         else caffeineRepository.deleteValue(rateLimitBlockKey);
-    }
 
-    public void deleteBlockCount(Long userId) {  // 24시간 차단 횟수 삭제
         String rateLimitBlockCountKey = String.format("userId:%d:ratelimit_block_count", userId);
-        redisRepository.unlock(rateLimitBlockCountKey);
+        redisRepository.unlock(rateLimitBlockCountKey);  // 이는 항상 저장소가 Redis이므로 마지막에 삭제
     }
 }
