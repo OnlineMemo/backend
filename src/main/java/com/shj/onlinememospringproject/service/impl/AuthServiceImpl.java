@@ -169,7 +169,11 @@ public class AuthServiceImpl implements AuthService {
         userRepository.delete(user);
 
         // Redis에 남은 24시간 차단 횟수 삭제.
-        rateLimitProvider.deleteBlockCount(loginUserId);
+        try {
+            rateLimitProvider.deleteBlockCount(loginUserId);
+        } catch (Exception ex) {
+            // 저장소 장애 시 삭제 생략 (회원 탈퇴는 그대로 진행)
+        }
     }
 
     @Transactional
