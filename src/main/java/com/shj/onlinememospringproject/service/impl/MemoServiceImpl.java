@@ -281,6 +281,7 @@ public class MemoServiceImpl implements MemoService {
                 # 조건
                 - 글자 수 %d자 이하 (공백 포함, 초과 시 무효)
                 - 가능한 한 %d자에 가깝게 작성%s
+                - 띄어쓰기는 맞춤법대로 (생략 금지)
                 - 제목만 작성, 다른 설명 금지
                 - 위 조건들을 반드시 준수
 
