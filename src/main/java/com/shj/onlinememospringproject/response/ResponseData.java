@@ -4,6 +4,7 @@ import com.shj.onlinememospringproject.util.TimeConverter;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 
@@ -51,7 +52,7 @@ public class ResponseData<T> {
     public static <T> ResponseEntity<ResponseData<T>> toResponseEntity(ResponseCode responseCode, MultiValueMap<String, String> header, T data) {
         return ResponseEntity
                 .status(responseCode.getHttpStatus())
-                .header(String.valueOf(header))
+                .headers(new HttpHeaders(header))
                 .body(ResponseData.<T>builder()
                         .status(responseCode.getHttpStatus())
                         .message(responseCode.getMessage())

@@ -50,6 +50,9 @@
     <!-- ============ Production Appender (AWS CloudWatch) ============ -->
 
     <appender name="CLOUDWATCH-ERROR" class="ca.pjer.logback.AwsLogsAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter"> <!-- filter by Level -->
+            <level>ERROR</level>
+        </filter>
         <layout>
             <pattern>${CLOUDWATCH_PATTERN}</pattern>
         </layout>
@@ -94,6 +97,28 @@
         <logStreamUuidPrefix>onlinememo-admin-log-</logStreamUuidPrefix>
         <logRegion>ap-northeast-2</logRegion>
         <maxBatchLogEvents>1</maxBatchLogEvents>
+        <maxFlushTimeMillis>30000</maxFlushTimeMillis>
+        <maxBlockTimeMillis>5000</maxBlockTimeMillis>
+        <retentionTimeDays>7</retentionTimeDays>
+        <accessKeyId>${AWS_ACCESS_KEY}</accessKeyId>
+        <secretAccessKey>${AWS_SECRET_KEY}</secretAccessKey>
+    </appender>
+
+    <appender name="CLOUDWATCH-RATELIMIT" class="ca.pjer.logback.AwsLogsAppender">
+        <filter class="ch.qos.logback.core.filter.EvaluatorFilter"> <!-- filter by Marker -->
+            <evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator">
+                <marker>RATELIMIT_LOG</marker>
+            </evaluator>
+            <onMismatch>DENY</onMismatch>
+            <onMatch>ACCEPT</onMatch>
+        </filter>
+        <layout>
+            <pattern>${CLOUDWATCH_PATTERN}</pattern>
+        </layout>
+        <logGroupName>onlinememo/ratelimit-log</logGroupName>
+        <logStreamUuidPrefix>onlinememo-ratelimit-log-</logStreamUuidPrefix>
+        <logRegion>ap-northeast-2</logRegion>
+        <maxBatchLogEvents>50</maxBatchLogEvents>
         <maxFlushTimeMillis>30000</maxFlushTimeMillis>
         <maxBlockTimeMillis>5000</maxBlockTimeMillis>
         <retentionTimeDays>7</retentionTimeDays>
@@ -173,6 +198,9 @@
         <logger name="${PROJECT_PACKAGE}.response" level="error">
             <appender-ref ref="LOCAL-ERROR" />
         </logger>
+        <logger name="${PROJECT_PACKAGE}.ratelimit" level="warn">
+            <appender-ref ref="LOCAL-ERROR" />
+        </logger>
     </springProfile>
 
     <!-- Production (CloudWatch & Slack) -->
@@ -181,6 +209,12 @@
             <appender-ref ref="CLOUDWATCH-ERROR" />
             <appender-ref ref="SLACK-ERROR-500" />
             <appender-ref ref="SLACK-OPENAI-429" />
+            <appender-ref ref="CLOUDWATCH-RATELIMIT" />
+        </logger>
+        <logger name="${PROJECT_PACKAGE}.ratelimit" level="warn">
+            <appender-ref ref="CLOUDWATCH-ERROR" />
+            <appender-ref ref="SLACK-ERROR-500" />
+            <appender-ref ref="CLOUDWATCH-RATELIMIT" />
         </logger>
         <logger name="${PROJECT_PACKAGE}.service.BackOfficeScheduler" level="warn">
             <appender-ref ref="SLACK-WARN-OOM" />

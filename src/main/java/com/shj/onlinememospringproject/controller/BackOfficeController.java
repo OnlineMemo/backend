@@ -106,6 +106,13 @@ public class BackOfficeController {
         return ResponseData.toResponseEntity(ResponseCode.READ_USER, countResponseDto);
     }
 
+    @PutMapping("/users/{userId}/block")
+    @Operation(summary = "회원 영구정지/해제 [JWT O]", description = "- isBlock 필드 : 0(해제) or 1(정지)")
+    public ResponseEntity<ResponseData> updateUserBlock(@PathVariable(value = "userId") Long userId, @RequestBody UserDto.UpdateBlockRequest updateBlockRequestDto) {
+        userService.updateUserBlock(userId, updateBlockRequestDto);
+        return ResponseData.toResponseEntity(ResponseCode.UPDATE_USER);
+    }
+
     @GetMapping("/memory/heap")
     @Operation(summary = "Heap 메모리 사용량 조회 [JWT O]")
     public ResponseEntity<ResponseData<Map<String, Object>>> getHeapMemoryUsage() {

@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
@@ -35,10 +36,11 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
     private static final String PROJECT_PACKAGE = "com.shj.onlinememospringproject";
     private static final String CGLIB_STRING = "$$SpringCGLIB$$";
     private static final Pattern CGLIB_PATTERN = Pattern.compile("\\$\\$SpringCGLIB\\$\\$\\d+");  // CGLIB 프록시 패턴
-    private static final String[] FILTER_CLASSNAMES = {"JwtExceptionFilter", "JwtFilter"};
+    private static final String[] FILTER_CLASSNAMES = {"JwtExceptionFilter", "JwtFilter", "RateLimitFilter"};
 
     private static final Marker ERROR_500_LOG_MARKER = MarkerFactory.getMarker("ERROR_500_LOG");
     private static final Marker OPENAI_429_LOG_MARKER = MarkerFactory.getMarker("OPENAI_429_LOG");
+    private static final Marker RATELIMIT_LOG_MARKER = MarkerFactory.getMarker("RATELIMIT_LOG");
 
     private final UserAgentParser userAgentParser;
 
@@ -147,6 +149,9 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
             Exception500.class
     })
     public ResponseEntity handleCommonCustomException(CustomException ex) {
+        if(ex instanceof Exception403.BlockedUser) {  // 영구정지된 계정의 로그인 및 JWT 재발급
+            return logAndResponse(ex.getErrorResponseCode(), ex.getMessage(), RATELIMIT_LOG_MARKER);
+        }
         return logAndResponse(ex.getErrorResponseCode(), ex.getMessage(), null);
     }
 
@@ -157,6 +162,13 @@ public class GlobalExceptionHandler {  // Filter 예외는 이보다 앞단(Disp
     public ResponseEntity handle429CustomException(CustomException ex) {
         if(ex instanceof Exception429.ExcessRequestOpenAI) {
             return logAndResponse(ex.getErrorResponseCode(), ex.getMessage(), OPENAI_429_LOG_MARKER);
+        }
+        else if(ex instanceof Exception429.ExcessRequestUser excessRequestUserEx) {  // 24시간 차단된 계정의 로그인 및 재발급
+            long retryAfterSeconds = (long) Math.ceil(excessRequestUserEx.getRetryAfterTime() / 1e3);  // 밀리초 -> 초 (올림)
+            ResponseEntity responseEntity = logAndResponse(ex.getErrorResponseCode(), ex.getMessage(), RATELIMIT_LOG_MARKER);
+            return ResponseEntity.status(responseEntity.getStatusCode())
+                    .header(HttpHeaders.RETRY_AFTER, String.valueOf(retryAfterSeconds))
+                    .body(responseEntity.getBody());
         }
         return logAndResponse(ex.getErrorResponseCode(), ex.getMessage(), null);
     }

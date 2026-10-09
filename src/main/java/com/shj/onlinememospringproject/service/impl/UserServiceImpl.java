@@ -1,8 +1,12 @@
 package com.shj.onlinememospringproject.service.impl;
 
 import com.shj.onlinememospringproject.domain.User;
+import com.shj.onlinememospringproject.domain.enums.UserState;
 import com.shj.onlinememospringproject.dto.UserDto;
+import com.shj.onlinememospringproject.ratelimit.BlockedUserProvider;
+import com.shj.onlinememospringproject.ratelimit.RateLimitProvider;
 import com.shj.onlinememospringproject.repository.UserRepository;
+import com.shj.onlinememospringproject.response.exception.Exception400;
 import com.shj.onlinememospringproject.response.exception.Exception404;
 import com.shj.onlinememospringproject.service.UserService;
 import com.shj.onlinememospringproject.util.SecurityUtil;
@@ -15,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final RateLimitProvider rateLimitProvider;
+    private final BlockedUserProvider blockedUserProvider;
 
 
     @Transactional(readOnly = true)
@@ -42,6 +48,24 @@ public class UserServiceImpl implements UserService {
                 .remainUserCount(remainUserCount)
                 .withdrawnUserCount(signupUserCount - remainUserCount)
                 .build();
+    }
+
+    @Transactional
+    @Override
+    public void updateUserBlock(Long userId, UserDto.UpdateBlockRequest updateBlockRequestDto) {
+        User user = findUser(userId);
+
+        if(updateBlockRequestDto.getIsBlock() == 1) {  // 유저 영구정지일 경우
+            user.updateUserState(UserState.BLOCKED);
+        }
+        else if(updateBlockRequestDto.getIsBlock() == 0) {  // 유저 영구정지 해제일 경우
+            user.updateUserState(UserState.ACTIVE);
+        }
+        else {  // 잘못된 영구정지 수정 요청일 경우
+            throw new Exception400.UserBadRequest("잘못된 필드값으로 API를 요청하였습니다.");
+        }
+        rateLimitProvider.deleteRateLimit(userId);  // 영구정지 및 해제 시 RateLimit 기록 전체 초기화
+        blockedUserProvider.syncBlockedUserIdSet();  // 1분 주기를 기다리지 않고 즉시 반영
     }
 
 
