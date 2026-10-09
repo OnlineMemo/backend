@@ -50,6 +50,9 @@
     <!-- ============ Production Appender (AWS CloudWatch) ============ -->
 
     <appender name="CLOUDWATCH-ERROR" class="ca.pjer.logback.AwsLogsAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter"> <!-- filter by Level -->
+            <level>ERROR</level>
+        </filter>
         <layout>
             <pattern>${CLOUDWATCH_PATTERN}</pattern>
         </layout>
@@ -115,7 +118,7 @@
         <logGroupName>onlinememo/ratelimit-log</logGroupName>
         <logStreamUuidPrefix>onlinememo-ratelimit-log-</logStreamUuidPrefix>
         <logRegion>ap-northeast-2</logRegion>
-        <maxBatchLogEvents>1</maxBatchLogEvents>
+        <maxBatchLogEvents>50</maxBatchLogEvents>
         <maxFlushTimeMillis>30000</maxFlushTimeMillis>
         <maxBlockTimeMillis>5000</maxBlockTimeMillis>
         <retentionTimeDays>7</retentionTimeDays>
