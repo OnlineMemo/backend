@@ -2,6 +2,7 @@ package com.shj.onlinememospringproject.ratelimit;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shj.onlinememospringproject.domain.enums.Authority;
 import com.shj.onlinememospringproject.response.ResponseCode;
 import com.shj.onlinememospringproject.response.ResponseData;
 import com.shj.onlinememospringproject.response.item.MessageItem;
@@ -41,7 +42,10 @@ public class RateLimitFilter extends OncePerRequestFilter {  // 인증된 계정
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if(authentication != null) {  // 로그인 요청만 검사 (비로그인은 Cloudflare/WAF IP 제한으로 처리)
+        boolean isAdmin = (authentication != null) && authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals(Authority.ROLE_ADMIN.name()));
+
+        if(authentication != null && !isAdmin) {  // 로그인 요청만 검사 (비로그인은 Cloudflare/WAF IP 제한으로 처리, 관리자는 제외)
             Long userId = Long.valueOf(authentication.getName());
             long retryAfterTime = checkRateLimit(request, userId);
             if(retryAfterTime > 0) {  // 요청이 제한된 경우
