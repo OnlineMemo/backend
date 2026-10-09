@@ -10,6 +10,7 @@
 - <strong>25.09.01</strong>&nbsp;:&nbsp;&nbsp;<a href="https://github.com/OnlineMemo/backend/pull/9">[PR] GA4 · Admin 백오피스 구축 (ETL Pipeline)</a>
 - <strong>25.09.26</strong>&nbsp;:&nbsp;&nbsp;<a href="https://github.com/OnlineMemo/backend/pull/11">[PR] 메모 제목 AI 자동화 (OpenAI)</a>
 - <strong>25.10.14</strong>&nbsp;:&nbsp;&nbsp;<a href="https://github.com/OnlineMemo/backend/pull/13">[PR] AWS EB 배포 구축 (CI/CD Pipeline)</a>
+- <strong>26.10.09</strong>&nbsp;:&nbsp;&nbsp;<a href="https://github.com/OnlineMemo/backend/pull/15">[PR] 계정별 DDoS 트래픽 제어 (RateLimit Bucket)</a>
 
 <!--
 ### Refactor
