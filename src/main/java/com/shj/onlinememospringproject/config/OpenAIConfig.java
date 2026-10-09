@@ -22,6 +22,8 @@ public class OpenAIConfig {
     private String chatModel;
     @Value("${openai.models.chat.temperature}")
     private double chatTemperature;
+    @Value("${openai.models.chat.reasoning-effort}")
+    private String chatReasoningEffort;
     @Value("${openai.models.chat.max-tokens}")
     private int chatMaxTokens;
 
@@ -33,7 +35,8 @@ public class OpenAIConfig {
                 .defaultOptions(OpenAiChatOptions.builder()
                         .model(chatModel)
                         .temperature(chatTemperature)
-                        .maxTokens(chatMaxTokens)
+                        .reasoningEffort(chatReasoningEffort)
+                        .maxCompletionTokens(chatMaxTokens)
                         .build())
                 .retryTemplate(getCustomRetryTemplate())
                 .build();
