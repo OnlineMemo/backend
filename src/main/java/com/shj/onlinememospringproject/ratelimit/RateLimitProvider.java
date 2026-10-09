@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 
-// - [1차] 요청 제한 : 10초당 30회 초과 시 429 예외 응답 (메모리 저장)
+// - [1차] 요청 제한 : 10초당 40회 초과 시 429 예외 응답 (메모리 저장)
 // - [2차] 24시간 차단 : 1시간 내 버킷 소진 3회 시 (메모리 저장, 차단 횟수는 Redis 저장)
 // - [3차] 영구정지 : 24시간 차단 3회 누적 시 (MySQL user.user_state=BLOCKED 저장)
 @Slf4j
@@ -23,10 +23,10 @@ import java.time.Duration;
 @RequiredArgsConstructor
 public class RateLimitProvider {
 
-    private static final long REQUEST_BUCKET_MAX_COUNT = 30;  // 요청제한 최대 30회
+    private static final long REQUEST_BUCKET_MAX_COUNT = 40;  // 요청제한 최대 40회
     private static final long REQUEST_BUCKET_REFILL_TIME = 1000 * 10;  // 10초
     private static final BucketConfiguration REQUEST_BUCKET_CONFIGURATION = BucketConfiguration.builder()
-            .addLimit(limit -> limit.capacity(REQUEST_BUCKET_MAX_COUNT).refillIntervally(REQUEST_BUCKET_MAX_COUNT, Duration.ofMillis(REQUEST_BUCKET_REFILL_TIME)))  // 10초당 30회
+            .addLimit(limit -> limit.capacity(REQUEST_BUCKET_MAX_COUNT).refillIntervally(REQUEST_BUCKET_MAX_COUNT, Duration.ofMillis(REQUEST_BUCKET_REFILL_TIME)))  // 10초당 40회
             .build();
     private static final long EXHAUSTION_BUCKET_MAX_COUNT = 3;  // 버킷소진 최대 3회
     private static final long EXHAUSTION_BUCKET_REFILL_TIME = 1000 * 60 * 60;  // 60분 = 1시간
