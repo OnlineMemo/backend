@@ -5,7 +5,7 @@
 - 전체 레포지토리&nbsp;:&nbsp;&nbsp;<a href="https://github.com/orgs/OnlineMemo/repositories?q=sort%3Aname-asc">FullStack Repo</a>
 
 ### Refactor
-- <strong>24.08.17</strong>&nbsp;:&nbsp;&nbsp;[현재] 3400줄 리팩토링 (Query Tuning)
+- <strong>24.08.17</strong>&nbsp;:&nbsp;&nbsp;[현재] 대규모 코드 리팩토링 (Query Tuning)
 - <strong>25.06.19</strong>&nbsp;:&nbsp;&nbsp;<a href="https://github.com/OnlineMemo/backend/pull/5">[PR] 편집충돌 동시성 제어 (Redis Lock) </a>
 - <strong>25.09.01</strong>&nbsp;:&nbsp;&nbsp;<a href="https://github.com/OnlineMemo/backend/pull/9">[PR] GA4 · Admin 백오피스 구축 (ETL Pipeline)</a>
 - <strong>25.09.26</strong>&nbsp;:&nbsp;&nbsp;<a href="https://github.com/OnlineMemo/backend/pull/11">[PR] 메모 제목 AI 자동화 (OpenAI)</a>
