@@ -280,14 +280,14 @@ public class MemoServiceImpl implements MemoService {
 
                 # 조건
                 - 글자 수 %d자 이하 (공백 포함, 초과 시 무효)
-                - 가능한 한 %d자에 가깝게 작성%s
+                - 2~3 단어(띄어쓰기 기준)로 작성%s
                 - 띄어쓰기는 맞춤법대로 (생략 금지)
                 - 제목만 작성, 다른 설명 금지
                 - 위 조건들을 반드시 준수
 
                 # 글
                 %s
-                """, titleLenInPrompt, titleLenInPrompt, extraPrompt, content);
+                """, titleLenInPrompt, extraPrompt, content);
 
         // 4. OpenAI 호출 & 제목 생성 (generate memoTitle)
         String generatedTitle = null, resultTitle = null;
