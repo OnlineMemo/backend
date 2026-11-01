@@ -23,6 +23,6 @@ public interface UserMemoRepository extends JpaRepository<UserMemo, Long> {
     @Query(value = "SELECT EXISTS (SELECT 1 FROM user_memo WHERE memo_id = :memoId LIMIT 2 OFFSET 1)", nativeQuery = true)  // 두번째 작성자가 존재하는지만 확인하여, 2인 이상 여부 판단.
     Long isGroupMemoByMemoId(@Param("memoId") Long memoId);
 
-    boolean existsByUser_IdAndMemo_Id(Long userId, Long memoId);
+    boolean existsByUser_IdAndMemo_IdAndMemo_DeletedTimeIsNull(Long userId, Long memoId);
     void deleteByUser_IdAndMemo_Id(Long userId, Long memoId);
 }

@@ -71,7 +71,7 @@ public class UserMemoServiceImpl implements UserMemoService {
     @Transactional(readOnly = true)
     @Override
     public void checkUserInMemo(Long userId, Long memoId) {  // DI된 userMemoRepository 의존성 인스턴스 변수를 사용하므로, static으로는 선언하지 않는것이 권장됨.
-        if(!userMemoRepository.existsByUser_IdAndMemo_Id(userId, memoId)) {  // 애초에 초대할 권한(메모에 포함되지않은 사용자인 경우)이 없는 경우
+        if(!userMemoRepository.existsByUser_IdAndMemo_IdAndMemo_DeletedTimeIsNull(userId, memoId)) {  // 애초에 초대할 권한(메모에 포함되지않은 사용자인 경우)이 없는 경우
             throw new Exception404.NoSuchUserMemo(String.format("userId = %d, memoId = %d", userId, memoId));
         }
     }

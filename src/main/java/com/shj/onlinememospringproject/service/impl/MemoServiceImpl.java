@@ -81,6 +81,7 @@ public class MemoServiceImpl implements MemoService {
 
         List<MemoDto.MemoPageResponse> memoPageResponseDtoList = user.getUserMemoList().stream()
                 .map(UserMemo::getMemo)  // User.userMemoList (N+1 쿼리 발생)
+                .filter(memo -> memo.getDeletedTime() == null)  // 휴지통 메모 제외
                 .filter(memoPredicate)  // User.userMemoList.memo (N+1 쿼리 발생)
                 .sorted(Comparator.comparing(Memo::getModifiedTime, Comparator.reverseOrder())  // 정렬 우선순위 1: 수정날짜 내림차순
                         .thenComparing(Memo::getId, Comparator.reverseOrder()))  // 정렬 우선순위 2: id 내림차순
