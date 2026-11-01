@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface MemoRepository extends JpaRepository<Memo, Long> {
@@ -39,6 +40,11 @@ public interface MemoRepository extends JpaRepository<Memo, Long> {
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Memo m SET m.isStar = :isStar WHERE m.id = :memoId")  // 네이티브쿼리 말고, JPQL로 작성하였음.
     void updateIsStar(@Param("memoId") Long memoId, @Param("isStar") Integer isStar);
+
+    // 휴지통 이동 및 복원
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Memo m SET m.deletedTime = :deletedTime WHERE m.id = :memoId")
+    void updateDeletedTime(@Param("memoId") Long memoId, @Param("deletedTime") LocalDateTime deletedTime);
 
     // memoId로 검색하여 version만 가져오는 메소드
     @Query("SELECT m.version FROM Memo m WHERE m.id = :memoId")
