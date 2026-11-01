@@ -34,6 +34,9 @@ public class Memo extends BaseModifiedEntity implements Serializable {
     @Column(name = "is_star", columnDefinition = "TINYINT(1) default 0", length = 1)
     private Integer isStar;  // isStar 필드는 수정시각에 영향을 주지않도록, @LastModifiedDate 생명주기에서 제외시켜 따로 JPQL로 직접 업데이트함.
 
+    @Column(name = "deleted_time")
+    private LocalDateTime deletedTime;
+
     @Version
     private Long version;  // '낙관적 락 (Optimistic Lock)'을 위한 버전 필드
 
