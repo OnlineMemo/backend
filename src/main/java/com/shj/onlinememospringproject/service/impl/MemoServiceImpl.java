@@ -216,14 +216,14 @@ public class MemoServiceImpl implements MemoService {
         }
         int memoHasUsersCount = memo.getUserMemoList().size();  // Memo.userMemoList (리스트의 size 측정으로, N+1 쿼리 발생)
 
-        // 공동메모 그룹 탈퇴 처리. (자식 테이블인 UserMemo에서 먼저 삭제.)
-        userMemoRepository.deleteByUser_IdAndMemo_Id(loginUserId, memoId);
-        userMemoRepository.flush();  // 영속성 컨텍스트 내 변경상태인 위 delete를 즉시 반영.
-
         if(memoHasUsersCount == 1) {  // 해당 메모가 개인메모라면
-            memoRepository.delete(memo);  // 그 이후에 부모 테이블인 Memo에서 해당 메모를 삭제. (이후 부모 테이블인 Memo에서 삭제.)
+            memoRepository.updateDeletedTime(memoId, LocalDateTime.now());  // 휴지통 이동
         }
         else {  // 해당 메모가 공동메모라면
+            // 공동메모 그룹 탈퇴 처리.
+            userMemoRepository.deleteByUser_IdAndMemo_Id(loginUserId, memoId);
+            userMemoRepository.flush();  // 영속성 컨텍스트 내 변경상태인 위 delete를 즉시 반영.
+
             String lockKey = String.format("memoId:%d:lock", memoId);
             if(memoHasUsersCount == 2) {  // 공동메모인데, 그룹 탈퇴로 메모의 사용자가 2명에서 1명으로 개인메모가 될 경우 (즉, 원래 2명이었을 경우)
                 // isStar 필드는 수정시각에 영향을 주지않도록, @LastModifiedDate 생명주기에서 제외시켜 따로 JPQL로 직접 업데이트함.
