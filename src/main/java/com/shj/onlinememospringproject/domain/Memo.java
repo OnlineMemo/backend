@@ -16,7 +16,10 @@ import java.util.Set;
 
 @Getter
 @NoArgsConstructor
-@Table(name = "memo")
+@Table(
+        name = "memo",
+        indexes = @Index(name = "idx_memo_deleted_time", columnList = "deleted_time")
+)
 @Entity
 public class Memo extends BaseModifiedEntity implements Serializable {
 
