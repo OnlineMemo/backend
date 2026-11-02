@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public interface MemoRepository extends JpaRepository<Memo, Long> {
@@ -54,4 +55,7 @@ public interface MemoRepository extends JpaRepository<Memo, Long> {
     @Lock(LockModeType.OPTIMISTIC)
     @Query("SELECT m FROM Memo m WHERE m.id = :memoId")
     Optional<Memo> findByIdWithOptimisticLock(@Param("memoId") Long memoId);
+
+    // 보관기간 내의 휴지통 메모 조회
+    List<Memo> findByUserMemoList_User_IdAndDeletedTimeAfterOrderByDeletedTimeDesc(Long userId, LocalDateTime expiredTime);
 }

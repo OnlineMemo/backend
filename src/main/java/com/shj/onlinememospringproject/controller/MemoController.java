@@ -52,6 +52,13 @@ public class MemoController {
         return ResponseData.toResponseEntity(ResponseCode.READ_MEMOLIST, memoPageResponseDtoList);
     }
 
+    @GetMapping("/trash")
+    @Operation(summary = "휴지통 메모 목록 조회 [JWT O]")
+    public ResponseEntity<ResponseData<List<MemoDto.TrashPageResponse>>> findTrashMemos() {
+        List<MemoDto.TrashPageResponse> trashPageResponseDtoList = memoService.findTrashMemos();
+        return ResponseData.toResponseEntity(ResponseCode.READ_MEMOLIST, trashPageResponseDtoList);
+    }
+
     @PostMapping
     @Operation(summary = "개인/공동 메모 생성 [JWT O]", description = "- userIdList 필드 : null 허용 (개인메모인 경우에만)")
     public ResponseEntity<ResponseData<MemoDto.CreateResponse>> createMemo(@RequestBody MemoDto.CreateRequest createRequestDto) {

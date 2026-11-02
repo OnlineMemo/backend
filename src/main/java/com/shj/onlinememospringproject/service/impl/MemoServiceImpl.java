@@ -23,7 +23,9 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -35,6 +37,7 @@ import java.util.stream.Collectors;
 public class MemoServiceImpl implements MemoService {
 
     private static final long EDIT_LOCK_EXPIRE_TIME = 1000L * 60 * 10;  // Redis 편집락 TTL = 10분
+    private static final int TRASH_EXPIRE_DAYS = 30;  // 휴지통 보관기간 = 30일
     private static final int MAX_TITLE_LENGTH = 15;  // 메모 제목의 최대 길이 = 15자 이하
     private static final int MAX_SUMMARY_CONTENT_LENGTH = 6000;  // OpenAI 호출용 메모 최대 요약길이 = 6000자 이하
     private static final int MAX_DAILY_OPENAI_USAGE = 10;  // OpenAI 일일 최대 호출횟수 = 10회
@@ -89,6 +92,25 @@ public class MemoServiceImpl implements MemoService {
                 .collect(Collectors.toList());
 
         return memoPageResponseDtoList;
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<MemoDto.TrashPageResponse> findTrashMemos() {
+        Long loginUserId = SecurityUtil.getCurrentMemberId();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime expiredTime = now.minusDays(TRASH_EXPIRE_DAYS);
+        LocalDate today = now.toLocalDate();
+
+        List<Memo> trashMemoList = memoRepository.findByUserMemoList_User_IdAndDeletedTimeAfterOrderByDeletedTimeDesc(loginUserId, expiredTime);
+        List<MemoDto.TrashPageResponse> trashPageResponseDtoList = trashMemoList.stream()
+                .map(memo -> {
+                    int elapsedDays = (int) ChronoUnit.DAYS.between(memo.getDeletedTime().toLocalDate(), today);
+                    return new MemoDto.TrashPageResponse(memo, TRASH_EXPIRE_DAYS - elapsedDays);
+                })
+                .collect(Collectors.toList());
+
+        return trashPageResponseDtoList;
     }
 
     @Transactional
