@@ -60,7 +60,7 @@ public class MemoServiceImpl implements MemoService {
     @Override
     public MemoDto.Response findMemoInfo(Long memoId) {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
-        userMemoService.checkUserInMemo(loginUserId, memoId);  // 사용자의 메모 접근권한 체킹.
+        userMemoService.checkUserInMemo(loginUserId, memoId, null);  // 사용자의 메모 접근권한 체킹.
 
         // 강제 Eager 조회 (N+1 문제 해결)
         UserMemo userMemo = userMemoRepository.findByUser_IdAndMemo_IdToUserMemoListWithEager(loginUserId, memoId).orElseThrow(
@@ -143,7 +143,7 @@ public class MemoServiceImpl implements MemoService {
     @Override
     public void checkEditLock(Long memoId) {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
-        userMemoService.checkUserInMemo(loginUserId, memoId);  // 사용자의 메모 접근권한 체킹.
+        userMemoService.checkUserInMemo(loginUserId, memoId, null);  // 사용자의 메모 접근권한 체킹.
         if(!userMemoService.checkGroupMemo(memoId)) return;  // 공동메모 여부 체킹. (개인메모라면 락 제어는 불필요하므로 즉시 종료.)
 
         String loginUserNickname = userRepository.findNicknameById(loginUserId);
@@ -177,7 +177,7 @@ public class MemoServiceImpl implements MemoService {
     @Override
     public void releaseEditLock(Long memoId) {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
-        userMemoService.checkUserInMemo(loginUserId, memoId);  // 사용자의 메모 접근권한 체킹.
+        userMemoService.checkUserInMemo(loginUserId, memoId, null);  // 사용자의 메모 접근권한 체킹.
         if(!userMemoService.checkGroupMemo(memoId)) return;  // 공동메모 여부 체킹. (개인메모라면 락 제어는 불필요하므로 즉시 종료.)
 
         String lockKey = String.format("memoId:%d:lock", memoId);
@@ -195,7 +195,7 @@ public class MemoServiceImpl implements MemoService {
     @Override
     public void updateMemo(Long memoId, MemoDto.UpdateRequest updateRequestDto) {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
-        userMemoService.checkUserInMemo(loginUserId, memoId);  // 사용자의 메모 접근권한 체킹.
+        userMemoService.checkUserInMemo(loginUserId, memoId, null);  // 사용자의 메모 접근권한 체킹.
 
         // - case 1. 메모의 즐겨찾기 여부 수정인 경우
         if(updateRequestDto.getIsStar() != null) {
@@ -229,7 +229,7 @@ public class MemoServiceImpl implements MemoService {
     @Override
     public void deleteMemo(Long memoId) {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
-        userMemoService.checkUserInMemo(loginUserId, memoId);  // 메모를 삭제/탈퇴할 권한이 있는지 체킹.
+        userMemoService.checkUserInMemo(loginUserId, memoId, null);  // 메모를 삭제/탈퇴할 권한이 있는지 체킹.
 
         // 강제 Eager 조회 (N+1 문제 해결) + 비관적 락
         Memo memo = memoRepository.findByIdToUserMemoListWithEagerAndPessimisticLock(memoId).orElseThrow(

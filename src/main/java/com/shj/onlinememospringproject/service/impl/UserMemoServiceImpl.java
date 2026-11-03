@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -33,7 +34,7 @@ public class UserMemoServiceImpl implements UserMemoService {
     @Override
     public void inviteUsersToMemo(Long memoId, List<Long> userIdList) {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
-        checkUserInMemo(loginUserId, memoId);  // 애초에 초대할 권한(메모에 포함되지않은 사용자인 경우)이 없는 경우는 아닌지 체킹.
+        checkUserInMemo(loginUserId, memoId, null);  // 애초에 초대할 권한(메모에 포함되지않은 사용자인 경우)이 없는 경우는 아닌지 체킹.
 
         // 강제 Eager 조회 (N+1 문제 해결)
         Memo memo = memoRepository.findByIdToUserWithEager(memoId).orElseThrow(
@@ -70,8 +71,11 @@ public class UserMemoServiceImpl implements UserMemoService {
     // 해당 메모에 관련한 수정/삭제 권한이 있는지 체킹하는 메소드 (메모에 포함되지않은 사용자인지 체킹함.)
     @Transactional(readOnly = true)
     @Override
-    public void checkUserInMemo(Long userId, Long memoId) {  // DI된 userMemoRepository 의존성 인스턴스 변수를 사용하므로, static으로는 선언하지 않는것이 권장됨.
-        if(!userMemoRepository.existsByUser_IdAndMemo_IdAndMemo_DeletedTimeIsNull(userId, memoId)) {  // 애초에 초대할 권한(메모에 포함되지않은 사용자인 경우)이 없는 경우
+    public void checkUserInMemo(Long userId, Long memoId, LocalDateTime expiredTime) {  // DI된 userMemoRepository 의존성 인스턴스 변수를 사용하므로, static으로는 선언하지 않는것이 권장됨.
+        boolean isUserInMemo = (expiredTime == null)
+                ? userMemoRepository.existsByUser_IdAndMemo_IdAndMemo_DeletedTimeIsNull(userId, memoId)  // 일반 메모 체킹
+                : userMemoRepository.existsByUser_IdAndMemo_IdAndMemo_DeletedTimeAfter(userId, memoId, expiredTime);  // 휴지통 메모 체킹
+        if(!isUserInMemo) {  // 애초에 초대할 권한(메모에 포함되지않은 사용자인 경우)이 없는 경우
             throw new Exception404.NoSuchUserMemo(String.format("userId = %d, memoId = %d", userId, memoId));
         }
     }

@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface UserMemoRepository extends JpaRepository<UserMemo, Long> {
@@ -24,5 +25,6 @@ public interface UserMemoRepository extends JpaRepository<UserMemo, Long> {
     Long isGroupMemoByMemoId(@Param("memoId") Long memoId);
 
     boolean existsByUser_IdAndMemo_IdAndMemo_DeletedTimeIsNull(Long userId, Long memoId);
+    boolean existsByUser_IdAndMemo_IdAndMemo_DeletedTimeAfter(Long userId, Long memoId, LocalDateTime expiredTime);
     void deleteByUser_IdAndMemo_Id(Long userId, Long memoId);
 }
