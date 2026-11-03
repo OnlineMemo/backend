@@ -106,6 +106,13 @@ public class MemoController {
         return ResponseData.toResponseEntity(ResponseCode.DELETE_MEMO);
     }
 
+    @PutMapping("/trash/{memoId}")
+    @Operation(summary = "휴지통 메모 복원 [JWT O]")
+    public ResponseEntity<ResponseData> restoreTrashMemo(@PathVariable(value = "memoId") Long memoId) {
+        memoService.restoreTrashMemo(memoId);
+        return ResponseData.toResponseEntity(ResponseCode.UPDATE_MEMO);
+    }
+
     @PostMapping("/ai/title")
     @Operation(summary = "메모 내용 기반의 AI 제목 생성 [JWT O]", description = "- prevTitle 필드 : null 허용 (동일메모 내 첫 시도인 경우에만)")
     public ResponseEntity<ResponseData<MemoDto.GenerateResponse>> generateTitleByOpenAI(@RequestBody MemoDto.GenerateRequest generateRequestDto) {

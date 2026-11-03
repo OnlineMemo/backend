@@ -262,6 +262,16 @@ public class MemoServiceImpl implements MemoService {
 
     @Transactional
     @Override
+    public void restoreTrashMemo(Long memoId) {
+        Long loginUserId = SecurityUtil.getCurrentMemberId();
+        LocalDateTime expiredTime = LocalDateTime.now().minusDays(TRASH_EXPIRE_DAYS);
+        userMemoService.checkUserInMemo(loginUserId, memoId, expiredTime);  // 사용자의 휴지통 메모 접근권한 체킹.
+
+        memoRepository.updateDeletedTime(memoId, null);  // 휴지통 복원
+    }
+
+    @Transactional
+    @Override
     public MemoDto.GenerateResponse generateTitleByOpenAI(MemoDto.GenerateRequest generateRequestDto) {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
 
