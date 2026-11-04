@@ -15,6 +15,7 @@ public interface MemoService {
     void updateMemo(Long memoId, MemoDto.UpdateRequest updateRequestDto);
     void deleteMemo(Long memoId);
     void restoreTrashMemo(Long memoId);
+    void restoreTrashMemos();
     MemoDto.GenerateResponse generateTitleByOpenAI(MemoDto.GenerateRequest generateRequestDto);
 
     // ========== 유틸성 메소드 ========== //
