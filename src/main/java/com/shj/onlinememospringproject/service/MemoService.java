@@ -14,6 +14,7 @@ public interface MemoService {
     void releaseEditLock(Long memoId);
     void updateMemo(Long memoId, MemoDto.UpdateRequest updateRequestDto);
     void deleteMemo(Long memoId);
+    void deleteTrashMemo(Long memoId);
     void restoreTrashMemo(Long memoId);
     void restoreTrashMemos();
     MemoDto.GenerateResponse generateTitleByOpenAI(MemoDto.GenerateRequest generateRequestDto);

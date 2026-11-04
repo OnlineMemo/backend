@@ -262,6 +262,21 @@ public class MemoServiceImpl implements MemoService {
 
     @Transactional
     @Override
+    public void deleteTrashMemo(Long memoId) {
+        Long loginUserId = SecurityUtil.getCurrentMemberId();
+        LocalDateTime expiredTime = LocalDateTime.now().minusDays(TRASH_EXPIRE_DAYS);
+        userMemoService.checkUserInMemo(loginUserId, memoId, expiredTime);  // 사용자의 휴지통 메모 접근권한 체킹.
+
+        // 자식 테이블인 UserMemo에서 먼저 삭제.
+        userMemoRepository.deleteByUser_IdAndMemo_Id(loginUserId, memoId);
+        userMemoRepository.flush();  // 영속성 컨텍스트 내 변경상태인 위 delete를 즉시 반영.
+
+        // 최종적으로, 부모 테이블인 Memo를 삭제.
+        memoRepository.deleteById(memoId);
+    }
+
+    @Transactional
+    @Override
     public void restoreTrashMemo(Long memoId) {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
         LocalDateTime expiredTime = LocalDateTime.now().minusDays(TRASH_EXPIRE_DAYS);
