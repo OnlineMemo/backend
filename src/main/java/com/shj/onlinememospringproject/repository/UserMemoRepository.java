@@ -25,6 +25,10 @@ public interface UserMemoRepository extends JpaRepository<UserMemo, Long> {
     @Query("SELECT um FROM UserMemo um JOIN FETCH um.memo m WHERE um.user.id = :userId AND m.deletedTime > :expiredTime")
     List<UserMemo> findAllByUser_IdAndMemo_DeletedTimeAfterToMemoWithEager(@Param("userId") Long userId, @Param("expiredTime") LocalDateTime expiredTime);
 
+    // Eager 조회 : 'UserMemo + UserMemo.memo' (하위의 memo는 반드시 존재하므로 JOIN 사용.)
+    @Query("SELECT um FROM UserMemo um JOIN FETCH um.memo m WHERE m.deletedTime <= :expiredTime")
+    List<UserMemo> findAllByMemo_DeletedTimeLessThanEqualToMemoWithEager(@Param("expiredTime") LocalDateTime expiredTime);
+
     // memoId의 메모가 공동메모인지 여부를 확인하는 메소드
     @Query(value = "SELECT EXISTS (SELECT 1 FROM user_memo WHERE memo_id = :memoId LIMIT 2 OFFSET 1)", nativeQuery = true)  // 두번째 작성자가 존재하는지만 확인하여, 2인 이상 여부 판단.
     Long isGroupMemoByMemoId(@Param("memoId") Long memoId);
