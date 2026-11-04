@@ -300,6 +300,24 @@ public class MemoServiceImpl implements MemoService {
 
     @Transactional
     @Override
+    public void deleteExpiredTrashMemos() {
+        LocalDateTime expiredTime = LocalDateTime.now().minusDays(TRASH_EXPIRE_DAYS);
+
+        // 강제 Eager 조회 (N+1 문제 해결)
+        List<UserMemo> expiredTrashUserMemoList = userMemoRepository.findAllByMemo_DeletedTimeLessThanEqualToMemoWithEager(expiredTime);
+        List<Memo> expiredTrashMemoList = expiredTrashUserMemoList.stream()
+                .map(UserMemo::getMemo)
+                .collect(Collectors.toList());
+
+        // 부모 테이블인 Memo보다 먼저, 자식 테이블인 UserMemo에서 사용자와 메모와의 관계부터 삭제.
+        userMemoBatchRepository.batchDelete(expiredTrashUserMemoList);  // UserMemos - Batch Delete
+
+        // 최종적으로, 부모 테이블인 Memo를 삭제.
+        memoBatchRepository.batchDelete(expiredTrashMemoList);  // Memos - Batch Delete
+    }
+
+    @Transactional
+    @Override
     public void restoreTrashMemo(Long memoId) {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
         LocalDateTime expiredTime = LocalDateTime.now().minusDays(TRASH_EXPIRE_DAYS);

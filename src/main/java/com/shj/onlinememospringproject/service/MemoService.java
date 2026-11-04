@@ -16,6 +16,7 @@ public interface MemoService {
     void deleteMemo(Long memoId);
     void deleteTrashMemo(Long memoId);
     void deleteTrashMemos();
+    void deleteExpiredTrashMemos();
     void restoreTrashMemo(Long memoId);
     void restoreTrashMemos();
     MemoDto.GenerateResponse generateTitleByOpenAI(MemoDto.GenerateRequest generateRequestDto);
