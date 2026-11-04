@@ -32,6 +32,13 @@ public class MemoController {
         return ResponseData.toResponseEntity(ResponseCode.READ_MEMO, memoResponseDto);
     }
 
+    @GetMapping("/trash/{memoId}")
+    @Operation(summary = "휴지통 메모정보 조회 [JWT O]")
+    public ResponseEntity<ResponseData<MemoDto.TrashResponse>> findTrashMemoInfo(@PathVariable(value = "memoId") Long memoId) {
+        MemoDto.TrashResponse trashResponseDto = memoService.findTrashMemoInfo(memoId);
+        return ResponseData.toResponseEntity(ResponseCode.READ_MEMO, trashResponseDto);
+    }
+
     @GetMapping
     @Operation(summary = "메모 목록 조회/정렬/검색 [JWT O]",
             description = """

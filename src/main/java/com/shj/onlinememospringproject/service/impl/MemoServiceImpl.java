@@ -77,6 +77,21 @@ public class MemoServiceImpl implements MemoService {
 
     @Transactional(readOnly = true)
     @Override
+    public MemoDto.TrashResponse findTrashMemoInfo(Long memoId) {
+        Long loginUserId = SecurityUtil.getCurrentMemberId();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime expiredTime = now.minusDays(TRASH_EXPIRE_DAYS);
+        LocalDate today = now.toLocalDate();
+        userMemoService.checkUserInMemo(loginUserId, memoId, expiredTime);  // 사용자의 휴지통 메모 접근권한 체킹.
+
+        Memo memo = findMemo(memoId);
+        int elapsedDays = (int) ChronoUnit.DAYS.between(memo.getDeletedTime().toLocalDate(), today);
+        MemoDto.TrashResponse trashResponseDto = new MemoDto.TrashResponse(memo, TRASH_EXPIRE_DAYS - elapsedDays);
+        return trashResponseDto;
+    }
+
+    @Transactional(readOnly = true)
+    @Override
     public List<MemoDto.MemoPageResponse> findMemos(String filter, String search) {
         if(filter != null && search != null) throw new Exception400.MemoBadRequest("잘못된 쿼리파라미터로 API를 요청하였습니다.");  // 정렬과 검색중 하나만 적용 가능.
         Predicate<Memo> memoPredicate = (filter != null) ? filterMemos(filter) : searchMemos(search);

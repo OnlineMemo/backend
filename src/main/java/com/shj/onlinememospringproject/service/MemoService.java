@@ -7,6 +7,7 @@ import java.util.List;
 
 public interface MemoService {
     MemoDto.Response findMemoInfo(Long memoId);
+    MemoDto.TrashResponse findTrashMemoInfo(Long memoId);
     List<MemoDto.MemoPageResponse> findMemos(String filter, String search);
     List<MemoDto.TrashPageResponse> findTrashMemos();
     MemoDto.CreateResponse createMemo(MemoDto.CreateRequest createRequestDto);
