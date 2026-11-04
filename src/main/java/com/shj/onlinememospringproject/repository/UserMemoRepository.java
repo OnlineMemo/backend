@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public interface UserMemoRepository extends JpaRepository<UserMemo, Long> {
@@ -19,6 +20,10 @@ public interface UserMemoRepository extends JpaRepository<UserMemo, Long> {
     // Eager 조회 : 'UserMemo + UserMemo.memo + UserMemo.memo.userMemoList' (하위의 memo는 반드시 존재하므로 JOIN 사용하나, userMemoList는 비어있을수도있어 LEFT JOIN 사용.)
     @Query("SELECT um FROM UserMemo um JOIN FETCH um.memo m LEFT JOIN FETCH m.userMemoList WHERE um.user.id = :userId AND um.memo.id = :memoId")
     Optional<UserMemo> findByUser_IdAndMemo_IdToUserMemoListWithEager(@Param("userId") Long userId, @Param("memoId") Long memoId);
+
+    // Eager 조회 : 'UserMemo + UserMemo.memo' (하위의 memo는 반드시 존재하므로 JOIN 사용.)
+    @Query("SELECT um FROM UserMemo um JOIN FETCH um.memo m WHERE um.user.id = :userId AND m.deletedTime > :expiredTime")
+    List<UserMemo> findAllByUser_IdAndMemo_DeletedTimeAfterToMemoWithEager(@Param("userId") Long userId, @Param("expiredTime") LocalDateTime expiredTime);
 
     // memoId의 메모가 공동메모인지 여부를 확인하는 메소드
     @Query(value = "SELECT EXISTS (SELECT 1 FROM user_memo WHERE memo_id = :memoId LIMIT 2 OFFSET 1)", nativeQuery = true)  // 두번째 작성자가 존재하는지만 확인하여, 2인 이상 여부 판단.

@@ -5,8 +5,10 @@ import com.shj.onlinememospringproject.domain.Memo;
 import com.shj.onlinememospringproject.domain.User;
 import com.shj.onlinememospringproject.domain.mapping.UserMemo;
 import com.shj.onlinememospringproject.dto.MemoDto;
+import com.shj.onlinememospringproject.repository.MemoBatchRepository;
 import com.shj.onlinememospringproject.repository.MemoRepository;
 import com.shj.onlinememospringproject.repository.RedisRepository;
+import com.shj.onlinememospringproject.repository.UserMemoBatchRepository;
 import com.shj.onlinememospringproject.repository.UserMemoRepository;
 import com.shj.onlinememospringproject.repository.UserRepository;
 import com.shj.onlinememospringproject.response.exception.*;
@@ -52,6 +54,8 @@ public class MemoServiceImpl implements MemoService {
     private final UserRepository userRepository;
     private final MemoRepository memoRepository;
     private final UserMemoRepository userMemoRepository;
+    private final UserMemoBatchRepository userMemoBatchRepository;
+    private final MemoBatchRepository memoBatchRepository;
     private final RedisRepository redisRepository;
     private final OpenAIClient openAIClient;
 
@@ -273,6 +277,25 @@ public class MemoServiceImpl implements MemoService {
 
         // 최종적으로, 부모 테이블인 Memo를 삭제.
         memoRepository.deleteById(memoId);
+    }
+
+    @Transactional
+    @Override
+    public void deleteTrashMemos() {
+        Long loginUserId = SecurityUtil.getCurrentMemberId();
+        LocalDateTime expiredTime = LocalDateTime.now().minusDays(TRASH_EXPIRE_DAYS);
+
+        // 강제 Eager 조회 (N+1 문제 해결)
+        List<UserMemo> trashUserMemoList = userMemoRepository.findAllByUser_IdAndMemo_DeletedTimeAfterToMemoWithEager(loginUserId, expiredTime);
+        List<Memo> trashMemoList = trashUserMemoList.stream()
+                .map(UserMemo::getMemo)
+                .collect(Collectors.toList());
+
+        // 부모 테이블인 Memo보다 먼저, 자식 테이블인 UserMemo에서 사용자와 메모와의 관계부터 삭제.
+        userMemoBatchRepository.batchDelete(trashUserMemoList);  // UserMemos - Batch Delete
+
+        // 최종적으로, 부모 테이블인 Memo를 삭제.
+        memoBatchRepository.batchDelete(trashMemoList);  // Memos - Batch Delete
     }
 
     @Transactional

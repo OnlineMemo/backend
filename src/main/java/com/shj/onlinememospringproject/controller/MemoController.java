@@ -113,6 +113,13 @@ public class MemoController {
         return ResponseData.toResponseEntity(ResponseCode.DELETE_MEMO);
     }
 
+    @DeleteMapping("/trash")
+    @Operation(summary = "휴지통 메모 전체 영구삭제 [JWT O]")
+    public ResponseEntity<ResponseData> deleteTrashMemos() {
+        memoService.deleteTrashMemos();
+        return ResponseData.toResponseEntity(ResponseCode.DELETE_MEMO);
+    }
+
     @PutMapping("/trash/{memoId}")
     @Operation(summary = "휴지통 메모 단건 복원 [JWT O]")
     public ResponseEntity<ResponseData> restoreTrashMemo(@PathVariable(value = "memoId") Long memoId) {
