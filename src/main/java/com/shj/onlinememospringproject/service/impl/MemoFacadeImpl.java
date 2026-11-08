@@ -65,7 +65,7 @@ public class MemoFacadeImpl implements MemoFacade {
 //            });
         } catch (Exception400.MemoBadRequest ex400) {
             throw ex400;
-        } catch (Exception404.NoSuchMemo ex404) {
+        } catch (Exception404.NoSuchMemo | Exception404.NoSuchUserMemo ex404) {
             throw ex404;
         } catch (Exception423.LockedData ex423) {
             throw ex423;

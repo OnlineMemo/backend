@@ -44,7 +44,7 @@ public interface MemoRepository extends JpaRepository<Memo, Long> {
 
     // 휴지통 단건 이동 및 복원
     @Modifying(clearAutomatically = true)
-    @Query("UPDATE Memo m SET m.deletedTime = :deletedTime WHERE m.id = :memoId")
+    @Query("UPDATE Memo m SET m.deletedTime = :deletedTime, m.version = m.version + 1 WHERE m.id = :memoId")
     void updateDeletedTime(@Param("memoId") Long memoId, @Param("deletedTime") LocalDateTime deletedTime);
 
     // 휴지통 전체 복원
