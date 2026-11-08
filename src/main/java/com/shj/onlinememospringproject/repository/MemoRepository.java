@@ -49,7 +49,7 @@ public interface MemoRepository extends JpaRepository<Memo, Long> {
 
     // 휴지통 전체 복원
     @Modifying(clearAutomatically = true)
-    @Query("UPDATE Memo m SET m.deletedTime = NULL " +
+    @Query("UPDATE Memo m SET m.deletedTime = NULL, m.version = m.version + 1 " +
             "WHERE m.deletedTime > :expiredTime " +
             "AND m.id IN (SELECT um.memo.id FROM UserMemo um WHERE um.user.id = :userId)")
     void updateDeletedTimeToNullByUserId(@Param("userId") Long userId, @Param("expiredTime") LocalDateTime expiredTime);
