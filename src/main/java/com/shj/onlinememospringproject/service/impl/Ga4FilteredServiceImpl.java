@@ -27,7 +27,7 @@ public class Ga4FilteredServiceImpl implements Ga4FilteredService {
     private static final String ALL_PAGE_ALIAS = "전체 페이지 합계";
     private static final String AUTH_PAGE_ALIAS = "회원용 페이지 합계";
     private static final String PUBLIC_PAGE_ALIAS = "공개 페이지 합계";
-    private static final Set<String> AUTH_PAGE_SET = Set.of("/users", "/friends", "/senders", "/memos", "/memos/:memoId", "/memos/new-memo");  // 회원용 페이지
+    private static final Set<String> AUTH_PAGE_SET = Set.of("/users", "/friends", "/senders", "/memos", "/memos/:memoId", "/memos/new-memo", "/memos/trash", "/memos/trash/:memoId");  // 회원용 페이지
     private static final Set<String> PUBLIC_PAGE_SET = Set.of("/", "/signup", "/password", "/information", "/notice", "/download", "/404");  // 공개 페이지
 
     private final Ga4FilteredRepository ga4FilteredRepository;
