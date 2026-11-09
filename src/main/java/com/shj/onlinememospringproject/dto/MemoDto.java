@@ -136,4 +136,42 @@ public class MemoDto {
             this.memoHasUsersCount = userResponseDtoList.size();
         }
     }
+
+    @Getter
+    @NoArgsConstructor
+    public static class TrashResponse {
+
+        private Long memoId;
+        private String title;
+        private String content;
+        private String deletedTime;
+        private Integer remainDays;  // 영구삭제까지 남은 일수
+
+        public TrashResponse(Memo entity, Integer remainDays) {
+            this.memoId = entity.getId();
+            this.title = entity.getTitle();
+            this.content = entity.getContent();
+            this.deletedTime = TimeConverter.timeToStringForResponse(entity.getDeletedTime());
+            this.remainDays = remainDays;
+        }
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class TrashPageResponse {
+
+        private Long memoId;
+        private String title;
+        private String deletedTime;
+        private Integer remainDays;  // 영구삭제까지 남은 일수
+
+        public TrashPageResponse(Memo entity, Integer remainDays) {
+            this.memoId = entity.getId();
+            this.title = entity.getTitle();
+            this.deletedTime = TimeConverter.timeToStringForResponse(entity.getDeletedTime());
+            this.remainDays = remainDays;
+        }
+    }
 }

@@ -32,6 +32,13 @@ public class MemoController {
         return ResponseData.toResponseEntity(ResponseCode.READ_MEMO, memoResponseDto);
     }
 
+    @GetMapping("/trash/{memoId}")
+    @Operation(summary = "휴지통 메모정보 조회 [JWT O]")
+    public ResponseEntity<ResponseData<MemoDto.TrashResponse>> findTrashMemoInfo(@PathVariable(value = "memoId") Long memoId) {
+        MemoDto.TrashResponse trashResponseDto = memoService.findTrashMemoInfo(memoId);
+        return ResponseData.toResponseEntity(ResponseCode.READ_MEMO, trashResponseDto);
+    }
+
     @GetMapping
     @Operation(summary = "메모 목록 조회/정렬/검색 [JWT O]",
             description = """
@@ -50,6 +57,13 @@ public class MemoController {
             @RequestParam(value = "search", required = false) String search) {
         List<MemoDto.MemoPageResponse> memoPageResponseDtoList = memoService.findMemos(filter, search);
         return ResponseData.toResponseEntity(ResponseCode.READ_MEMOLIST, memoPageResponseDtoList);
+    }
+
+    @GetMapping("/trash")
+    @Operation(summary = "휴지통 메모 목록 조회 [JWT O]")
+    public ResponseEntity<ResponseData<List<MemoDto.TrashPageResponse>>> findTrashMemos() {
+        List<MemoDto.TrashPageResponse> trashPageResponseDtoList = memoService.findTrashMemos();
+        return ResponseData.toResponseEntity(ResponseCode.READ_MEMOLIST, trashPageResponseDtoList);
     }
 
     @PostMapping
@@ -93,10 +107,38 @@ public class MemoController {
     }
 
     @DeleteMapping("/{memoId}")
-    @Operation(summary = "메모 삭제/탈퇴 [JWT O]")
+    @Operation(summary = "메모 휴지통 이동/탈퇴 [JWT O]")
     public ResponseEntity<ResponseData> deleteMemo(@PathVariable(value = "memoId") Long memoId) {
         memoService.deleteMemo(memoId);
         return ResponseData.toResponseEntity(ResponseCode.DELETE_MEMO);
+    }
+
+    @DeleteMapping("/trash/{memoId}")
+    @Operation(summary = "휴지통 메모 단건 영구삭제 [JWT O]")
+    public ResponseEntity<ResponseData> deleteTrashMemo(@PathVariable(value = "memoId") Long memoId) {
+        memoService.deleteTrashMemo(memoId);
+        return ResponseData.toResponseEntity(ResponseCode.DELETE_MEMO);
+    }
+
+    @DeleteMapping("/trash")
+    @Operation(summary = "휴지통 메모 전체 영구삭제 [JWT O]")
+    public ResponseEntity<ResponseData> deleteTrashMemos() {
+        memoService.deleteTrashMemos();
+        return ResponseData.toResponseEntity(ResponseCode.DELETE_MEMO);
+    }
+
+    @PutMapping("/trash/{memoId}")
+    @Operation(summary = "휴지통 메모 단건 복원 [JWT O]")
+    public ResponseEntity<ResponseData> restoreTrashMemo(@PathVariable(value = "memoId") Long memoId) {
+        memoService.restoreTrashMemo(memoId);
+        return ResponseData.toResponseEntity(ResponseCode.UPDATE_MEMO);
+    }
+
+    @PutMapping("/trash")
+    @Operation(summary = "휴지통 메모 전체 복원 [JWT O]")
+    public ResponseEntity<ResponseData> restoreTrashMemos() {
+        memoService.restoreTrashMemos();
+        return ResponseData.toResponseEntity(ResponseCode.UPDATE_MEMO);
     }
 
     @PostMapping("/ai/title")

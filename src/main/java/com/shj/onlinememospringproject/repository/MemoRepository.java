@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public interface MemoRepository extends JpaRepository<Memo, Long> {
@@ -40,6 +42,18 @@ public interface MemoRepository extends JpaRepository<Memo, Long> {
     @Query("UPDATE Memo m SET m.isStar = :isStar WHERE m.id = :memoId")  // 네이티브쿼리 말고, JPQL로 작성하였음.
     void updateIsStar(@Param("memoId") Long memoId, @Param("isStar") Integer isStar);
 
+    // 휴지통 단건 이동 및 복원
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Memo m SET m.deletedTime = :deletedTime, m.version = m.version + 1 WHERE m.id = :memoId")
+    void updateDeletedTime(@Param("memoId") Long memoId, @Param("deletedTime") LocalDateTime deletedTime);
+
+    // 휴지통 전체 복원
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Memo m SET m.deletedTime = NULL, m.version = m.version + 1 " +
+            "WHERE m.deletedTime > :expiredTime " +
+            "AND m.id IN (SELECT um.memo.id FROM UserMemo um WHERE um.user.id = :userId)")
+    void updateDeletedTimeToNullByUserId(@Param("userId") Long userId, @Param("expiredTime") LocalDateTime expiredTime);
+
     // memoId로 검색하여 version만 가져오는 메소드
     @Query("SELECT m.version FROM Memo m WHERE m.id = :memoId")
     Long findVersionById(@Param("memoId") Long memoId);
@@ -48,4 +62,7 @@ public interface MemoRepository extends JpaRepository<Memo, Long> {
     @Lock(LockModeType.OPTIMISTIC)
     @Query("SELECT m FROM Memo m WHERE m.id = :memoId")
     Optional<Memo> findByIdWithOptimisticLock(@Param("memoId") Long memoId);
+
+    // 보관기간 내의 휴지통 메모 조회
+    List<Memo> findByUserMemoList_User_IdAndDeletedTimeAfterOrderByDeletedTimeDesc(Long userId, LocalDateTime expiredTime);
 }

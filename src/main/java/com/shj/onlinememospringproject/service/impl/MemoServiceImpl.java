@@ -5,8 +5,10 @@ import com.shj.onlinememospringproject.domain.Memo;
 import com.shj.onlinememospringproject.domain.User;
 import com.shj.onlinememospringproject.domain.mapping.UserMemo;
 import com.shj.onlinememospringproject.dto.MemoDto;
+import com.shj.onlinememospringproject.repository.MemoBatchRepository;
 import com.shj.onlinememospringproject.repository.MemoRepository;
 import com.shj.onlinememospringproject.repository.RedisRepository;
+import com.shj.onlinememospringproject.repository.UserMemoBatchRepository;
 import com.shj.onlinememospringproject.repository.UserMemoRepository;
 import com.shj.onlinememospringproject.repository.UserRepository;
 import com.shj.onlinememospringproject.response.exception.*;
@@ -23,7 +25,9 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -35,6 +39,7 @@ import java.util.stream.Collectors;
 public class MemoServiceImpl implements MemoService {
 
     private static final long EDIT_LOCK_EXPIRE_TIME = 1000L * 60 * 10;  // Redis 편집락 TTL = 10분
+    private static final int TRASH_EXPIRE_DAYS = 30;  // 휴지통 보관기간 = 30일
     private static final int MAX_TITLE_LENGTH = 15;  // 메모 제목의 최대 길이 = 15자 이하
     private static final int MAX_SUMMARY_CONTENT_LENGTH = 6000;  // OpenAI 호출용 메모 최대 요약길이 = 6000자 이하
     private static final int MAX_DAILY_OPENAI_USAGE = 10;  // OpenAI 일일 최대 호출횟수 = 10회
@@ -49,6 +54,8 @@ public class MemoServiceImpl implements MemoService {
     private final UserRepository userRepository;
     private final MemoRepository memoRepository;
     private final UserMemoRepository userMemoRepository;
+    private final UserMemoBatchRepository userMemoBatchRepository;
+    private final MemoBatchRepository memoBatchRepository;
     private final RedisRepository redisRepository;
     private final OpenAIClient openAIClient;
 
@@ -57,7 +64,7 @@ public class MemoServiceImpl implements MemoService {
     @Override
     public MemoDto.Response findMemoInfo(Long memoId) {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
-        userMemoService.checkUserInMemo(loginUserId, memoId);  // 사용자의 메모 접근권한 체킹.
+        userMemoService.checkUserInMemo(loginUserId, memoId, null);  // 사용자의 메모 접근권한 체킹.
 
         // 강제 Eager 조회 (N+1 문제 해결)
         UserMemo userMemo = userMemoRepository.findByUser_IdAndMemo_IdToUserMemoListWithEager(loginUserId, memoId).orElseThrow(
@@ -66,6 +73,21 @@ public class MemoServiceImpl implements MemoService {
         Memo memo = userMemo.getMemo();
         MemoDto.Response memoResponseDto = new MemoDto.Response(memo);  // Usermemo.memo & Usermemo.memo.userMemoList (DTO 변환 및 List길이 계산으로, N+1 쿼리 발생)
         return memoResponseDto;
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public MemoDto.TrashResponse findTrashMemoInfo(Long memoId) {
+        Long loginUserId = SecurityUtil.getCurrentMemberId();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime expiredTime = now.minusDays(TRASH_EXPIRE_DAYS);
+        LocalDate today = now.toLocalDate();
+        userMemoService.checkUserInMemo(loginUserId, memoId, expiredTime);  // 사용자의 휴지통 메모 접근권한 체킹.
+
+        Memo memo = findMemo(memoId);
+        int elapsedDays = (int) ChronoUnit.DAYS.between(memo.getDeletedTime().toLocalDate(), today);
+        MemoDto.TrashResponse trashResponseDto = new MemoDto.TrashResponse(memo, TRASH_EXPIRE_DAYS - elapsedDays);
+        return trashResponseDto;
     }
 
     @Transactional(readOnly = true)
@@ -81,6 +103,7 @@ public class MemoServiceImpl implements MemoService {
 
         List<MemoDto.MemoPageResponse> memoPageResponseDtoList = user.getUserMemoList().stream()
                 .map(UserMemo::getMemo)  // User.userMemoList (N+1 쿼리 발생)
+                .filter(memo -> memo.getDeletedTime() == null)  // 휴지통 메모 제외
                 .filter(memoPredicate)  // User.userMemoList.memo (N+1 쿼리 발생)
                 .sorted(Comparator.comparing(Memo::getModifiedTime, Comparator.reverseOrder())  // 정렬 우선순위 1: 수정날짜 내림차순
                         .thenComparing(Memo::getId, Comparator.reverseOrder()))  // 정렬 우선순위 2: id 내림차순
@@ -88,6 +111,25 @@ public class MemoServiceImpl implements MemoService {
                 .collect(Collectors.toList());
 
         return memoPageResponseDtoList;
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<MemoDto.TrashPageResponse> findTrashMemos() {
+        Long loginUserId = SecurityUtil.getCurrentMemberId();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime expiredTime = now.minusDays(TRASH_EXPIRE_DAYS);
+        LocalDate today = now.toLocalDate();
+
+        List<Memo> trashMemoList = memoRepository.findByUserMemoList_User_IdAndDeletedTimeAfterOrderByDeletedTimeDesc(loginUserId, expiredTime);
+        List<MemoDto.TrashPageResponse> trashPageResponseDtoList = trashMemoList.stream()
+                .map(memo -> {
+                    int elapsedDays = (int) ChronoUnit.DAYS.between(memo.getDeletedTime().toLocalDate(), today);
+                    return new MemoDto.TrashPageResponse(memo, TRASH_EXPIRE_DAYS - elapsedDays);
+                })
+                .collect(Collectors.toList());
+
+        return trashPageResponseDtoList;
     }
 
     @Transactional
@@ -120,7 +162,7 @@ public class MemoServiceImpl implements MemoService {
     @Override
     public void checkEditLock(Long memoId) {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
-        userMemoService.checkUserInMemo(loginUserId, memoId);  // 사용자의 메모 접근권한 체킹.
+        userMemoService.checkUserInMemo(loginUserId, memoId, null);  // 사용자의 메모 접근권한 체킹.
         if(!userMemoService.checkGroupMemo(memoId)) return;  // 공동메모 여부 체킹. (개인메모라면 락 제어는 불필요하므로 즉시 종료.)
 
         String loginUserNickname = userRepository.findNicknameById(loginUserId);
@@ -154,7 +196,7 @@ public class MemoServiceImpl implements MemoService {
     @Override
     public void releaseEditLock(Long memoId) {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
-        userMemoService.checkUserInMemo(loginUserId, memoId);  // 사용자의 메모 접근권한 체킹.
+        userMemoService.checkUserInMemo(loginUserId, memoId, null);  // 사용자의 메모 접근권한 체킹.
         if(!userMemoService.checkGroupMemo(memoId)) return;  // 공동메모 여부 체킹. (개인메모라면 락 제어는 불필요하므로 즉시 종료.)
 
         String lockKey = String.format("memoId:%d:lock", memoId);
@@ -172,7 +214,7 @@ public class MemoServiceImpl implements MemoService {
     @Override
     public void updateMemo(Long memoId, MemoDto.UpdateRequest updateRequestDto) {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
-        userMemoService.checkUserInMemo(loginUserId, memoId);  // 사용자의 메모 접근권한 체킹.
+        userMemoService.checkUserInMemo(loginUserId, memoId, null);  // 사용자의 메모 접근권한 체킹.
 
         // - case 1. 메모의 즐겨찾기 여부 수정인 경우
         if(updateRequestDto.getIsStar() != null) {
@@ -206,7 +248,7 @@ public class MemoServiceImpl implements MemoService {
     @Override
     public void deleteMemo(Long memoId) {
         Long loginUserId = SecurityUtil.getCurrentMemberId();
-        userMemoService.checkUserInMemo(loginUserId, memoId);  // 메모를 삭제/탈퇴할 권한이 있는지 체킹.
+        userMemoService.checkUserInMemo(loginUserId, memoId, null);  // 메모를 삭제/탈퇴할 권한이 있는지 체킹.
 
         // 강제 Eager 조회 (N+1 문제 해결) + 비관적 락
         Memo memo = memoRepository.findByIdToUserMemoListWithEagerAndPessimisticLock(memoId).orElseThrow(
@@ -216,14 +258,14 @@ public class MemoServiceImpl implements MemoService {
         }
         int memoHasUsersCount = memo.getUserMemoList().size();  // Memo.userMemoList (리스트의 size 측정으로, N+1 쿼리 발생)
 
-        // 공동메모 그룹 탈퇴 처리. (자식 테이블인 UserMemo에서 먼저 삭제.)
-        userMemoRepository.deleteByUser_IdAndMemo_Id(loginUserId, memoId);
-        userMemoRepository.flush();  // 영속성 컨텍스트 내 변경상태인 위 delete를 즉시 반영.
-
         if(memoHasUsersCount == 1) {  // 해당 메모가 개인메모라면
-            memoRepository.delete(memo);  // 그 이후에 부모 테이블인 Memo에서 해당 메모를 삭제. (이후 부모 테이블인 Memo에서 삭제.)
+            memoRepository.updateDeletedTime(memoId, LocalDateTime.now());  // 휴지통 이동
         }
         else {  // 해당 메모가 공동메모라면
+            // 공동메모 그룹 탈퇴 처리.
+            userMemoRepository.deleteByUser_IdAndMemo_Id(loginUserId, memoId);
+            userMemoRepository.flush();  // 영속성 컨텍스트 내 변경상태인 위 delete를 즉시 반영.
+
             String lockKey = String.format("memoId:%d:lock", memoId);
             if(memoHasUsersCount == 2) {  // 공동메모인데, 그룹 탈퇴로 메모의 사용자가 2명에서 1명으로 개인메모가 될 경우 (즉, 원래 2명이었을 경우)
                 // isStar 필드는 수정시각에 영향을 주지않도록, @LastModifiedDate 생명주기에서 제외시켜 따로 JPQL로 직접 업데이트함.
@@ -235,6 +277,77 @@ public class MemoServiceImpl implements MemoService {
                 redisRepository.unlockOwner(lockKey, loginUserId);  // Redis 내 본인의 편집락 해제. (락 소유자만 가능)
             }
         }
+    }
+
+    @Transactional
+    @Override
+    public void deleteTrashMemo(Long memoId) {
+        Long loginUserId = SecurityUtil.getCurrentMemberId();
+        LocalDateTime expiredTime = LocalDateTime.now().minusDays(TRASH_EXPIRE_DAYS);
+        userMemoService.checkUserInMemo(loginUserId, memoId, expiredTime);  // 사용자의 휴지통 메모 접근권한 체킹.
+
+        // 자식 테이블인 UserMemo에서 먼저 삭제.
+        userMemoRepository.deleteByUser_IdAndMemo_Id(loginUserId, memoId);
+        userMemoRepository.flush();  // 영속성 컨텍스트 내 변경상태인 위 delete를 즉시 반영.
+
+        // 최종적으로, 부모 테이블인 Memo를 삭제.
+        memoRepository.deleteById(memoId);
+    }
+
+    @Transactional
+    @Override
+    public void deleteTrashMemos() {
+        Long loginUserId = SecurityUtil.getCurrentMemberId();
+        LocalDateTime expiredTime = LocalDateTime.now().minusDays(TRASH_EXPIRE_DAYS);
+
+        // 강제 Eager 조회 (N+1 문제 해결)
+        List<UserMemo> trashUserMemoList = userMemoRepository.findAllByUser_IdAndMemo_DeletedTimeAfterToMemoWithEager(loginUserId, expiredTime);
+        List<Memo> trashMemoList = trashUserMemoList.stream()
+                .map(UserMemo::getMemo)
+                .collect(Collectors.toList());
+
+        // 부모 테이블인 Memo보다 먼저, 자식 테이블인 UserMemo에서 사용자와 메모와의 관계부터 삭제.
+        userMemoBatchRepository.batchDelete(trashUserMemoList);  // UserMemos - Batch Delete
+
+        // 최종적으로, 부모 테이블인 Memo를 삭제.
+        memoBatchRepository.batchDelete(trashMemoList);  // Memos - Batch Delete
+    }
+
+    @Transactional
+    @Override
+    public void deleteExpiredTrashMemos() {
+        LocalDateTime expiredTime = LocalDateTime.now().minusDays(TRASH_EXPIRE_DAYS);
+
+        // 강제 Eager 조회 (N+1 문제 해결)
+        List<UserMemo> expiredTrashUserMemoList = userMemoRepository.findAllByMemo_DeletedTimeLessThanEqualToMemoWithEager(expiredTime);
+        List<Memo> expiredTrashMemoList = expiredTrashUserMemoList.stream()
+                .map(UserMemo::getMemo)
+                .collect(Collectors.toList());
+
+        // 부모 테이블인 Memo보다 먼저, 자식 테이블인 UserMemo에서 사용자와 메모와의 관계부터 삭제.
+        userMemoBatchRepository.batchDelete(expiredTrashUserMemoList);  // UserMemos - Batch Delete
+
+        // 최종적으로, 부모 테이블인 Memo를 삭제.
+        memoBatchRepository.batchDelete(expiredTrashMemoList);  // Memos - Batch Delete
+    }
+
+    @Transactional
+    @Override
+    public void restoreTrashMemo(Long memoId) {
+        Long loginUserId = SecurityUtil.getCurrentMemberId();
+        LocalDateTime expiredTime = LocalDateTime.now().minusDays(TRASH_EXPIRE_DAYS);
+        userMemoService.checkUserInMemo(loginUserId, memoId, expiredTime);  // 사용자의 휴지통 메모 접근권한 체킹.
+
+        memoRepository.updateDeletedTime(memoId, null);  // 휴지통 단건 복원
+    }
+
+    @Transactional
+    @Override
+    public void restoreTrashMemos() {
+        Long loginUserId = SecurityUtil.getCurrentMemberId();
+        LocalDateTime expiredTime = LocalDateTime.now().minusDays(TRASH_EXPIRE_DAYS);
+
+        memoRepository.updateDeletedTimeToNullByUserId(loginUserId, expiredTime);  // 휴지통 전체 복원
     }
 
     @Transactional
